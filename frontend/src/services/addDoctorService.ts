@@ -36,7 +36,16 @@ export const addDoctorService = {
     return loadFromStorage(KEYS.credentialFields, credentialFields);
   },
   getDutyDays(): DutyDay[] {
-    return loadFromStorage(KEYS.dutyDays, dutyDaysDefault);
+    const savedDays = loadFromStorage<Partial<DutyDay>[]>(KEYS.dutyDays, dutyDaysDefault);
+    return dutyDaysDefault.map((defaultDay) => {
+      const savedDay = savedDays.find((day) => day.key === defaultDay.key);
+      return {
+        ...defaultDay,
+        ...savedDay,
+        start: savedDay?.start || defaultDay.start,
+        end: savedDay?.end || defaultDay.end,
+      };
+    });
   },
   saveDutyDays(days: DutyDay[]): void {
     saveToStorage(KEYS.dutyDays, days);

@@ -52,7 +52,7 @@ export function AddPatientPage() {
                 ))}
               </div>
             </label>
-            {fields.filter((f) => ['complaint', 'allergies', 'doctor'].includes(f.id)).map((f) => (
+            {fields.filter((f) => ['complaint', 'recommendedTest'].includes(f.id)).map((f) => (
               <RegistrationField key={f.id} field={f} value={formValues[f.id] ?? ''} onChange={(v) => updateField(f.id, v)} />
             ))}
             {fields.filter((f) => f.id === 'notes').map((f) => (

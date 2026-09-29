@@ -1,19 +1,6 @@
-import { ShieldCheck, RefreshCcw } from 'lucide-react';
 import type {
-  AppointmentPatientInfo, AppointmentFormatOption, PriorityOption, AppointmentDoctorInfo,
-  AppointmentCalendarDay, AppointmentSlotSession, AppointmentMiniChip,
+  AppointmentFormatOption, PriorityOption, AppointmentDoctorInfo,
 } from '@/types';
-
-export const appointmentPatient: AppointmentPatientInfo = {
-  name: 'Ahmed Khan',
-  patientId: 'PT-00841',
-  insuranceBadge: 'INSURED (BLUECARE GOLD)',
-  age: 42,
-  gender: 'Male',
-  phone: '+1 (555) 382-9012',
-  lastVisit: 'Last visit 3 mo ago',
-  avatar: 'https://i.pravatar.cc/80?img=12',
-};
 
 export const medicalSpecialtyOptions = [
   'Neurology & Neurosciences', 'Cardiology', 'Dermatology', 'Pediatrics', 'Orthopedics', 'Internal Medicine',
@@ -42,45 +29,33 @@ export const appointmentDoctor: AppointmentDoctorInfo = {
   hours: '09:00 AM - 02:00 PM',
 };
 
-export const appointmentMiniChips: AppointmentMiniChip[] = [
-  { icon: ShieldCheck, label: 'PROTOCOL', value: 'Standard Care Pathway' },
-  { icon: RefreshCcw, label: 'QUEUE', value: 'Room 102 Auto-Sync' },
-];
+export interface DoctorScheduleConfig {
+  name: string;
+  weekdays: number[];
+  startHour: number;
+  endHour: number;
+  suite: string;
+  avatar: string;
+}
 
-export const calendarMonthLabel = 'September 2026';
-
-export const calendarDays: AppointmentCalendarDay[] = [
-  { label: 'MON', date: 21, status: 'past', meta: 'Past' },
-  { label: 'TUE', date: 22, status: 'past', meta: 'Past' },
-  { label: 'WED', date: 23, status: 'full', meta: 'Full' },
-  { label: 'THU', date: 24, status: 'open', meta: '5 Open' },
-  { label: 'FRI', date: 25, status: 'open', meta: '4 Open' },
-  { label: 'SAT', date: 26, status: 'open', meta: '2 Open' },
-];
-
-export const slotSessions: AppointmentSlotSession[] = [
-  {
-    title: 'MORNING CONSULTATION SESSION',
-    hours: '09:00 AM - 12:00 PM',
-    slots: [
-      { time: '09:00 AM', status: 'booked' },
-      { time: '09:30 AM', status: 'reserved' },
-      { time: '10:00 AM', status: 'available' },
-      { time: '10:30 AM', status: 'available' },
-      { time: '11:00 AM', status: 'booked' },
-      { time: '11:30 AM', status: 'available' },
-    ],
+export const doctorScheduleConfigs: Record<string, DoctorScheduleConfig> = {
+  'Dr. Ahmed Rahman (MD, PhD)': {
+    name: 'Dr. Ahmed Rahman', weekdays: [1, 2, 3, 4, 5], startHour: 9, endHour: 14,
+    suite: 'Suite 102 • Wing B', avatar: 'https://i.pravatar.cc/100?img=12',
   },
-  {
-    title: 'AFTERNOON CONSULTATION SESSION',
-    hours: '01:00 PM - 02:00 PM',
-    slots: [
-      { time: '01:00 PM', status: 'available' },
-      { time: '01:30 PM', status: 'available' },
-      { time: '02:00 PM', status: 'offduty' },
-    ],
+  'Dr. Elena Rostova (MD)': {
+    name: 'Dr. Elena Rostova', weekdays: [1, 3, 5], startHour: 10, endHour: 16,
+    suite: 'Suite 204 • Wing A', avatar: 'https://i.pravatar.cc/100?img=47',
   },
-];
+  'Dr. Marcus Vale (MD)': {
+    name: 'Dr. Marcus Vale', weekdays: [2, 4, 6], startHour: 8, endHour: 13,
+    suite: 'Suite 310 • Wing C', avatar: 'https://i.pravatar.cc/100?img=11',
+  },
+  'Dr. Priya Patel (MD, FACC)': {
+    name: 'Dr. Priya Patel', weekdays: [1, 2, 4, 5], startHour: 11, endHour: 17,
+    suite: 'Suite 205 • Wing A', avatar: 'https://i.pravatar.cc/100?img=45',
+  },
+};
 
 export const appointmentMeta = {
   reasonDefault: 'Recurrent migraine episodes with unilateral visual aura',

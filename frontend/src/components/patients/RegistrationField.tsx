@@ -12,14 +12,14 @@ const PLACEHOLDERS: Record<string, string> = {
   phone: 'e.g. +1 (555) 123-4567',
   dob: 'MM/DD/YYYY',
   complaint: 'e.g. Follow-up consultation',
-  allergies: 'e.g. Penicillin, Latex — or None',
   doctor: 'e.g. Dr. Jane Smith',
   notes: 'Any additional notes for the care team',
 };
 
 export function RegistrationField({ field, value, onChange }: Props) {
-  const { id, label, wide, optional, textarea, icon: Icon } = field;
+  const { id, label, wide, optional, textarea, icon: Icon, options } = field;
   const placeholder = PLACEHOLDERS[id] ?? `Enter ${label.replace(/\s*\*$/, '').toLowerCase()}`;
+  const suggestionListId = `patient-field-${id}-suggestions`;
   return (
     <label className={wide ? 'wide' : ''}>
       <span>
@@ -31,11 +31,12 @@ export function RegistrationField({ field, value, onChange }: Props) {
       ) : Icon ? (
         <div className="field-decorated">
           <Icon size={13} />
-          <input placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
+          <input placeholder={placeholder} value={value} list={options ? suggestionListId : undefined} onChange={(e) => onChange(e.target.value)} />
         </div>
       ) : (
-        <input placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
+        <input placeholder={placeholder} value={value} list={options ? suggestionListId : undefined} onChange={(e) => onChange(e.target.value)} />
       )}
+      {options && <datalist id={suggestionListId}>{options.map((option) => <option key={option} value={option} />)}</datalist>}
     </label>
   );
 }

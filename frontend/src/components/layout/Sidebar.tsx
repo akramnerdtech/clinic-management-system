@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Bell, HeartPulse, LogOut } from "lucide-react";
 import { useNavigation } from "@/hooks/useNavigation";
 import { useToast } from "@/utils/toast";
 import { useAuth } from "@/hooks/useAuth";
+import { ACCOUNT_AVATAR_EVENT, accountService } from "@/services/accountService";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -14,7 +16,18 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const toast = useToast();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const [avatar, setAvatar] = useState(() => accountService.getAvatar());
+
+  useEffect(() => {
+    const refreshAvatar = () => setAvatar(accountService.getAvatar());
+    window.addEventListener(ACCOUNT_AVATAR_EVENT, refreshAvatar);
+    window.addEventListener("storage", refreshAvatar);
+    return () => {
+      window.removeEventListener(ACCOUNT_AVATAR_EVENT, refreshAvatar);
+      window.removeEventListener("storage", refreshAvatar);
+    };
+  }, []);
 
   const handleSignOut = () => {
     logout();
@@ -57,17 +70,16 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
         ))}
       </nav>
       <div className="receptionist">
-        <img src="https://i.pravatar.cc/60?img=47" alt="Sarah Jenkins" />
-        <div>
-          <strong>Sarah Jenkins</strong>
-          <span>Head Receptionist</span>
-        </div>
-        <Bell size={15} className="reception-bell" />
-        <b>3</b>
-        <small>ID: #REC-4092</small>
-        <button onClick={handleSignOut}>
-          <LogOut size={12} /> Sign out
+        <img src={avatar} alt={user?.fullName || 'Profile'} />
+        <div className="">
+          <strong>{user?.fullName || 'Sarah Jenkins'}</strong>
+       
+        
+        <button className="mt-2"  onClick={handleSignOut}>
+          <LogOut  size={12} /> Sign out
         </button>
+        </div>
+        
       </div>
     </aside>
   );

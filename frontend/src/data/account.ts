@@ -4,7 +4,6 @@ export const accountTabs = [
   '◍ Profile & Identity',
   '⚿ Security & Password',
   '♪ Notifications',
-  '▥ Active Sessions',
 ];
 
 export const accountAvatar = 'https://i.pravatar.cc/120?img=47';

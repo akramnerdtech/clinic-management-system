@@ -7,14 +7,14 @@ interface Props {
 }
 
 export function DoctorFormField({ field, value, onChange }: Props) {
-  const { label, placeholder, wide, type, options, icon: Icon, suffix } = field;
-  const decorated = Boolean(Icon || suffix);
+  const { label, placeholder, wide, type, options, suffix } = field;
+  const decorated = Boolean( suffix);
 
   return (
     <label className={wide ? 'wide' : ''}>
       <span>{label}</span>
       <div className={decorated ? 'field-decorated' : ''}>
-        {Icon && <Icon size={13} />}
+        {/* {Icon && <Icon size={13} />} */}
         {type === 'select' ? (
           <select value={value} onChange={(e) => onChange(e.target.value)}>
             <option value="" disabled>{placeholder}</option>

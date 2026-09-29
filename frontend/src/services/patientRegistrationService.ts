@@ -12,7 +12,11 @@ const KEYS = {
 
 export const patientRegistrationService = {
   getFields(): RegistrationField[] {
-    return loadFromStorage(KEYS.fields, patientRegistrationFields);
+    const savedFields = loadFromStorage(KEYS.fields, patientRegistrationFields);
+    return patientRegistrationFields.map((field) => {
+      const saved = savedFields.find((savedField) => savedField.id === field.id);
+      return { ...field, ...(saved ? { label: saved.label, defaultValue: saved.defaultValue } : {}) };
+    });
   },
   getGenderOptions(): string[] {
     return loadFromStorage(KEYS.genderOptions, genderOptions);

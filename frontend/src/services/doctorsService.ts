@@ -10,10 +10,22 @@ const KEYS = {
 
 export const doctorsService = {
   getDoctors(): Doctor[] {
-    return loadFromStorage(KEYS.doctors, doctors);
+    return loadFromStorage(KEYS.doctors, doctors).map((doctor) => [
+      doctor[0], doctor[1], doctor[2], doctor[3],
+      doctor[4] === 'OFF DUTY' ? 'OFF DUTY' : 'ON DUTY',
+      doctor[5], doctor[6], doctor[7],
+    ]);
+  },
+  getOnDutyCount(): number {
+    return this.getDoctors().filter((doctor) => doctor[4] === 'ON DUTY').length;
   },
   getMetrics(): MetricConfig[] {
-    return loadFromStorage(KEYS.metrics, doctorsMetrics);
+    const metrics = loadFromStorage(KEYS.metrics, doctorsMetrics);
+    const roster = this.getDoctors();
+    const onDuty = roster.filter((doctor) => doctor[4] === 'ON DUTY').length;
+    return metrics.map((metric) => metric.label === 'ON DUTY TODAY'
+      ? { ...metric, value: String(onDuty), note: `of ${roster.length} doctors` }
+      : metric);
   },
   getFeaturedProfile() {
     return loadFromStorage(KEYS.profile, doctorProfile);
@@ -23,6 +35,26 @@ export const doctorsService = {
     const current = loadFromStorage(KEYS.doctors, doctors);
     const updated = [doctor, ...current];
     saveToStorage(KEYS.doctors, updated);
-    return updated;
+    return this.getDoctors();
+  },
+  updateDoctor(previousName: string, updatedDoctor: Doctor): Doctor[] {
+    const current = loadFromStorage(KEYS.doctors, doctors);
+    const updated = current.map((doctor) => doctor[0] === previousName ? updatedDoctor : doctor);
+    saveToStorage(KEYS.doctors, updated);
+    return this.getDoctors();
+  },
+  removeDoctor(name: string): Doctor[] {
+    const current = loadFromStorage(KEYS.doctors, doctors);
+    const updated = current.filter((doctor) => doctor[0] !== name);
+    saveToStorage(KEYS.doctors, updated);
+    return this.getDoctors();
+  },
+  setDutyStatus(name: string, onDuty: boolean): Doctor[] {
+    const current = loadFromStorage(KEYS.doctors, doctors);
+    const updated = current.map((doctor) => doctor[0] === name
+      ? [...doctor.slice(0, 4), onDuty ? 'ON DUTY' : 'OFF DUTY', ...doctor.slice(5)] as Doctor
+      : doctor);
+    saveToStorage(KEYS.doctors, updated);
+    return this.getDoctors();
   },
 };

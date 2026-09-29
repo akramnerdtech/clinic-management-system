@@ -10,6 +10,7 @@ import { AccountSettingsPage } from '@/pages/AccountSettingsPage';
 import { AppointmentsPage } from '@/pages/AppointmentsPage';
 import { NewAppointmentPage } from '@/pages/NewAppointmentPage';
 import { AddPatientPage } from '@/pages/AddPatientPage';
+import { EditPatientPage } from '@/pages/EditPatientPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { MasterCalendarPage } from '@/pages/MasterCalendarPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -30,6 +31,7 @@ function MainProjectRoutes() {
           <Route path="/doctors/new" element={<AddDoctorPage />} />
           <Route path="/patients" element={<PatientsPage />} />
           <Route path="/patients/new" element={<AddPatientPage />} />
+          <Route path="/patients/:patientId/edit" element={<EditPatientPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/appointments/new" element={<NewAppointmentPage />} />
           <Route path="/calendar" element={<MasterCalendarPage />} />

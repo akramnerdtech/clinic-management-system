@@ -1,15 +1,18 @@
 import type { AccountProfileField } from '@/types';
+import { useRef } from 'react';
+import { ImagePlus, RotateCcw } from 'lucide-react';
 import { Field } from './Field';
-import { useToast } from '@/utils/toast';
 
 interface Props {
   avatar: string;
   profileFields: AccountProfileField[];
   onChangeField: (index: number, value: string) => void;
+  onChangeAvatar: (file: File) => void;
+  onRemoveAvatar: () => void;
 }
 
-export function AccountProfileCard({ avatar, profileFields, onChangeField }: Props) {
-  const toast = useToast();
+export function AccountProfileCard({ avatar, profileFields, onChangeField, onChangeAvatar, onRemoveAvatar }: Props) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <section className="content-card identity-card">
@@ -24,11 +27,24 @@ export function AccountProfileCard({ avatar, profileFields, onChangeField }: Pro
         <img src={avatar} alt="Profile" />
         <div>
           <h3>Profile Photo</h3>
-          <p>Visible to clinic staff in the sidebar, shift roster, and internal directory search.</p>
-          <button onClick={() => toast.info('Photo uploads require a connected file store — not available in this demo.')}>Change Photo</button>{' '}
-          <b onClick={() => toast.info('Profile photo removed (demo only — not persisted).')}>Remove</b>
+          <p>Use a clear square image. Your photo is stored in this browser.</p>
+          <div className="profile-photo-actions">
+            <button type="button" onClick={() => fileInputRef.current?.click()}><ImagePlus size={14} /> Change photo</button>
+            <button type="button" className="photo-reset-button" onClick={onRemoveAvatar}><RotateCcw size={13} /> Remove photo</button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              aria-label="Choose profile photo"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) onChangeAvatar(file);
+                event.currentTarget.value = '';
+              }}
+            />
+          </div>
         </div>
-        <small>Recommended 256×256 JPG or PNG</small>
+        <small>Up to 8 MB · resized for storage</small>
       </div>
       <div className="form-grid">
         {profileFields.map((f, i) => (

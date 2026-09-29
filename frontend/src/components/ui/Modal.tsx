@@ -8,10 +8,11 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  className?: string;
 }
 
 /** Small, dependency-free modal dialog styled to match the app's content cards. */
-export function Modal({ title, subtitle, onClose, children, footer }: ModalProps) {
+export function Modal({ title, subtitle, onClose, children, footer, className = '' }: ModalProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -22,7 +23,7 @@ export function Modal({ title, subtitle, onClose, children, footer }: ModalProps
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-card ${className}`} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
             <h2>{title}</h2>

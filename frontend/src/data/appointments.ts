@@ -10,13 +10,13 @@ export const appointmentsMetrics: MetricConfig[] = [
 
 export const appointmentTabs = ['All', 'Confirmed', 'Waiting', 'In Consultation', 'Completed', 'Cancelled'];
 
-/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status] */
+/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status, appointmentDate?] */
 export const appointmentEntries: AppointmentEntry[] = [
-  ['10:30 AM', '30 min slot', 'TK-108', 'Eleanor Vance', '68 / F', 'Persistent Arrhythmia & Dyspnea', 'ECG scheduled on arrival', 'Dr. Marcus Chen', 'Room 204 · Cardiology', 'Follow-up', 'In Consultation'],
-  ['10:45 AM', 'Waiting: 8 min', 'TK-109', 'Arthur Pendelton', '42 / M', 'Severe Migraine with Aura', 'Allergic to Penicillin', 'Dr. Sophia Patel', 'Room 201 · Neurology', 'New Visit', 'Waiting'],
-  ['11:00 AM', 'Starts in 18 min', 'TK-110', 'Karina Lindqvist', '29 / F', 'Annual Endocrine Review', 'Bloodwork pre-cleared', 'Dr. Henrik Vanger', 'Room 206 · Endocrinology', 'Follow-up', 'Confirmed'],
-  ['09:30 AM', 'Ended: 10:05 AM', 'TK-104', 'Rachel Brody', '51 / F', 'Hypertension Refill & Vitals Log', 'Prescription e-sent', 'Dr. Sophia Patel', 'Room 201 · General', 'Follow-up', 'Completed'],
-  ['10:00 AM', 'Cancelled @ 08:45', 'TK-106', 'David Lin', '45 / M', 'Annual Dermatology Screening', 'Patient work conflict · Slot freed', 'Dr. Lisa Thorne', 'Room 205 · Dermatology', 'New Visit', 'Cancelled'],
+  ['10:30 AM', '30 min slot', 'TK-108', 'Eleanor Vance', '68 / F', 'Persistent Arrhythmia & Dyspnea', 'ECG scheduled on arrival', 'Dr. Marcus Chen', 'Room 204 · Cardiology', 'Follow-up', 'In Consultation', 'September 24, 2026'],
+  ['10:45 AM', 'Waiting: 8 min', 'TK-109', 'Arthur Pendelton', '42 / M', 'Severe Migraine with Aura', 'Allergic to Penicillin', 'Dr. Sophia Patel', 'Room 201 · Neurology', 'New Visit', 'Waiting', 'September 24, 2026'],
+  ['11:00 AM', 'Starts in 18 min', 'TK-110', 'Karina Lindqvist', '29 / F', 'Annual Endocrine Review', 'Bloodwork pre-cleared', 'Dr. Henrik Vanger', 'Room 206 · Endocrinology', 'Follow-up', 'Confirmed', 'September 24, 2026'],
+  ['09:30 AM', 'Ended: 10:05 AM', 'TK-104', 'Rachel Brody', '51 / F', 'Hypertension Refill & Vitals Log', 'Prescription e-sent', 'Dr. Sophia Patel', 'Room 201 · General', 'Follow-up', 'Completed', 'September 24, 2026'],
+  ['10:00 AM', 'Cancelled @ 08:45', 'TK-106', 'David Lin', '45 / M', 'Annual Dermatology Screening', 'Patient work conflict · Slot freed', 'Dr. Lisa Thorne', 'Room 205 · Dermatology', 'New Visit', 'Cancelled', 'September 24, 2026'],
 ];
 
 /** Maps a status label to the CSS modifier class used for its pill. */

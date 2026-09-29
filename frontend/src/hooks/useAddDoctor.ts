@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { addDoctorService } from '@/services/addDoctorService';
 import { doctorsService } from '@/services/doctorsService';
 import { useToast } from '@/utils/toast';
-import type { Doctor, DoctorFormField } from '@/types';
+import type { Doctor, DoctorDaySchedule, DoctorFormField } from '@/types';
 
 function buildInitialValues(fields: DoctorFormField[], saved: Record<string, string>) {
   const values: Record<string, string> = {};
@@ -44,12 +44,38 @@ export function useAddDoctor() {
     });
   };
 
-  const updateShiftTime = (key: 'start' | 'end', value: string) => {
-    setShiftTimes((prev) => {
-      const updated = { ...prev, [key]: value };
-      addDoctorService.saveShiftTimes(updated);
+  const updateDaySchedule = (dayKey: string, patch: Partial<DoctorDaySchedule>) => {
+    setDutyDays((prev) => {
+      const updated = prev.map((day) => day.key === dayKey ? { ...day, ...patch } : day);
+      addDoctorService.saveDutyDays(updated);
       return updated;
     });
+  };
+
+  const changePhoto = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Choose an image file for the doctor photo.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Choose a photo smaller than 2 MB.');
+      return;
+    }
+    try {
+      const image = await createImageBitmap(file);
+      const scale = Math.min(1, 512 / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Unable to process image');
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      image.close();
+      updateField('photo', canvas.toDataURL('image/jpeg', 0.82));
+      toast.success('Doctor photo uploaded.');
+    } catch {
+      toast.error('This photo could not be loaded. Try another image.');
+    }
   };
 
   const setOnCallEnabled = (value: boolean) => {
@@ -74,6 +100,12 @@ export function useAddDoctor() {
       toast.error(message);
       return null;
     }
+    if (dutyDays.some((day) => day.active && (!day.start || !day.end || day.start >= day.end))) {
+      const message = 'Set a valid start and end time for every scheduled day.';
+      setStatus(message);
+      toast.error(message);
+      return null;
+    }
     const title = formValues.title?.trim() || 'Dr.';
     const name = fullName.toLowerCase().startsWith(title.toLowerCase()) ? fullName : `${title} ${fullName}`;
     const room = formValues.suite?.trim() || 'Unassigned';
@@ -84,9 +116,10 @@ export function useAddDoctor() {
       specialty,
       room,
       workingDays,
-      'ACTIVE FLOOR',
+      'ON DUTY',
       `0 /${capacityInfo.cap}`,
-      `https://i.pravatar.cc/80?u=${encodeURIComponent(name)}`,
+      formValues.photo || `https://i.pravatar.cc/80?u=${encodeURIComponent(name)}`,
+      Object.fromEntries(dutyDays.filter((day) => day.active).map((day) => [day.key, { start: day.start, end: day.end }])),
     ];
 
     doctorsService.addDoctor(doctor);
@@ -109,7 +142,8 @@ export function useAddDoctor() {
     toggleDutyDay,
     activeDaysCount,
     shiftTimes,
-    updateShiftTime,
+    updateDaySchedule,
+    changePhoto,
     capacityInfo,
     onCallInfo,
     onCallEnabled,

@@ -1,13 +1,12 @@
+import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Stethoscope, Clock3, Camera, ShieldCheck, UserPlus2 } from 'lucide-react';
+import { Briefcase, Stethoscope, Clock3, Camera, ImagePlus, ShieldCheck, UserPlus2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IconButton } from '@/components/ui/IconButton';
 import { DoctorFormField } from '@/components/doctors/DoctorFormField';
 import { DutyDaySelector } from '@/components/doctors/DutyDaySelector';
-import { RegistrationPreview } from '@/components/doctors/RegistrationPreview';
-import { SpecialtyRosterCard } from '@/components/doctors/SpecialtyRosterCard';
-import { CredentialingChecklist } from '@/components/doctors/CredentialingChecklist';
 import { useAddDoctor } from '@/hooks/useAddDoctor';
+import {useToast} from '@/utils/toast';
 
 export function AddDoctorPage() {
   const {
@@ -18,25 +17,27 @@ export function AddDoctorPage() {
     dutyDays,
     toggleDutyDay,
     activeDaysCount,
-    shiftTimes,
-    updateShiftTime,
+    updateDaySchedule,
+    changePhoto,
     capacityInfo,
     onCallInfo,
     onCallEnabled,
     setOnCallEnabled,
-    preview,
-    specialtyRoster,
-    checklist,
     meta,
     status,
     saveDraft,
     registerDoctor,
   } = useAddDoctor();
   const navigate = useNavigate();
+  const toast = useToast();
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const handleRegister = () => {
     const doctor = registerDoctor();
-    if (doctor) navigate('/doctors');
+    if (doctor){
+       
+       navigate('/doctors');
+    }
   };
 
   return (
@@ -51,7 +52,7 @@ export function AddDoctorPage() {
         </>}
       />
 
-      <div className="doctors-layout">
+      <div className="doctors-layout add-doctor-layout">
         <div className="add-doctor-main">
           <section className="content-card doctor-form-card">
             <div className="card-title icon-title">
@@ -63,16 +64,22 @@ export function AddDoctorPage() {
               <span className="section-badge">REQUIRED INFO</span>
             </div>
             <div className="photo-upload">
-              <div className="photo-drop">
-                <Camera size={20} />
-                <b>Upload Photo</b>
-                <small>Drag and drop or browse</small>
-              </div>
+              <button type="button" className="photo-drop" onClick={() => photoInputRef.current?.click()}>
+                {formValues.photo
+                  ? <img className="doctor-upload-preview" src={formValues.photo} alt="Doctor profile preview" />
+                  : <Camera size={22} />}
+                <b>{formValues.photo ? 'Change photo' : 'Upload photo'}</b>
+                <small>JPG, PNG or WEBP · up to 4 MB</small>
+              </button>
+              <input ref={photoInputRef} className="doctor-photo-input" type="file" accept="image/*" aria-label="Upload doctor photo" onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void changePhoto(file);
+                event.currentTarget.value = '';
+              }} />
               <div className="photo-notes">
-                <b>Clinical Photo Standards</b>
-                <p>Strictly plain neutral or clinical teal background. Professional attire or laboratory white coat. JPG, PNG or WEBP format. Minimum 600×600 px (Max 4MB).</p>
-                <span><ShieldCheck size={11} /> Verified Secure Vault</span>
-                <span><Clock3 size={11} /> Used on Patient Portals</span>
+                <b>Doctor profile image</b>
+                <p>Choose a clear, well-lit headshot. The image is resized and stored with this doctor’s record.</p>
+                <span><ShieldCheck size={13} /> Stored with roster profile</span>
               </div>
             </div>
             <form onSubmit={(e) => e.preventDefault()} className="form-grid">
@@ -109,50 +116,15 @@ export function AddDoctorPage() {
             </div>
             <div className="duty-block">
               <div className="duty-block-head">
-                <span>Scheduled Duty Days</span>
-                <small>{activeDaysCount} Selected / Week</small>
+                <span>Weekly working hours</span>
+                <small>{activeDaysCount} working days</small>
               </div>
-              <DutyDaySelector days={dutyDays} onToggle={toggleDutyDay} />
+              <DutyDaySelector days={dutyDays} onToggle={toggleDutyDay} onTimeChange={(dayKey, part, value) => updateDaySchedule(dayKey, { [part]: value })} />
             </div>
-            <form onSubmit={(e) => e.preventDefault()} className="form-grid shift-grid">
-              <label><span>Shift Start Time</span><input placeholder="e.g. 09:00 AM" value={shiftTimes.start} onChange={(e) => updateShiftTime('start', e.target.value)} /></label>
-              <label><span>Shift End Time</span><input placeholder="e.g. 05:00 PM" value={shiftTimes.end} onChange={(e) => updateShiftTime('end', e.target.value)} /></label>
-            </form>
-            <div className="capacity-row">
-              <div className="capacity-box">
-                <div className="capacity-box-head">
-                  <span>Daily Intake Cap</span>
-                  <b>{capacityInfo.cap} Patients</b>
-                </div>
-                <p>Prevents overbooking beyond clinical focus thresholds.</p>
-                <div className="cap-breakdown">
-                  {capacityInfo.breakdown.map((b) => <small key={b.label}>{b.value} {b.label}</small>)}
-                </div>
-              </div>
-              <div className="oncall-box">
-                <div className="oncall-box-head">
-                  <span>On-Call Emergency Triage</span>
-                  <button
-                    type="button"
-                    className={`toggle-switch ${onCallEnabled ? 'on' : ''}`}
-                    onClick={() => setOnCallEnabled(!onCallEnabled)}
-                    aria-label="Toggle on-call emergency triage"
-                  >
-                    <i />
-                  </button>
-                </div>
-                <p>{onCallInfo.description}</p>
-                <small className="oncall-link"><Clock3 size={10} /> {onCallInfo.linkLabel}</small>
-              </div>
-            </div>
+           
           </section>
         </div>
 
-        <div className="right-rail">
-          <RegistrationPreview preview={preview} dutyDays={dutyDays} />
-          <SpecialtyRosterCard roster={specialtyRoster} />
-          <CredentialingChecklist items={checklist} />
-        </div>
       </div>
 
       <section className="content-card registration-actions add-doctor-footer">

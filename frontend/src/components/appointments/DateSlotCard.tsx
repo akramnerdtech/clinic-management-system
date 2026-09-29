@@ -1,41 +1,34 @@
-import { CalendarClock, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
-import { IconButton } from '@/components/ui/IconButton';
-import { useToast } from '@/utils/toast';
+import { CalendarClock, Zap } from 'lucide-react';
 import type { AppointmentCalendarDay, AppointmentSlotSession } from '@/types';
 
 interface Props {
   monthLabel: string;
   days: AppointmentCalendarDay[];
-  selectedDay: number;
-  onSelectDay: (date: number) => void;
+  selectedDay: string;
+  onSelectDay: (dateKey: string) => void;
   slotSessions: AppointmentSlotSession[];
   selectedSlot: string;
   onSelectSlot: (time: string) => void;
 }
 
 export function DateSlotCard({ monthLabel, days, selectedDay, onSelectDay, slotSessions, selectedSlot, onSelectSlot }: Props) {
-  const toast = useToast();
-  const noticeMonth = () => toast.info('Only the current month is available in this demo calendar.');
   return (
     <section className="content-card side-card date-slot-card">
       <h2><CalendarClock size={14} /> 3. Select Date & Slot <em className="section-badge live-slots"><Zap size={10} /> Live Slots</em></h2>
 
       <div className="calendar-nav">
         <span>{monthLabel}</span>
-        <div>
-          <IconButton className="soft-button" onClick={noticeMonth}><ChevronLeft size={13} /></IconButton>
-          <IconButton className="soft-button" onClick={noticeMonth}><ChevronRight size={13} /></IconButton>
-        </div>
+        <small>Next 7 days</small>
       </div>
 
       <div className="date-grid">
         {days.map((d) => (
           <button
             type="button"
-            key={d.date}
-            disabled={d.status === 'past' || d.status === 'full'}
-            className={`date-cell ${d.status} ${selectedDay === d.date ? 'selected' : ''}`}
-            onClick={() => onSelectDay(d.date)}
+            key={d.dateKey}
+            disabled={d.status !== 'open'}
+            className={`date-cell ${d.status} ${selectedDay === d.dateKey ? 'selected' : ''}`}
+            onClick={() => onSelectDay(d.dateKey)}
           >
             <span>{d.label}</span>
             <b>{d.date}</b>

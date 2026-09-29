@@ -30,6 +30,13 @@ function nextPatientId(existing: Patient[]): string {
   return `PT-${String(max + 1).padStart(5, '0')}`;
 }
 
+function todayDateKey(): string {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
+}
+
 export function usePatientRegistration() {
   const [fields] = useState(() => patientRegistrationService.getFields());
   const [genderOptions] = useState(() => patientRegistrationService.getGenderOptions());
@@ -73,10 +80,12 @@ export function usePatientRegistration() {
       fullName,
       ageSex,
       complaint,
-      formValues.doctor?.trim() || 'Unassigned',
+      '',
       lastVisit,
       '',
       '',
+      formValues.recommendedTest?.trim() ?? '',
+      todayDateKey(),
     ];
 
     patientsService.addPatient(patient);

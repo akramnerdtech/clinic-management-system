@@ -15,12 +15,18 @@ const KEYS = {
   dangerZone: 'curaclinic.account.dangerZone',
 };
 
+export const ACCOUNT_AVATAR_EVENT = 'curaclinic:avatar-change';
+
 export const accountService = {
   getTabs() {
-    return loadFromStorage(KEYS.tabs, accountTabs);
+    return loadFromStorage<string[]>(KEYS.tabs, accountTabs).filter((tab) => !tab.includes('Active Sessions'));
   },
   getAvatar(): string {
     return loadFromStorage(KEYS.avatar, accountAvatar);
+  },
+  saveAvatar(avatar: string): void {
+    saveToStorage(KEYS.avatar, avatar);
+    window.dispatchEvent(new Event(ACCOUNT_AVATAR_EVENT));
   },
   getProfileFields(): AccountProfileField[] {
     return loadFromStorage(KEYS.profileFields, profileFields);

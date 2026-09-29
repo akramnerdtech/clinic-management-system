@@ -2,14 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PatientIdentityCard } from '@/components/appointments/PatientIdentityCard';
 import { ClinicalSetupCard } from '@/components/appointments/ClinicalSetupCard';
-import { DoctorScheduleRail } from '@/components/appointments/DoctorScheduleRail';
 import { DateSlotCard } from '@/components/appointments/DateSlotCard';
 import { AppointmentOverviewCard } from '@/components/appointments/AppointmentOverviewCard';
 import { useNewAppointment } from '@/hooks/useNewAppointment';
 
 export function NewAppointmentPage() {
   const {
-    patient, medicalSpecialties, specialists, formatOptions, priorityOptions, doctor, miniChips,
+    patients, selectedPatientId, setSelectedPatient, medicalSpecialties, specialists, formatOptions, priorityOptions,
     monthLabel, days, slotSessions, meta,
     selectedDay, setSelectedDay, selectedSlot, setSelectedSlot,
     formatId, setFormatId, priorityId, setPriorityId,
@@ -34,7 +33,7 @@ export function NewAppointmentPage() {
 
       <div className="appointment-layout">
         <div className="appointment-main">
-          <PatientIdentityCard patient={patient} />
+          <PatientIdentityCard patients={patients} selectedPatientId={selectedPatientId} onSelectPatient={setSelectedPatient} />
           <ClinicalSetupCard
             medicalSpecialties={medicalSpecialties}
             specialists={specialists}
@@ -58,7 +57,6 @@ export function NewAppointmentPage() {
         </div>
 
         <div className="right-rail">
-          <DoctorScheduleRail chips={miniChips} doctor={doctor} />
           <DateSlotCard
             monthLabel={monthLabel}
             days={days}

@@ -10,11 +10,14 @@ import { useToast } from '@/utils/toast';
 import { downloadCsv } from '@/utils/exportFile';
 
 export function AppointmentsPage() {
-  const { metrics, tabs, entries, statusStyles } = useAppointments();
+  const { metrics, tabs, entries, statusStyles, updateStatus } = useAppointments();
   const [tab, setTab] = useState(tabs[0]);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
   const toast = useToast();
+  const todayLabel = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
 
   const rows = (tab === 'All' ? entries : entries.filter((r) => r[10] === tab))
     .filter((r) => `${r[2]} ${r[3]} ${r[7]}`.toLowerCase().includes(query.trim().toLowerCase()));
@@ -22,7 +25,7 @@ export function AppointmentsPage() {
   const handleExport = () => {
     downloadCsv(
       'appointments-summary',
-      ['Time', 'Slot', 'Token', 'Patient', 'Age/Sex', 'Complaint', 'Note', 'Doctor', 'Room', 'Visit Type', 'Status'],
+      ['Time', 'Slot', 'Token', 'Patient', 'Age/Sex', 'Complaint', 'Note', 'Doctor', 'Room', 'Visit Type', 'Status', 'Appointment Date'],
       entries,
     );
     toast.success('Appointment summary exported.');
@@ -48,7 +51,7 @@ export function AppointmentsPage() {
         <div className="card-title">
           <div>
             <h2>Scheduled Appointments</h2>
-            <p>Thursday, 24 September 2026</p>
+            <p>{todayLabel}</p>
           </div>
           <div className="inline-tools">
             <div className="small-search">
@@ -61,7 +64,14 @@ export function AppointmentsPage() {
         <div className="tabs">
           {tabs.map((t) => <button key={t} className={tab === t ? 'selected' : ''} onClick={() => setTab(t)}>{t}</button>)}
         </div>
-        <AppointmentsTable rows={rows} statusStyles={statusStyles} />
+        <AppointmentsTable
+          rows={rows}
+          statusStyles={statusStyles}
+          onAttend={(tokenId) => {
+            updateStatus(tokenId, 'In Consultation');
+            toast.success(`Appointment ${tokenId} is now in consultation.`);
+          }}
+        />
       </section>
     </>
   );

@@ -13,12 +13,19 @@ export interface NavGroup {
 }
 
 // ---------- Patients ----------
-/** Tuple shape: [id, name, ageSex, condition, specialist, lastVisit, email, bloodGroup] */
-export type Patient = [string, string, string, string, string, string, string, string];
+/** Tuple shape: [id, name, ageSex, condition, specialist, lastVisit, email, bloodGroup, recommendedTest?, registrationDate?] */
+export type Patient = [string, string, string, string, string, string, string, string, string?, string?];
 
 // ---------- Doctors ----------
-/** Tuple shape: [name, specialty, room, workingDays, status, patients, avatarUrl] */
-export type Doctor = [string, string, string, string, string, string, string];
+export interface DoctorDaySchedule {
+  start: string;
+  end: string;
+}
+
+export type DoctorWeeklySchedule = Record<string, DoctorDaySchedule>;
+
+/** Tuple shape: [name, specialty, room, workingDays, status, patients, avatarUrl, weeklySchedule?] */
+export type Doctor = [string, string, string, string, string, string, string, DoctorWeeklySchedule?];
 
 // ---------- Specialties ----------
 /** Tuple shape: [name, code, description, fee, duration, doctorsCount] */
@@ -50,8 +57,8 @@ export interface TrafficPoint {
 }
 
 // ---------- Appointments ----------
-/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status] */
-export type AppointmentEntry = [string, string, string, string, string, string, string, string, string, string, string];
+/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status, appointmentDate?] */
+export type AppointmentEntry = [string, string, string, string, string, string, string, string, string, string, string, string?];
 
 // ---------- Patient Registration ----------
 export interface RegistrationField {
@@ -62,6 +69,7 @@ export interface RegistrationField {
   optional?: boolean;
   textarea?: boolean;
   icon?: LucideIcon;
+  options?: string[];
 }
 
 // ---------- Add Doctor ----------
@@ -79,6 +87,8 @@ export interface DoctorFormField {
 export interface DutyDay {
   key: string;
   active: boolean;
+  start: string;
+  end: string;
 }
 
 export interface SpecialtyRosterItem {
@@ -228,7 +238,8 @@ export interface AppointmentDoctorInfo {
 export interface AppointmentCalendarDay {
   label: string;
   date: number;
-  status: 'past' | 'full' | 'open';
+  dateKey: string;
+  status: 'offduty' | 'full' | 'open';
   meta: string;
 }
 

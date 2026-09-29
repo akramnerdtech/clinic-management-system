@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Menu, Plus, Search, UserPlus } from 'lucide-react';
-import { IconButton } from '@/components/ui/IconButton';
+import { Calendar, Menu, Search } from 'lucide-react';
 import { patientsService } from '@/services/patientsService';
 import { doctorsService } from '@/services/doctorsService';
 import { appointmentsService } from '@/services/appointmentsService';
@@ -60,8 +59,6 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
       </div>
       <div className="clinic-status"><i /> Clinic Open · 8 Doctors On Duty</div>
       <div className="top-date"><Calendar size={14} /> Thursday, 24 September 2026</div>
-      <IconButton className="white-button" onClick={() => navigate('/patients/new')}><UserPlus size={14} /> Add Patient</IconButton>
-      <IconButton className="teal-button" onClick={() => navigate('/appointments/new')}><Plus size={14} /> New Appointment</IconButton>
     </header>
   );
 }

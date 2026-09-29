@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Search, UserPlus } from 'lucide-react';
+import { Download, Pencil, Search, Trash2, UserPlus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Metric } from '@/components/ui/Metric';
 import { IconButton } from '@/components/ui/IconButton';
+import { Modal } from '@/components/ui/Modal';
 import { DoctorProfile } from '@/components/doctors/DoctorProfile';
 import { useDoctors } from '@/hooks/useDoctors';
 import { useToast } from '@/utils/toast';
 import { downloadCsv } from '@/utils/exportFile';
+import type { Doctor } from '@/types';
 
 export function DoctorsPage() {
-  const { doctors, metrics } = useDoctors();
+  const { doctors, metrics, updateDoctor, removeDoctor, setDutyStatus } = useDoctors();
   const [view, setView] = useState<'table' | 'cards'>('table');
   const [query, setQuery] = useState('');
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [editingDoctorName, setEditingDoctorName] = useState<string | null>(null);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -23,6 +27,15 @@ export function DoctorsPage() {
   const handleExport = () => {
     downloadCsv('doctors-roster', ['Name', 'Specialty', 'Room & Wing', 'Working Days', 'Status', 'Patients'], doctors);
     toast.success('Physician roster exported.');
+  };
+
+  const updateEditingDoctorField = (index: number, value: string) => {
+    setEditingDoctor((current) => {
+      if (!current) return current;
+      const updated: Doctor = [...current];
+      updated[index] = value;
+      return updated;
+    });
   };
 
   return (
@@ -41,7 +54,7 @@ export function DoctorsPage() {
       </div>
       <div className="filter-row">
         <div className="small-search">
-          <Search size={14} />
+          <Search size={12} />
           <input placeholder="Filter by name, ID, or suite..." value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <select><option>Neurology</option><option>All Specialties</option></select>
@@ -60,7 +73,7 @@ export function DoctorsPage() {
           {view === 'table' ? (
             <table>
               <thead>
-                <tr><th>DOCTOR</th><th>SPECIALTY</th><th>ROOM & WING</th><th>WORKING DAYS</th><th>STATUS</th><th>PATIENTS</th></tr>
+                <tr><th>DOCTOR</th><th>SPECIALTY</th><th>ROOM & WING</th><th>WORKING DAYS</th><th>STATUS</th><th>PATIENTS</th><th>ACTIONS</th></tr>
               </thead>
               <tbody>
                 {filtered.map((d) => (
@@ -78,8 +91,25 @@ export function DoctorsPage() {
                         {d[3].split(' ').map((x, i) => <b className={i < 4 ? 'on' : ''} key={i}>{x}</b>)}
                       </div>
                     </td>
-                    <td><span className="doctor-status">{d[4]}</span></td>
+                    <td>
+                      <label className="doctor-duty-control">
+                        <input type="checkbox" checked={d[4] === 'ON DUTY'} onChange={(event) => setDutyStatus(d[0], event.target.checked)} aria-label={`${d[0]} duty status`} />
+                        <span className="doctor-duty-switch" />
+                        <span className={`doctor-duty-label ${d[4] === 'ON DUTY' ? 'on-duty' : 'off-duty'}`}>{d[4]}</span>
+                      </label>
+                    </td>
                     <td>{d[5]}</td>
+                    <td className="doctor-row-actions">
+                      <button type="button" className="patient-action-icon" title={`Edit ${d[0]}`} aria-label={`Edit ${d[0]}`} onClick={() => { setEditingDoctor([...d]); setEditingDoctorName(d[0]); }}>
+                        <Pencil size={16} />
+                      </button>
+                      <button type="button" className="patient-action-icon delete-patient-icon" title={`Delete ${d[0]}`} aria-label={`Delete ${d[0]}`} onClick={() => {
+                        removeDoctor(d[0]);
+                        toast.success(`${d[0]} was removed from the roster.`);
+                      }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -92,6 +122,22 @@ export function DoctorsPage() {
                   <b>{d[0]}</b>
                   <span>{d[1]}</span>
                   <small>{d[2]} · {d[4]}</small>
+                  <label className="doctor-duty-control">
+                    <input type="checkbox" checked={d[4] === 'ON DUTY'} onChange={(event) => setDutyStatus(d[0], event.target.checked)} aria-label={`${d[0]} duty status`} />
+                    <span className="doctor-duty-switch" />
+                    <span className={`doctor-duty-label ${d[4] === 'ON DUTY' ? 'on-duty' : 'off-duty'}`}>{d[4]}</span>
+                  </label>
+                  <div className="doctor-card-actions">
+                    <button type="button" className="patient-action-icon" title={`Edit ${d[0]}`} aria-label={`Edit ${d[0]}`} onClick={() => { setEditingDoctor([...d]); setEditingDoctorName(d[0]); }}>
+                      <Pencil size={16} />
+                    </button>
+                    <button type="button" className="patient-action-icon delete-patient-icon" title={`Delete ${d[0]}`} aria-label={`Delete ${d[0]}`} onClick={() => {
+                      removeDoctor(d[0]);
+                      toast.success(`${d[0]} was removed from the roster.`);
+                    }}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -105,8 +151,33 @@ export function DoctorsPage() {
             </div>
           </div>
         </section>
-        <DoctorProfile />
+        {/* <DoctorProfile /> */}
       </div>
+      {editingDoctor && (
+        <Modal
+          title="Edit doctor"
+          subtitle="Update this physician's roster details."
+              onClose={() => { setEditingDoctor(null); setEditingDoctorName(null); }}
+          className="doctor-edit-modal"
+          footer={<>
+            <IconButton className="white-button" onClick={() => { setEditingDoctor(null); setEditingDoctorName(null); }}>Cancel</IconButton>
+            <IconButton className="teal-button" onClick={() => {
+              if (editingDoctorName) updateDoctor(editingDoctorName, editingDoctor);
+              setEditingDoctor(null);
+              setEditingDoctorName(null);
+              toast.success(`${editingDoctor[0]} was updated.`);
+            }}>Save Changes</IconButton>
+          </>}
+        >
+          <div className="doctor-edit-form">
+            <label><span>Doctor name</span><input value={editingDoctor[0]} onChange={(event) => updateEditingDoctorField(0, event.target.value)} /></label>
+            <label><span>Specialty</span><input value={editingDoctor[1]} onChange={(event) => updateEditingDoctorField(1, event.target.value)} /></label>
+            <label><span>Room / suite</span><input value={editingDoctor[2]} onChange={(event) => updateEditingDoctorField(2, event.target.value)} /></label>
+            <label><span>Working days</span><input value={editingDoctor[3]} onChange={(event) => updateEditingDoctorField(3, event.target.value)} /></label>
+            <label><span>Patient capacity</span><input value={editingDoctor[5]} onChange={(event) => updateEditingDoctorField(5, event.target.value)} /></label>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }

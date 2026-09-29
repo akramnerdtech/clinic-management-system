@@ -4,10 +4,10 @@ import type { DoctorFormField, DutyDay, SpecialtyRosterItem, AddDoctorPreview, C
 export const basicInfoFields: DoctorFormField[] = [
   { id: 'title', label: 'Title', placeholder: 'Dr.', type: 'select', options: ['Dr.', 'Prof.', 'Mr.', 'Mrs.'] },
   { id: 'fullName', label: 'Full Legal Name *', placeholder: 'e.g. Eleanor Vance, MD', wide: true },
-  { id: 'license', label: 'Medical License / Board ID *', placeholder: 'e.g. MED-CA-948201-B', icon: IdCard },
-  { id: 'npi', label: 'NPI / Registry Number', placeholder: '10-digit National NPI', icon: Hash },
-  { id: 'mobile', label: 'Primary Contact Mobile *', placeholder: '+1 (555) 349-8821', icon: Phone },
-  { id: 'email', label: 'Clinical Communication Email *', placeholder: 'dr.vance@curaclinic.org', icon: Mail },
+  { id: 'license', label: 'Medical License / Board ID *', placeholder: 'e.g. MED-CA-948201-B' },
+  { id: 'npi', label: 'NPI / Registry Number', placeholder: '10-digit National NPI',  },
+  { id: 'mobile', label: 'Primary Contact Mobile *', placeholder: '+1 (555) 349-8821',  },
+  { id: 'email', label: 'Clinical Communication Email *', placeholder: 'dr.vance@curaclinic.org', },
 ];
 
 export const credentialFields: DoctorFormField[] = [
@@ -26,13 +26,13 @@ export const credentialFields: DoctorFormField[] = [
 ];
 
 export const dutyDaysDefault: DutyDay[] = [
-  { key: 'MON', active: true },
-  { key: 'TUE', active: true },
-  { key: 'WED', active: true },
-  { key: 'THU', active: true },
-  { key: 'FRI', active: true },
-  { key: 'SAT', active: false },
-  { key: 'SUN', active: false },
+  { key: 'MON', active: true, start: '09:00', end: '17:00' },
+  { key: 'TUE', active: true, start: '09:00', end: '17:00' },
+  { key: 'WED', active: true, start: '09:00', end: '17:00' },
+  { key: 'THU', active: true, start: '09:00', end: '17:00' },
+  { key: 'FRI', active: true, start: '09:00', end: '17:00' },
+  { key: 'SAT', active: false, start: '09:00', end: '13:00' },
+  { key: 'SUN', active: false, start: '09:00', end: '13:00' },
 ];
 
 export const shiftTimesDefault = { start: '', end: '' };

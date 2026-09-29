@@ -1,64 +1,78 @@
-import { useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Repeat2, UserSquare2, UserPlus, History } from 'lucide-react';
+import { Search, UserPlus, UserRound } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
-import { useToast } from '@/utils/toast';
-import type { AppointmentPatientInfo } from '@/types';
+import type { Patient } from '@/types';
 
-export function PatientIdentityCard({ patient }: { patient: AppointmentPatientInfo }) {
+interface Props {
+  patients: Patient[];
+  selectedPatientId: string;
+  onSelectPatient: (patientId: string) => void;
+}
+
+export function PatientIdentityCard({ patients, selectedPatientId, onSelectPatient }: Props) {
+  const [query, setQuery] = useState('');
   const navigate = useNavigate();
-  const toast = useToast();
-  const [lookup, setLookup] = useState('');
-
-  const goToPatients = () => navigate('/patients');
-  const handleLookup = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && lookup.trim()) {
-      toast.info(`Searching patients for "${lookup.trim()}"...`);
-      navigate('/patients');
-    }
-  };
+  const filteredPatients = useMemo(() => patients.filter((patient) =>
+    `${patient[0]} ${patient[1]} ${patient[3]}`.toLowerCase().includes(query.trim().toLowerCase()),
+  ), [patients, query]);
+  const selectedPatient = patients.find(([id]) => id === selectedPatientId);
 
   return (
-    <section className="content-card appointment-form-card">
+    <section className="content-card appointment-form-card patient-select-card">
       <div className="card-title icon-title">
-        <div className="form-icon"><UserSquare2 size={16} /></div>
+        <div className="form-icon"><UserRound size={17} /></div>
         <div>
-          <h2>1. Patient Identification</h2>
+          <h2>1. Select Patient</h2>
+          <p>Choose a patient already registered in the clinic.</p>
         </div>
-        <div className="header-actions">
-          <IconButton className="white-button" onClick={goToPatients}>Select Existing</IconButton>
-          <IconButton className="soft-button" onClick={() => navigate('/patients/new')}><UserPlus size={13} /> New Patient</IconButton>
-        </div>
+        <IconButton className="soft-button" onClick={() => navigate('/patients/new')}><UserPlus size={15} /> Add Patient</IconButton>
       </div>
 
-      <div className="patient-identity-box">
-        <img src={patient.avatar} alt={patient.name} />
-        <div className="patient-identity-info">
-          <div className="patient-identity-head">
-            <h3>{patient.name}</h3>
-            <span className="patient-id-chip">{patient.patientId}</span>
-            <span className="doctor-status">{patient.insuranceBadge}</span>
-          </div>
-          <div className="meta-row">
-            <span>{patient.age} yrs • {patient.gender}</span>
-            <span>{patient.phone}</span>
-          </div>
-          <small className="last-visit"><History size={10} /> {patient.lastVisit}</small>
-        </div>
-        <button type="button" className="change-patient-btn" onClick={goToPatients}><Repeat2 size={12} /> Change<br />Patient</button>
-      </div>
-
-      <div className="quick-find-bar">
-        <Search size={13} />
+      <label className="registered-patient-search">
+        <Search size={17} />
         <input
-          placeholder="Lookup another patient by Name, MRN, National ID or Phone..."
-          value={lookup}
-          onChange={(e) => setLookup(e.target.value)}
-          onKeyDown={handleLookup}
+          type="search"
+          placeholder="Search by patient name, ID, or condition"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          aria-label="Search registered patients"
         />
-        <span>Quick Find</span>
-      </div>
+      </label>
+
+      {patients.length ? (
+        <div className="registered-patient-list" role="group" aria-label="Registered patients">
+          {filteredPatients.map((patient) => (
+            <button
+              type="button"
+              id={`appointment-patient-${patient[0]}`}
+              aria-pressed={selectedPatientId === patient[0]}
+              key={patient[0]}
+              className={`registered-patient-option ${selectedPatientId === patient[0] ? 'selected' : ''}`}
+              onClick={() => onSelectPatient(patient[0])}
+            >
+              <span className="registered-patient-avatar">{patient[1].split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span>
+              <span className="registered-patient-name"><b>{patient[1]}</b><small>{patient[0]} · {patient[3]}</small></span>
+              <span className="registered-patient-age">{patient[2]}</span>
+            </button>
+          ))}
+          {filteredPatients.length === 0 && <p className="patient-selector-empty">No registered patients match that search.</p>}
+        </div>
+      ) : (
+        <div className="patient-selector-empty-state">
+          <UserRound size={24} />
+          <p>No registered patients yet.</p>
+          <IconButton className="teal-button" onClick={() => navigate('/patients/new')}><UserPlus size={14} /> Register Patient</IconButton>
+        </div>
+      )}
+
+      {selectedPatient && (
+        <div className="selected-patient-summary">
+          <span>Selected patient</span>
+          <b>{selectedPatient[1]}</b>
+          <small>{selectedPatient[0]} · {selectedPatient[2]}</small>
+        </div>
+      )}
     </section>
   );
 }

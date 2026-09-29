@@ -25,4 +25,16 @@ export const patientsService = {
     saveToStorage(KEYS.patients, updated);
     return updated;
   },
+  removePatient(patientId: string): Patient[] {
+    const current = loadFromStorage(KEYS.patients, patients);
+    const updated = current.filter(([id]) => id !== patientId);
+    saveToStorage(KEYS.patients, updated);
+    return updated;
+  },
+  updatePatient(patient: Patient): Patient[] {
+    const current = loadFromStorage(KEYS.patients, patients);
+    const updated = current.map((entry) => entry[0] === patient[0] ? patient : entry);
+    saveToStorage(KEYS.patients, updated);
+    return updated;
+  },
 };

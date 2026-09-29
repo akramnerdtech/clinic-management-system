@@ -2,9 +2,16 @@ import { useState } from 'react';
 import { appointmentsService } from '@/services/appointmentsService';
 
 export function useAppointments() {
-  const [metrics] = useState(() => appointmentsService.getMetrics());
+  const [metrics, setMetrics] = useState(() => appointmentsService.getMetrics());
   const [tabs] = useState(() => appointmentsService.getTabs());
-  const [entries] = useState(() => appointmentsService.getEntries());
+  const [entries, setEntries] = useState(() => appointmentsService.getEntries());
   const [statusStyles] = useState(() => appointmentsService.getStatusStyles());
-  return { metrics, tabs, entries, statusStyles };
+
+  const updateStatus = (tokenId: string, status: string) => {
+    const updated = appointmentsService.updateStatus(tokenId, status);
+    setEntries(updated);
+    setMetrics(appointmentsService.getMetrics());
+  };
+
+  return { metrics, tabs, entries, statusStyles, updateStatus };
 }
