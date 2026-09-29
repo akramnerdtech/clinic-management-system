@@ -13,5 +13,11 @@ export function useAppointments() {
     setMetrics(appointmentsService.getMetrics());
   };
 
-  return { metrics, tabs, entries, statusStyles, updateStatus };
+  const deleteEntry = (tokenId: string) => {
+    const updated = appointmentsService.deleteEntry(tokenId);
+    setEntries(updated);
+    setMetrics(appointmentsService.getMetrics());
+  };
+
+  return { metrics, tabs, entries, statusStyles, updateStatus, deleteEntry };
 }

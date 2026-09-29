@@ -11,9 +11,10 @@ interface Props {
   status: string | null;
   onBook: () => void;
   onSaveDraft: () => void;
+  isEditing?: boolean;
 }
 
-export function AppointmentOverviewCard({ holdMinutesLabel, overview, fee, feeNote, syncNote, status, onBook, onSaveDraft }: Props) {
+export function AppointmentOverviewCard({ holdMinutesLabel, overview, fee, feeNote, syncNote, status, onBook, onSaveDraft, isEditing = false }: Props) {
   const navigate = useNavigate();
 
   const rows = [
@@ -49,9 +50,9 @@ export function AppointmentOverviewCard({ holdMinutesLabel, overview, fee, feeNo
 
       {status && <p className="fee-note">{status}</p>}
 
-      <IconButton className="teal-button full-button" onClick={onBook}><CheckCircle2 size={14} /> Book & Confirm Appointment</IconButton>
+      <IconButton className="teal-button full-button" onClick={onBook}><CheckCircle2 size={14} /> {isEditing ? 'Update Appointment' : 'Book & Confirm Appointment'}</IconButton>
       <div className="overview-actions">
-        <IconButton className="soft-button" onClick={onSaveDraft}><FileEdit size={13} /> Save Draft</IconButton>
+        {!isEditing && <IconButton className="soft-button" onClick={onSaveDraft}><FileEdit size={13} /> Save Draft</IconButton>}
         <IconButton className="white-button" onClick={() => navigate('/appointments')}><X size={13} /> Cancel</IconButton>
       </div>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Download, Plus, Search, SlidersHorizontal } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -10,9 +10,15 @@ import { useToast } from '@/utils/toast';
 import { downloadCsv } from '@/utils/exportFile';
 
 export function AppointmentsPage() {
-  const { metrics, tabs, entries, statusStyles, updateStatus } = useAppointments();
+  const { metrics, tabs, entries, statusStyles, updateStatus, deleteEntry } = useAppointments();
   const [tab, setTab] = useState(tabs[0]);
   const [query, setQuery] = useState('');
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const syncLabel = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const navigate = useNavigate();
   const toast = useToast();
   const todayLabel = new Date().toLocaleDateString('en-US', {
@@ -38,7 +44,7 @@ export function AppointmentsPage() {
         title="Appointments"
         description="Track today's schedule, waiting room status, and consultation progress across every suite."
         actions={<>
-          <span className="live-sync"><i /> Live Sync: 10:42 AM</span>
+          <span className="live-sync"><i /> Live Sync: {syncLabel}</span>
           <IconButton className="white-button" onClick={handleExport}><Download size={14} /> Export Summary</IconButton>
           <IconButton className="white-button" onClick={() => toast.info('Table column settings are not available in this build.')}><SlidersHorizontal size={14} /> Table Settings</IconButton>
           <IconButton className="teal-button" onClick={() => navigate('/appointments/new')}><Plus size={14} /> New Appointment</IconButton>
@@ -70,6 +76,10 @@ export function AppointmentsPage() {
           onAttend={(tokenId) => {
             updateStatus(tokenId, 'In Consultation');
             toast.success(`Appointment ${tokenId} is now in consultation.`);
+          }}
+          onDelete={(tokenId) => {
+            deleteEntry(tokenId);
+            toast.success(`Appointment ${tokenId} deleted.`);
           }}
         />
       </section>
