@@ -107,6 +107,14 @@ export const newAppointmentService = {
       };
     }).filter((session) => session.slots.length > 0);
   },
+  /** Total bookable 30-min slots across all specialists on a given day (YYYY-MM-DD). */
+  getDayCapacity(dateKey: string): number {
+    const date = new Date(`${dateKey}T00:00:00`);
+    return this.getSpecialists().reduce((total, specialist) => {
+      const daySchedule = getSchedule(specialist)?.weekdays[date.getDay()];
+      return total + (daySchedule ? createTimes(daySchedule.start, daySchedule.end).length : 0);
+    }, 0);
+  },
   getMeta() { return loadFromStorage(KEYS.meta, appointmentMeta); },
   /** In-progress selections for the New Appointment form (survives a page reload). */
   getFormState(): NewAppointmentFormState {

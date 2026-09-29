@@ -2740,7 +2740,7 @@ td small {
 }
 .appointment-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 315px;
+  grid-template-columns: minmax(0, 1fr) 400px;
   gap: 14px;
 }
 .appointment-main {
@@ -3038,6 +3038,7 @@ td small {
 }
 
 .date-slot-card h2 {
+  font-size: 16px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -3050,13 +3051,14 @@ td small {
   background: #eef0ff;
   color: #007d72;
   font-weight: 700;
+  font-size: 11px;
 }
 .calendar-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin: 12px 0 8px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: #263247;
 }
@@ -3085,18 +3087,18 @@ td small {
   border-radius: 3px;
   padding: 7px 2px;
   text-align: center;
-  font-size: 8px;
+  font-size: 10px;
   color: #8a92a3;
   font-weight: 700;
 }
 .date-cell b {
   display: block;
-  font-size: 13px;
+  font-size: 16px;
   margin: 2px 0;
   color: #182338;
 }
 .date-cell small {
-  font-size: 8px;
+  font-size: 10px;
   color: #8a92a3;
   font-weight: 600;
 }
@@ -3134,7 +3136,7 @@ td small {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: #687285;
   margin-bottom: 6px;
@@ -3154,16 +3156,16 @@ td small {
   border-radius: 3px;
   padding: 7px 4px;
   text-align: center;
-  font-size: 9px;
+  font-size: 11px;
 }
 .slot-cell b {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #263247;
   font-weight: 700;
 }
 .slot-cell small {
-  font-size: 7px;
+  font-size: 9px;
   color: #9aa1af;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -3229,7 +3231,7 @@ td small {
   color: #2271bc;
   padding: 8px 10px;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   margin-bottom: 13px;
 }
@@ -3247,7 +3249,7 @@ td small {
   align-items: center;
   padding: 7px 0;
   border-bottom: 1px solid #f0f1f6;
-  font-size: 10px;
+  font-size: 12px;
 }
 .overview-row span {
   display: flex;
@@ -3266,17 +3268,17 @@ td small {
   align-items: center;
   background: #f0f2ff;
   padding: 11px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: #263247;
   margin-bottom: 6px;
 }
 .fee-row span:last-child {
   color: #007d72;
-  font-size: 15px;
+  font-size: 18px;
 }
 .fee-note {
-  font-size: 9px;
+  font-size: 11px;
   color: #687285;
   margin: 0 0 13px;
   line-height: 1.4;
@@ -3293,7 +3295,9 @@ td small {
   gap: 6px;
   margin-top: 7px;
 }
+.overview-card .full-button,
 .overview-actions button {
+  font-size: 13px;
   flex: 1;
   display: flex;
   align-items: center;
@@ -3315,7 +3319,7 @@ td small {
 }
 .sync-guarantee p {
   margin: 0;
-  font-size: 9px;
+  font-size: 11px;
   color: #687285;
   line-height: 1.4;
 }
@@ -4722,4 +4726,52 @@ td small {
   .selected-patient-summary {
     grid-template-columns: 1fr;
   }
+}
+
+.appointment-row-actions {
+  white-space: nowrap;
+}
+.appointment-action-icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  border: 1px solid #e1e7e9;
+  border-radius: 5px;
+  background: #fff;
+  color: #596576;
+  vertical-align: middle;
+}
+.appointment-action-icon:hover,
+.appointment-action-icon:focus-visible {
+  border-color: #a9ceca;
+  background: #f5f8f8;
+  color: #263247;
+  outline: none;
+}
+.appointment-action-icon.delete-appointment-icon {
+  color: #bd3035;
+}
+.appointment-action-icon.delete-appointment-icon:hover,
+.appointment-action-icon.delete-appointment-icon:focus-visible {
+  border-color: #efc1bf;
+  background: #fff2f1;
+  color: #a82328;
+}
+.appointment-delete-confirm {
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid #bd3035;
+  border-radius: 4px;
+  background: #bd3035;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.appointment-delete-confirm:hover,
+.appointment-delete-confirm:focus-visible {
+  background: #a82328;
+  outline: none;
 }

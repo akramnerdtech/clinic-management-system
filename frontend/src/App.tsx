@@ -34,6 +34,7 @@ function MainProjectRoutes() {
           <Route path="/patients/:patientId/edit" element={<EditPatientPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/appointments/new" element={<NewAppointmentPage />} />
+          <Route path="/appointments/:tokenId/edit" element={<NewAppointmentPage />} />
           <Route path="/calendar" element={<MasterCalendarPage />} />
           <Route path="/specialties" element={<SpecialtiesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
