@@ -16,6 +16,10 @@ export const calendarDayHeaders: CalendarDayHeader[] = [
   { label: 'SUN', date: 27 },
 ];
 
+/** The demo clinic's "today" and the Monday of the week the seed events are laid out in. */
+export const calendarToday = '2026-09-24';
+export const calendarWeekStart = '2026-09-21';
+
 export const calendarWeekRangeLabel = 'September 21 – 27, 2026';
 export const calendarSyncLabel = 'SYNC LIVE • 10:15 AM EDT';
 export const calendarNowLabel = '10:15 AM';
@@ -24,26 +28,26 @@ export const calendarNowMinutes = 135; // minutes after 08:00 AM
 /** Tuple-free event list mirroring the live scheduling board. */
 export const calendarEvents: CalendarEvent[] = [
   // Monday
-  { id: 'ev-1', day: 0, startMinutes: 60, durationMinutes: 45, time: '09:00 AM', patient: 'Teresa Ramos', doctor: 'Dr. Rostova', badge: 'Ste 204', tone: 'default' },
-  { id: 'ev-2', day: 0, startMinutes: 300, durationMinutes: 45, time: '01:00 PM', patient: 'Deon Jackson', doctor: 'Dr. Vance · Ste 101', status: 'Confirmed', tone: 'confirmed' },
-  { id: 'ev-3', day: 0, startMinutes: 360, durationMinutes: 45, time: '02:00 PM', patient: 'Kavita Sharma', doctor: 'Dr. Patel · Ste 103', status: 'Confirmed', tone: 'confirmed' },
+  { id: 'ev-1', room: 'Suite 204', day: 0, startMinutes: 60, durationMinutes: 45, time: '09:00 AM', patient: 'Teresa Ramos', doctor: 'Dr. Rostova', badge: 'Ste 204', doctorName: 'Dr. Elena Rostova', tone: 'default' },
+  { id: 'ev-2', room: 'Suite 101', day: 0, startMinutes: 300, durationMinutes: 45, time: '01:00 PM', patient: 'Deon Jackson', doctor: 'Dr. Vance · Ste 101', status: 'Confirmed', doctorName: 'Dr. Marcus Vale', tone: 'confirmed' },
+  { id: 'ev-3', room: 'Suite 103', day: 0, startMinutes: 360, durationMinutes: 45, time: '02:00 PM', patient: 'Kavita Sharma', doctor: 'Dr. Patel · Ste 103', status: 'Confirmed', doctorName: 'Dr. Priya Patel', tone: 'confirmed' },
   // Tuesday
-  { id: 'ev-4', day: 1, startMinutes: 120, durationMinutes: 45, time: '10:00 AM', patient: 'Arthur Pendelton', doctor: 'Dr. Vance (Cardiology)', badge: 'Ste 102', tone: 'default' },
+  { id: 'ev-4', room: 'Suite 102', day: 1, startMinutes: 120, durationMinutes: 45, time: '10:00 AM', patient: 'Arthur Pendelton', doctor: 'Dr. Vance (Cardiology)', badge: 'Ste 102', doctorName: 'Dr. Marcus Vale', tone: 'default' },
   // Wednesday
-  { id: 'ev-5', day: 2, startMinutes: 15, durationMinutes: 45, time: '08:15 AM', patient: 'Harold Finch', doctor: 'Dr. Vance · Ste 101', status: 'Confirmed', tone: 'confirmed' },
-  { id: 'ev-6', day: 2, startMinutes: 195, durationMinutes: 45, time: '11:15 AM', patient: 'Sofia Chen', doctor: 'Dr. Rostova · Ste 204', status: 'Confirmed', tone: 'confirmed' },
-  { id: 'ev-7', day: 2, startMinutes: 435, durationMinutes: 45, time: '03:15 PM', patient: 'Oliver Vance', doctor: 'Dr. Rostova · Beds', badge: 'Ste 204', tone: 'default' },
+  { id: 'ev-5', room: 'Suite 101', day: 2, startMinutes: 15, durationMinutes: 45, time: '08:15 AM', patient: 'Harold Finch', doctor: 'Dr. Vance · Ste 101', status: 'Confirmed', doctorName: 'Dr. Marcus Vale', tone: 'confirmed' },
+  { id: 'ev-6', room: 'Suite 204', day: 2, startMinutes: 195, durationMinutes: 45, time: '11:15 AM', patient: 'Sofia Chen', doctor: 'Dr. Rostova · Ste 204', status: 'Confirmed', doctorName: 'Dr. Elena Rostova', tone: 'confirmed' },
+  { id: 'ev-7', room: 'Suite 204', day: 2, startMinutes: 435, durationMinutes: 45, time: '03:15 PM', patient: 'Oliver Vance', doctor: 'Dr. Rostova · Beds', badge: 'Ste 204', doctorName: 'Dr. Elena Rostova', tone: 'default' },
   // Thursday (today)
-  { id: 'ev-8', day: 3, startMinutes: 75, durationMinutes: 45, time: '09:15 AM', patient: 'Liam Henderson', doctor: 'Dr. A. Patel · Ste 103', status: 'In Consult', tone: 'consult' },
-  { id: 'ev-9', day: 3, startMinutes: 135, durationMinutes: 45, time: '10:15 AM', patient: 'Maya Lin-Wood', status: 'Waiting', tone: 'waiting' },
-  { id: 'ev-10', day: 3, startMinutes: 195, durationMinutes: 45, time: '11:15 AM', patient: 'Chloe Dupuis', doctor: 'Dr. A. Patel · Ste 103', status: 'Confirmed', tone: 'confirmed' },
-  { id: 'ev-11', day: 3, startMinutes: 330, durationMinutes: 45, time: '01:30 PM', patient: 'Patricia Gomez', doctor: 'Dr. Vance · Ste 102', status: 'Confirmed', tone: 'confirmed' },
+  { id: 'ev-8', room: 'Suite 103', day: 3, startMinutes: 75, durationMinutes: 45, time: '09:15 AM', patient: 'Liam Henderson', doctor: 'Dr. A. Patel · Ste 103', status: 'In Consult', doctorName: 'Dr. Priya Patel', tone: 'consult' },
+  { id: 'ev-9', room: 'Suite 103', day: 3, startMinutes: 135, durationMinutes: 45, time: '10:15 AM', patient: 'Maya Lin-Wood', status: 'Waiting', doctorName: 'Dr. Priya Patel', tone: 'waiting' },
+  { id: 'ev-10', room: 'Suite 103', day: 3, startMinutes: 195, durationMinutes: 45, time: '11:15 AM', patient: 'Chloe Dupuis', doctor: 'Dr. A. Patel · Ste 103', status: 'Confirmed', doctorName: 'Dr. Priya Patel', tone: 'confirmed' },
+  { id: 'ev-11', room: 'Suite 102', day: 3, startMinutes: 330, durationMinutes: 45, time: '01:30 PM', patient: 'Patricia Gomez', doctor: 'Dr. Vance · Ste 102', status: 'Confirmed', doctorName: 'Dr. Marcus Vale', tone: 'confirmed' },
   // Friday
-  { id: 'ev-12', day: 4, startMinutes: 60, durationMinutes: 45, time: '09:00 AM', patient: 'Gwen Stacy', status: 'Confirmed', tone: 'confirmed' },
-  { id: 'ev-13', day: 4, startMinutes: 375, durationMinutes: 45, time: '02:15 PM', patient: 'Felix Baum', doctor: 'Dr. Chen · Ortho', status: 'Confirmed', tone: 'confirmed' },
-  { id: 'ev-14', day: 4, startMinutes: 480, durationMinutes: 45, time: '04:00 PM', patient: 'Zoe Saldana', doctor: 'Dr. Vance · Ste 101', status: 'Confirmed', tone: 'confirmed' },
+  { id: 'ev-12', room: 'Suite 304', day: 4, startMinutes: 60, durationMinutes: 45, time: '09:00 AM', patient: 'Gwen Stacy', doctor: 'Dr. Rahman · Ste 304', status: 'Confirmed', doctorName: 'Dr. Ahmed Rahman', tone: 'confirmed' },
+  { id: 'ev-13', room: 'Suite 105', day: 4, startMinutes: 375, durationMinutes: 45, time: '02:15 PM', patient: 'Felix Baum', doctor: 'Dr. Chen · Ste 105', status: 'Confirmed', doctorName: 'Dr. Sandra Chen', tone: 'confirmed' },
+  { id: 'ev-14', room: 'Suite 101', day: 4, startMinutes: 480, durationMinutes: 45, time: '04:00 PM', patient: 'Zoe Saldana', doctor: 'Dr. Vance · Ste 101', status: 'Confirmed', doctorName: 'Dr. Marcus Vale', tone: 'confirmed' },
   // Saturday
-  { id: 'ev-15', day: 5, startMinutes: 120, durationMinutes: 45, time: '10:00 AM', patient: 'Urgent Walk-in', doctor: 'Weekend Roster', badge: 'Bay 1', tone: 'urgent' },
+  { id: 'ev-15', room: 'Bay 1', day: 5, startMinutes: 120, durationMinutes: 45, time: '10:00 AM', patient: 'Urgent Walk-in', doctor: 'Weekend Roster', badge: 'Bay 1', tone: 'urgent' },
 ];
 
 export const calendarMiddayBanner: CalendarBanner = {
@@ -68,7 +72,7 @@ export const roomStatuses: RoomStatus[] = [
 ];
 
 export const physicianShifts: PhysicianShift[] = [
-  { name: 'Dr. Marcus Vance', dept: 'Cardiology Lead', avatar: 'https://i.pravatar.cc/60?img=12', shiftStart: '08:00', shiftEnd: '16:30', station: 'Suite 101 / 102', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '6 / 8 Visits' },
-  { name: 'Dr. Elena Rostova', dept: 'Pediatric Dept', avatar: 'https://i.pravatar.cc/60?img=48', shiftStart: '08:30', shiftEnd: '17:00', station: 'Suite 204', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '5 / 7 Visits' },
-  { name: 'Dr. Aisha Patel', dept: 'Internal Medicine', avatar: 'https://i.pravatar.cc/60?img=32', shiftStart: '09:00', shiftEnd: '18:00', station: 'Suite 103', statusLabel: 'In Consult', statusTone: 'in-consult', visits: '4 / 9 Visits' },
+  { name: 'Dr. Marcus Vance', doctorName: 'Dr. Marcus Vale', dept: 'Cardiology Lead', avatar: 'https://i.pravatar.cc/60?img=12', shiftStart: '08:00', shiftEnd: '16:30', station: 'Suite 101 / 102', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '6 / 8 Visits' },
+  { name: 'Dr. Elena Rostova', doctorName: 'Dr. Elena Rostova', dept: 'Pediatric Dept', avatar: 'https://i.pravatar.cc/60?img=48', shiftStart: '08:30', shiftEnd: '17:00', station: 'Suite 204', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '5 / 7 Visits' },
+  { name: 'Dr. Aisha Patel', doctorName: 'Dr. Priya Patel', dept: 'Internal Medicine', avatar: 'https://i.pravatar.cc/60?img=32', shiftStart: '09:00', shiftEnd: '18:00', station: 'Suite 103', statusLabel: 'In Consult', statusTone: 'in-consult', visits: '4 / 9 Visits' },
 ];
