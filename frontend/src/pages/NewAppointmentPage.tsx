@@ -1,12 +1,14 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PatientIdentityCard } from '@/components/appointments/PatientIdentityCard';
 import { ClinicalSetupCard } from '@/components/appointments/ClinicalSetupCard';
 import { DateSlotCard } from '@/components/appointments/DateSlotCard';
 import { AppointmentOverviewCard } from '@/components/appointments/AppointmentOverviewCard';
 import { useNewAppointment } from '@/hooks/useNewAppointment';
+import { IconButton } from '@/components/ui/IconButton';
 
 export function NewAppointmentPage() {
+  const { tokenId } = useParams<{ tokenId: string }>();
   const {
     patients, selectedPatientId, setSelectedPatient, medicalSpecialties, specialists, formatOptions, priorityOptions,
     monthLabel, days, slotSessions, meta,
@@ -14,8 +16,8 @@ export function NewAppointmentPage() {
     formatId, setFormatId, priorityId, setPriorityId,
     specialty, setSpecialty, specialist, setSpecialist,
     reason, setReason, intakeMemo, setIntakeMemo,
-    overview, status, saveDraft, bookAppointment,
-  } = useNewAppointment();
+    overview, status, saveDraft, bookAppointment, isEditing, editNotFound,
+  } = useNewAppointment(tokenId);
   const navigate = useNavigate();
 
   const handleBook = () => {
@@ -23,12 +25,29 @@ export function NewAppointmentPage() {
     if (entry) navigate('/appointments');
   };
 
+  if (editNotFound) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="APPOINTMENTS / EDIT APPOINTMENT"
+          title="Appointment not found"
+          description={`No appointment with ID ${tokenId} exists. It may have been deleted.`}
+        />
+        <IconButton className="teal-button" onClick={() => navigate('/appointments')}>Back to Appointments</IconButton>
+      </>
+    );
+  }
+
   return (
     <>
       <PageHeader
-        eyebrow="APPOINTMENTS / NEW APPOINTMENT"
-        title={<>Book New Appointment <span className="dispatch-badge"><i /> Live Dispatch</span></>}
-        description="Schedule a patient consultation with a specialist doctor and review real-time suite availability."
+        eyebrow={isEditing ? `APPOINTMENTS / EDIT / ${tokenId}` : 'APPOINTMENTS / NEW APPOINTMENT'}
+        title={isEditing
+          ? <>Edit Appointment <span className="dispatch-badge">{tokenId}</span></>
+          : <>Book New Appointment <span className="dispatch-badge"><i /> Live Dispatch</span></>}
+        description={isEditing
+          ? 'Update the patient, doctor, date or slot for this appointment. Changes are saved to the same booking.'
+          : 'Schedule a patient consultation with a specialist doctor and review real-time suite availability.'}
       />
 
       <div className="appointment-layout">
@@ -75,6 +94,7 @@ export function NewAppointmentPage() {
             status={status}
             onBook={handleBook}
             onSaveDraft={saveDraft}
+            isEditing={isEditing}
           />
         </div>
       </div>

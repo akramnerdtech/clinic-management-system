@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { DoorOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { DoorOpen, Pencil, Trash2 } from 'lucide-react';
 
 import { useToast } from '@/utils/toast';
 import { Modal } from '@/components/ui/Modal';
@@ -36,12 +37,17 @@ export function AppointmentsTable({
   rows,
   statusStyles,
   onAttend,
+  onDelete,
 }: {
   rows: AppointmentEntry[];
   statusStyles: Record<string, string>;
   onAttend: (tokenId: string) => void;
+  onDelete: (tokenId: string) => void;
 }) {
   const toast = useToast();
+  const navigate = useNavigate();
+  const [deleteTarget, setDeleteTarget] =
+    useState<AppointmentEntry | null>(null);
 
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentEntry | null>(null);
@@ -57,7 +63,6 @@ export function AppointmentsTable({
       <table>
         <thead>
           <tr>
-            <th>SLOT / TIME</th>
             <th>TOKEN ID</th>
             <th>PATIENT PROFILE</th>
             <th>CHIEF COMPLAINT</th>
@@ -65,6 +70,7 @@ export function AppointmentsTable({
             <th>VISIT TYPE</th>
             <th>STATUS</th>
             <th>DETAILS</th>
+            <th>MANAGE</th>
             <th>ACTION</th>
           </tr>
         </thead>
@@ -100,15 +106,6 @@ export function AppointmentsTable({
                   cancelled ? 'row-cancelled' : ''
                 }
               >
-                {/* SLOT / TIME */}
-                <td>
-                  <b className="time-dot" />
-
-                  {r[0]}
-
-                  <small>{r[1]}</small>
-                </td>
-
                 {/* TOKEN ID */}
                 <td>
                   <span className="patient-id">
@@ -203,6 +200,33 @@ export function AppointmentsTable({
                     '—'
                   )}
                 </td>
+
+                {/* ACTION: EDIT / DELETE */}
+                <td className="appointment-row-actions">
+                  <button
+                    type="button"
+                    className="appointment-action-icon"
+                    title={`Edit ${r[2]}`}
+                    aria-label={`Edit appointment ${r[2]}`}
+                    onClick={() =>
+                      navigate(
+                        `/appointments/${encodeURIComponent(r[2])}/edit`,
+                      )
+                    }
+                  >
+                    <Pencil size={15} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="appointment-action-icon delete-appointment-icon"
+                    title={`Delete ${r[2]}`}
+                    aria-label={`Delete appointment ${r[2]}`}
+                    onClick={() => setDeleteTarget(r)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </td>
               </tr>
             );
           })}
@@ -259,6 +283,43 @@ export function AppointmentsTable({
           </button>
         </div>
       </div>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteTarget && (
+        <Modal
+          title="Delete appointment?"
+          subtitle={`${deleteTarget[2]} · ${deleteTarget[3]}`}
+          onClose={() => setDeleteTarget(null)}
+          footer={
+            <>
+              <button
+                type="button"
+                className="appointment-detail-button"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Keep appointment
+              </button>
+
+              <button
+                type="button"
+                className="appointment-delete-confirm"
+                onClick={() => {
+                  onDelete(deleteTarget[2]);
+                  setDeleteTarget(null);
+                }}
+              >
+                Delete
+              </button>
+            </>
+          }
+        >
+          <p>
+            This will permanently remove the appointment for{' '}
+            <b>{deleteTarget[3]}</b> with <b>{deleteTarget[7]}</b> and free
+            the slot. This cannot be undone.
+          </p>
+        </Modal>
+      )}
 
       {/* APPOINTMENT DETAILS MODAL */}
       {selectedAppointment && (
