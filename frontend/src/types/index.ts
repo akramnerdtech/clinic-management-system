@@ -129,9 +129,32 @@ export interface CalendarEvent {
   time: string;
   patient: string;
   doctor?: string;
+  /** Full roster name of the assigned doctor; used by the doctor filter. */
+  doctorName?: string;
+  /** Suite / bay the visit takes place in; used by the room filter. */
+  room?: string;
+  /** ISO date (YYYY-MM-DD). Derived from `day` + the seed week when not stored. */
+  date?: string;
   badge?: string;
   status?: string;
   tone: CalendarEventTone;
+}
+
+/** One visible column of the Day / Week time grid. */
+export interface CalendarColumn {
+  iso: string;
+  label: string;
+  date: number;
+  today: boolean;
+}
+
+/** A doctor entry in the calendar's doctor filter dropdown. */
+export interface CalendarDoctorOption {
+  name: string;
+  specialty: string;
+  room: string;
+  avatar: string;
+  onDuty: boolean;
 }
 
 export interface CalendarBanner {
@@ -163,6 +186,8 @@ export interface PhysicianShift {
   statusLabel: string;
   statusTone: 'on-floor' | 'in-consult';
   visits: string;
+  /** Roster name used by the calendar doctor filter (the display name above can differ). */
+  doctorName?: string;
 }
 
 // ---------- Settings ----------
