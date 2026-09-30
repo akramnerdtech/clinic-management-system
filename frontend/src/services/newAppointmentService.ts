@@ -23,6 +23,7 @@ import type {
 
 import { doctorsService } from '@/services/doctorsService';
 import { calendarService } from '@/services/calendarService';
+import { getDoctorRoomAndOpd } from '@/services/wardAllocationService';
 
 const KEYS = {
   medicalSpecialties:
@@ -626,6 +627,12 @@ export const newAppointmentService = {
         time,
       );
 
+    const roomOpd = getDoctorRoomAndOpd({
+      doctorName: doctor,
+      doctorSuite: entry[8] || doctorInfo.suite,
+      customOpd: entry[12],
+    });
+
     const event: CalendarEvent = {
       id: eventId,
       date,
@@ -635,7 +642,8 @@ export const newAppointmentService = {
       patient,
       doctor,
       doctorName: doctor,
-      room: doctorInfo.suite || 'Room 1',
+      room: roomOpd.room,
+      opd: roomOpd.opd,
       status: 'Slot Booked',
       tone: 'confirmed',
       badge: 'SLOT BOOKED',

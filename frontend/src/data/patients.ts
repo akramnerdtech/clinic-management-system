@@ -5,10 +5,10 @@ import type { Patient, MetricConfig } from '@/types';
 export const patients: Patient[] = []
 
 export const patientsMetrics: MetricConfig[] = [
-  { label: 'TOTAL DIRECTORY', value: '1,248', note: '↗ +14 this wk', color: 'blue', icon: Users },
-  { label: 'ACTIVE TODAY', value: '38', note: '24 confirmed', color: 'blue', icon: Clock3 },
-  { label: 'CRITICAL ALERTS', value: '3', note: 'Requires review', color: 'red', icon: AlertTriangle },
-  { label: 'VERIFICATION RATE', value: '99.4%', note: 'Insured', icon: ShieldCheck },
+  { label: 'TOTAL DIRECTORY', value: '0', note: 'Register new patients', color: 'blue', icon: Users },
+  { label: 'ACTIVE TODAY', value: '0', note: '0 confirmed', color: 'blue', icon: Clock3 },
+  { label: 'CRITICAL ALERTS', value: '0', note: 'Requires review', color: 'red', icon: AlertTriangle },
+  { label: 'VERIFICATION RATE', value: '100%', note: 'Verified', icon: ShieldCheck },
 ];
 
 /** Static dossier details shown in the patient side panel, independent of the selected row. */

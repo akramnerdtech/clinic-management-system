@@ -362,6 +362,7 @@ export function MasterCalendarPage() {
             emptyMessage={emptyMessage}
             onSelectEvent={setSelectedEvent}
             selectedDoctor={selectedDoctor}
+            doctorOptions={doctorOptions}
             getDoctorSchedule={getDoctorSchedule}
             onSelectOpenSlot={handleOpenSlotClick}
           />

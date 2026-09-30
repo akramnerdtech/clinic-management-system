@@ -2,12 +2,90 @@ export interface WardAllocationResult {
   wardName: string;
   wardCode: string;
   roomNumber: string;
+  opdUnit?: string;
   wing: string;
   floor: string;
   bedStation: string;
   displayLabel: string;
   features: string[];
   allocationReason: string;
+}
+
+export interface OpdUnit {
+  code: string;
+  name: string;
+  department: string;
+  defaultRoom: string;
+  floor: string;
+}
+
+export const OPD_UNITS: OpdUnit[] = [
+  { code: 'OPD-1', name: 'OPD 1 • General Medicine', department: 'General Medicine', defaultRoom: 'Suite 105', floor: 'Floor 1' },
+  { code: 'OPD-2', name: 'OPD 2 • Pediatrics & Child Health', department: 'Pediatrics', defaultRoom: 'Suite 201', floor: 'Ground Floor' },
+  { code: 'OPD-3', name: 'OPD 3 • Neurology & Brain Health', department: 'Neurology', defaultRoom: 'Suite 304', floor: 'Floor 1' },
+  { code: 'OPD-4', name: 'OPD 4 • Cardiology & Telemetry', department: 'Cardiology', defaultRoom: 'Cath Lab 2', floor: 'Floor 1' },
+  { code: 'OPD-5', name: 'OPD 5 • Dermatology & Skin Care', department: 'Dermatology', defaultRoom: 'Suite 112', floor: 'Ground Floor' },
+  { code: 'OPD-6', name: 'OPD 6 • Orthopedics & Sports Rehab', department: 'Orthopedics', defaultRoom: 'Suite 408', floor: 'Floor 2' },
+  { code: 'OPD-7', name: 'OPD 7 • Emergency & Acute Triage', department: 'Emergency', defaultRoom: 'Triage Bay 1', floor: 'Ground Floor' },
+];
+
+export const CLINIC_ROOMS: string[] = [
+  'Suite 105 (General Consultation)',
+  'Suite 101 (Outpatient Consult)',
+  'Suite 201 (Pediatric Suite)',
+  'Suite 304 (Neurology Care)',
+  'Cath Lab 2 (Cardio Intervention)',
+  'Suite 112 (Dermatology Clinic)',
+  'Suite 408 (Orthopedic Assessment)',
+  'Triage Bay 1 (Emergency Care)',
+  'Room 101',
+  'Room 102',
+  'Room 103',
+  'Room 105',
+];
+
+export function getDoctorRoomAndOpd(params: {
+  doctorName?: string;
+  specialty?: string;
+  doctorSuite?: string;
+  customRoom?: string;
+  customOpd?: string;
+}): { room: string; opd: string; display: string } {
+  const { doctorName = '', specialty = '', doctorSuite = '', customRoom, customOpd } = params;
+  if (customRoom && customOpd) {
+    return {
+      room: customRoom,
+      opd: customOpd,
+      display: `${customRoom} • ${customOpd}`,
+    };
+  }
+
+  const specLower = specialty.toLowerCase();
+  const docLower = doctorName.toLowerCase();
+  const suite = customRoom || doctorSuite || 'Suite 105';
+
+  let matchedOpd = OPD_UNITS[0]; // default OPD-1 General Medicine
+
+  if (specLower.includes('pediatric') || docLower.includes('vale')) {
+    matchedOpd = OPD_UNITS[1];
+  } else if (specLower.includes('neuro') || docLower.includes('ahmed') || docLower.includes('rahman')) {
+    matchedOpd = OPD_UNITS[2];
+  } else if (specLower.includes('cardio') || docLower.includes('patel')) {
+    matchedOpd = OPD_UNITS[3];
+  } else if (specLower.includes('derma') || docLower.includes('rostova')) {
+    matchedOpd = OPD_UNITS[4];
+  } else if (specLower.includes('ortho') || docLower.includes('moore')) {
+    matchedOpd = OPD_UNITS[5];
+  } else if (specLower.includes('emerg') || specLower.includes('trauma')) {
+    matchedOpd = OPD_UNITS[6];
+  }
+
+  const finalOpd = customOpd || matchedOpd.name;
+  return {
+    room: suite,
+    opd: finalOpd,
+    display: `${suite} • ${finalOpd}`,
+  };
 }
 
 export interface WardDefinition {

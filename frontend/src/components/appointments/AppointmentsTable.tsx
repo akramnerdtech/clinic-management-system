@@ -17,20 +17,20 @@ function formatAppointmentDate(value?: string): string {
 
   const date = match
     ? new Date(
-        Number(match[1]),
-        Number(match[2]) - 1,
-        Number(match[3]),
-      )
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+    )
     : new Date(value);
 
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
 }
 
 export function AppointmentsTable({
@@ -70,7 +70,7 @@ export function AppointmentsTable({
             <th>VISIT TYPE</th>
             <th>STATUS</th>
             <th>DETAILS</th>
-            <th>MANAGE</th>
+            {/* <th>MANAGE</th> */}
             <th>ACTION</th>
           </tr>
         </thead>
@@ -116,9 +116,8 @@ export function AppointmentsTable({
                 {/* PATIENT PROFILE */}
                 <td>
                   <span
-                    className={`patient-dot dot-${
-                      index % 4
-                    }`}
+                    className={`patient-dot dot-${index % 4
+                      }`}
                   >
                     {r[3]
                       .split(' ')
@@ -139,13 +138,18 @@ export function AppointmentsTable({
                   <small>{r[6]}</small>
                 </td>
 
-                {/* DOCTOR / SUITE */}
+                {/* DOCTOR / SUITE & OPD */}
                 <td>
                   <b>{r[7]}</b>
 
-                  <small>
-                    <DoorOpen size={10} />
-                    {r[8]}
+                  <small style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
+                    <DoorOpen size={11} style={{ flexShrink: 0 }} />
+                    <span>{r[8]}</span>
+                    {r[12] && (
+                      <span className="specialty-chip" style={{ fontSize: '9px', padding: '1px 5px' }}>
+                        {r[12].includes('•') ? r[12].split('•')[0].trim() : r[12]}
+                      </span>
+                    )}
                   </small>
                 </td>
 
@@ -159,9 +163,8 @@ export function AppointmentsTable({
                 {/* STATUS */}
                 <td>
                   <span
-                    className={`status-pill ${
-                      statusStyles[r[10]] ?? ''
-                    }`}
+                    className={`status-pill ${statusStyles[r[10]] ?? ''
+                      }`}
                   >
                     {r[10]}
                   </span>
@@ -181,7 +184,7 @@ export function AppointmentsTable({
                 </td>
 
                 {/* ACTION */}
-                <td className="appointment-list-actions">
+                {/* <td className="appointment-list-actions">
                   {['Confirmed', 'Waiting'].includes(
                     r[10],
                   ) ? (
@@ -199,7 +202,7 @@ export function AppointmentsTable({
                   ) : (
                     '—'
                   )}
-                </td>
+                </td> */}
 
                 {/* ACTION: EDIT / DELETE */}
                 <td className="appointment-row-actions">
@@ -223,6 +226,9 @@ export function AppointmentsTable({
                     title={`Delete ${r[2]}`}
                     aria-label={`Delete appointment ${r[2]}`}
                     onClick={() => setDeleteTarget(r)}
+                    style={{
+                      marginLeft: '10px'
+                    }}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -370,9 +376,15 @@ export function AppointmentsTable({
             </div>
 
             <div>
-              <span>Suite / room</span>
+              <span>Assigned room</span>
 
               <b>{selectedAppointment[8]}</b>
+            </div>
+
+            <div>
+              <span>Assigned OPD unit</span>
+
+              <b>{selectedAppointment[12] || 'OPD-1 • General Medicine'}</b>
             </div>
 
             <div>
@@ -386,11 +398,10 @@ export function AppointmentsTable({
 
               <b>
                 <span
-                  className={`status-pill ${
-                    statusStyles[
-                      selectedAppointment[10]
-                    ] ?? ''
-                  }`}
+                  className={`status-pill ${statusStyles[
+                    selectedAppointment[10]
+                  ] ?? ''
+                    }`}
                 >
                   {selectedAppointment[10]}
                 </span>

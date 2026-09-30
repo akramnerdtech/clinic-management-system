@@ -57,8 +57,8 @@ export interface TrafficPoint {
 }
 
 // ---------- Appointments ----------
-/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status, appointmentDate?] */
-export type AppointmentEntry = [string, string, string, string, string, string, string, string, string, string, string, string?];
+/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status, appointmentDate?, opd?] */
+export type AppointmentEntry = [string, string, string, string, string, string, string, string, string, string, string, string?, string?];
 
 // ---------- Patient Registration ----------
 export interface RegistrationField {
@@ -133,6 +133,8 @@ export interface CalendarEvent {
   doctorName?: string;
   /** Suite / bay the visit takes place in; used by the room filter. */
   room?: string;
+  /** Outpatient Department (OPD unit) assigned to the patient visit. */
+  opd?: string;
   /** ISO date (YYYY-MM-DD). Derived from `day` + the seed week when not stored. */
   date?: string;
   badge?: string;

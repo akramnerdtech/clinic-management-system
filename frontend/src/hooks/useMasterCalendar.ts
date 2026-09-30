@@ -65,10 +65,12 @@ export function useMasterCalendar() {
     };
     window.addEventListener('clinic-appointments-updated', handleUpdate);
     window.addEventListener('clinic-calendar-updated', handleUpdate);
+    window.addEventListener('clinic-doctors-updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
     return () => {
       window.removeEventListener('clinic-appointments-updated', handleUpdate);
       window.removeEventListener('clinic-calendar-updated', handleUpdate);
+      window.removeEventListener('clinic-doctors-updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
   }, []);
@@ -95,6 +97,13 @@ export function useMasterCalendar() {
     useState<string | null>(
       null,
     );
+
+  // If only 1 doctor is registered in the clinic, auto-select them so their schedule slots are immediately visible
+  useEffect(() => {
+    if (!selectedDoctor && doctorOptions.length === 1) {
+      setSelectedDoctor(doctorOptions[0].name);
+    }
+  }, [selectedDoctor, doctorOptions]);
 
   const [selectedRoom, setSelectedRoom] =
     useState<string | null>(

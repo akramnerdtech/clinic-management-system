@@ -1,7 +1,8 @@
-import { Check, Clock, Plus } from 'lucide-react';
+import { Check, Clock, Plus, DoorClosed } from 'lucide-react';
 import type {
   CalendarBanner,
   CalendarColumn,
+  CalendarDoctorOption,
   CalendarEvent,
 } from '@/types';
 import type { DoctorScheduleDayInfo } from '@/services/calendarService';
@@ -34,6 +35,7 @@ interface CalendarGridProps {
   emptyMessage?: string;
   onSelectEvent?: (event: CalendarEvent) => void;
   selectedDoctor?: string | null;
+  doctorOptions?: CalendarDoctorOption[];
   getDoctorSchedule?: (doctorName: string, dateKey: string) => DoctorScheduleDayInfo;
   onSelectOpenSlot?: (doctor: string, date: string, time: string) => void;
 }
@@ -49,6 +51,7 @@ export function CalendarGrid({
   emptyMessage,
   onSelectEvent,
   selectedDoctor,
+  doctorOptions = [],
   getDoctorSchedule,
   onSelectOpenSlot,
 }: CalendarGridProps) {
@@ -58,8 +61,11 @@ export function CalendarGrid({
   const gridHeight = totalMinutes * PX_PER_MIN;
   const wrapperHeight = gridHeight + END_BANNER_HEIGHT;
 
+  // Active doctor to show slots for: selected doctor, or single registered doctor
+  const activeDoctorName = selectedDoctor || (doctorOptions.length === 1 ? doctorOptions[0].name : null);
+
   /*
-   * 30-minute time labels along the time column
+   * 30-minute time labels along the time column (10:00 AM to 08:00 PM)
    */
   const timeSlots: number[] = [];
   for (let minutes = startMinutes; minutes <= endMinutes; minutes += 30) {
@@ -69,8 +75,9 @@ export function CalendarGrid({
   const single = columns.length === 1;
 
   const trackStyle = {
-    gridTemplateColumns: `75px repeat(${columns.length}, minmax(${single ? 260 : 130
-      }px, 1fr))`,
+    gridTemplateColumns: `75px repeat(${columns.length}, minmax(${
+      single ? 260 : 130
+    }px, 1fr))`,
     minWidth: single ? 0 : 960,
   };
 
@@ -81,7 +88,7 @@ export function CalendarGrid({
     let minutes = 0;
     if (event.time) {
       minutes = timeToMinutes(event.time);
-    } else if (Number(event.startMinutes) >= 480) {
+    } else if (Number(event.startMinutes) >= startMinutes) {
       minutes = Number(event.startMinutes);
     } else {
       minutes = startMinutes + Number(event.startMinutes);
@@ -98,7 +105,8 @@ export function CalendarGrid({
       status === 'booked' ||
       status === 'confirmed' ||
       status === 'slot booked' ||
-      status.includes('book')
+      status.includes('book') ||
+      event.tone === 'confirmed'
     );
   };
 
@@ -154,30 +162,36 @@ export function CalendarGrid({
               (event) => event.date === column.iso,
             );
 
-            // If a doctor is selected, retrieve their availability schedule for this day
+            // Retrieve doctor availability schedule for this column
             const docSchedule =
-              selectedDoctor && getDoctorSchedule
-                ? getDoctorSchedule(selectedDoctor, column.iso)
+              activeDoctorName && getDoctorSchedule
+                ? getDoctorSchedule(activeDoctorName, column.iso)
                 : null;
 
             return (
               <div key={column.iso} className="cal-day-col">
-                {/* 1. If doctor has active schedule on this day, render available open slots */}
-                {selectedDoctor && docSchedule?.hasSchedule && (
+                {/* 1. Doctor Shift Window & 15-Minute Available Slots */}
+                {activeDoctorName && docSchedule?.hasSchedule && (
                   <>
                     {/* Shift Window Header Badge */}
                     <div
                       className="cal-shift-badge"
                       style={{
-                        top: Math.max(0, (docSchedule.startMinutes - startMinutes) * PX_PER_MIN - 24),
+                        top: Math.max(
+                          0,
+                          (docSchedule.startMinutes - startMinutes) * PX_PER_MIN - 24,
+                        ),
                       }}
-                      title={`${selectedDoctor} scheduled ${docSchedule.start} - ${docSchedule.end}`}
+                      title={`${activeDoctorName} scheduled ${docSchedule.start} - ${docSchedule.end}`}
                     >
                       <Clock size={10} />
-                      <span>{selectedDoctor}: {formatTime(docSchedule.startMinutes)} – {formatTime(docSchedule.endMinutes)}</span>
+                      <span>
+                        {activeDoctorName}: {formatTime(docSchedule.startMinutes)} –{' '}
+                        {formatTime(docSchedule.endMinutes)}
+                      </span>
                     </div>
 
-                    {/* Open slots for this doctor during their shift */}
+                    {/* 15-Minute Discrete Slots */}
                     {docSchedule.slots.map((slot) => {
                       // Check if a booked event occupies this slot
                       const isOccupied = columnEvents.some((ev) => {
@@ -188,7 +202,7 @@ export function CalendarGrid({
                       if (isOccupied) return null; // Booked slot will be rendered below in GREEN
 
                       const slotTop = (slot.startMinutes - startMinutes) * PX_PER_MIN;
-                      const slotHeight = slot.durationMinutes * PX_PER_MIN - 4;
+                      const slotHeight = Math.max(28, slot.durationMinutes * PX_PER_MIN - 4);
 
                       return (
                         <div
@@ -196,14 +210,14 @@ export function CalendarGrid({
                           className="cal-open-slot"
                           style={{
                             top: slotTop,
-                            height: Math.max(26, slotHeight),
+                            height: slotHeight,
                           }}
                           role="button"
                           tabIndex={0}
-                          title={`Click to book 15-min slot for ${selectedDoctor} at ${slot.time}`}
+                          title={`Click to book 15-min slot (${slot.time}) for ${activeDoctorName}`}
                           onClick={() =>
                             onSelectOpenSlot?.(
-                              selectedDoctor,
+                              activeDoctorName,
                               column.iso,
                               slot.time,
                             )
@@ -212,7 +226,7 @@ export function CalendarGrid({
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
                               onSelectOpenSlot?.(
-                                selectedDoctor,
+                                activeDoctorName,
                                 column.iso,
                                 slot.time,
                               );
@@ -223,7 +237,7 @@ export function CalendarGrid({
                             {slot.time}
                           </span>
                           <span className="cal-open-slot-action">
-                            <Plus size={10} /> Available Slot
+                            <Plus size={10} /> 15m Slot
                           </span>
                         </div>
                       );
@@ -231,21 +245,22 @@ export function CalendarGrid({
                   </>
                 )}
 
-                {/* 2. Render all booked and active appointments for this column */}
+                {/* 2. Render all Booked Appointments in GREEN with Slot Booked message, Room & OPD */}
                 {columnEvents.map((event) => {
                   const booked = isSlotBooked(event);
 
                   return (
                     <div
                       key={event.id}
-                      className={`cal-event ${booked
-                        ? 'tone-confirmed tone-booked cal-event-green'
-                        : `tone-${event.tone ?? 'confirmed'}`
-                        }`}
+                      className={`cal-event ${
+                        booked
+                          ? 'tone-confirmed tone-booked cal-event-green'
+                          : `tone-${event.tone ?? 'confirmed'}`
+                      }`}
                       style={{
                         top: getEventTop(event),
                         height: Math.max(
-                          34,
+                          44,
                           (event.durationMinutes || 15) * PX_PER_MIN,
                         ),
                       }}
@@ -268,25 +283,35 @@ export function CalendarGrid({
                           {event.time}
                         </span>
 
-                        {booked ? (
-                          <em className="cal-booked-badge">
-                            <Check size={9} /> Slot Booked
-                          </em>
-                        ) : (
-                          event.badge && (
-                            <em className="cal-badge">{event.badge}</em>
-                          )
-                        )}
+                        <em className="cal-booked-badge">
+                          <Check size={9} /> Slot Booked
+                        </em>
                       </div>
 
                       <b className="cal-patient-name">{event.patient}</b>
 
-                      <div className="cal-event-sub-row">
-                        {booked && (
-                          <span className="cal-status-msg">
-                            Slot Booked
+                      <div className="cal-event-room-info">
+                        <span
+                          className="cal-room-pill"
+                          title={`Assigned Room: ${event.room || 'Suite 105'}`}
+                        >
+                          <DoorClosed size={9} />
+                          {event.room || 'Suite 105'}
+                        </span>
+                        {event.opd && (
+                          <span
+                            className="cal-opd-pill"
+                            title={`Assigned OPD: ${event.opd}`}
+                          >
+                            {event.opd.includes('•')
+                              ? event.opd.split('•')[0].trim()
+                              : event.opd}
                           </span>
                         )}
+                      </div>
+
+                      <div className="cal-event-sub-row">
+                        <span className="cal-status-msg">Slot is booked</span>
                         {event.doctor && (
                           <small className="cal-doc-name">
                             {event.doctor}
@@ -302,7 +327,7 @@ export function CalendarGrid({
         </div>
 
         {/* EMPTY MESSAGE */}
-        {emptyMessage && events.length === 0 && !selectedDoctor && (
+        {emptyMessage && events.length === 0 && !activeDoctorName && (
           <div className="cal-empty">{emptyMessage}</div>
         )}
 

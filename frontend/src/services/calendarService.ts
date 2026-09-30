@@ -16,6 +16,7 @@ import {
 import { doctorsService } from '@/services/doctorsService';
 import { appointmentsService } from '@/services/appointmentsService';
 import { doctorScheduleConfigs } from '@/data/newAppointment';
+import { getDoctorRoomAndOpd } from '@/services/wardAllocationService';
 import { loadFromStorage, saveToStorage } from '@/utils/storage';
 import { addDays, weekdayIndex } from '@/utils/calendarDates';
 
@@ -63,15 +64,35 @@ function getNow(): { label: string; minutes: number } {
   };
 }
 
+/**
+ * Robust time string to minutes converter.
+ * Supports:
+ * - 12-hour: "05:15 PM", "5:00 PM", "05:15 PM - 05:30 PM"
+ * - 24-hour: "17:00", "17:15", "09:30", "18:00"
+ */
 export function timeToMinutes(time?: string): number {
   if (!time) return 0;
-  const match = time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-  if (!match) return 0;
-  const rawHour = Number(match[1]);
-  const minute = Number(match[2]);
-  const period = match[3].toUpperCase();
-  const hour24 = (rawHour % 12) + (period === 'PM' ? 12 : 0);
-  return hour24 * 60 + minute;
+  const trimmed = time.trim();
+
+  // 12-hour with AM / PM
+  const match12 = trimmed.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (match12) {
+    const rawHour = Number(match12[1]);
+    const minute = Number(match12[2]);
+    const period = match12[3].toUpperCase();
+    const hour24 = (rawHour % 12) + (period === 'PM' ? 12 : 0);
+    return hour24 * 60 + minute;
+  }
+
+  // 24-hour e.g. "17:00" or "09:30"
+  const match24 = trimmed.match(/^(\d{1,2}):(\d{2})/);
+  if (match24) {
+    const hour = Number(match24[1]);
+    const minute = Number(match24[2]);
+    return hour * 60 + minute;
+  }
+
+  return 0;
 }
 
 export function formatTime(minutes: number): string {
@@ -118,15 +139,19 @@ export interface DoctorScheduleDayInfo {
   startMinutes: number;
   endMinutes: number;
   suite: string;
+  opd: string;
   slots: DoctorSlotInfo[];
 }
 
 export const calendarService = {
+  /**
+   * Calendar Operating Bounds: Strictly 10:00 AM to 08:00 PM (10am to 8pm)
+   */
   getGridBounds(): { startHour: number; endHour: number } {
-    return loadFromStorage(KEYS.gridBounds, {
-      startHour: calendarGridStartHour,
-      endHour: calendarGridEndHour,
-    });
+    return {
+      startHour: 10,
+      endHour: 20,
+    };
   },
 
   getDayHeaders(): CalendarDayHeader[] {
@@ -142,17 +167,14 @@ export const calendarService = {
   },
 
   getToday,
-
   getNow,
 
   /**
-   * Retrieves all calendar events merged from both:
-   * 1. Stored calendar events
-   * 2. Live appointments from `appointmentsService`
+   * Retrieves all calendar events merged from stored calendar events and live appointments.
+   * Every booked visit carries assigned room, OPD, green tone, and 'Slot Booked' status.
    */
   getEvents(): CalendarEvent[] {
     const stored = loadFromStorage<CalendarEvent[]>(KEYS.events, calendarEvents);
-
     const seed = new Map(calendarEvents.map((event) => [event.id, event]));
 
     const processedStored: CalendarEvent[] = stored
@@ -163,29 +185,37 @@ export const calendarService = {
         const doc = event.doctor ?? event.doctorName ?? seedEvent?.doctor;
         const date = event.date ?? seedEvent?.date ?? addDays(calendarWeekStart, event.day ?? 0);
         const parsedStart = timeToMinutes(event.time);
-      const startMinutes = parsedStart > 0
-        ? parsedStart
-        : event.startMinutes < 480
-          ? calendarGridStartHour * 60 + event.startMinutes
-          : event.startMinutes;
+        const startMinutes = parsedStart > 0
+          ? parsedStart
+          : event.startMinutes < 600
+            ? 10 * 60 + event.startMinutes
+            : event.startMinutes;
 
-      const isBooked =
-        event.status?.toLowerCase().includes('book') ||
-        event.status?.toLowerCase().includes('confirm');
+        const isBooked =
+          event.status?.toLowerCase().includes('book') ||
+          event.status?.toLowerCase().includes('confirm') ||
+          true;
 
-      return {
-        ...event,
-        doctorName: docName,
-        doctor: doc,
-        room: event.room ?? seedEvent?.room ?? 'Room 1',
-        date,
-        startMinutes,
-        durationMinutes: event.durationMinutes || 15,
-        tone: isBooked ? 'confirmed' : (event.tone ?? 'confirmed'),
-        status: isBooked ? 'Slot Booked' : (event.status || 'Slot Booked'),
-        badge: isBooked ? 'SLOT BOOKED' : (event.badge || 'SLOT BOOKED'),
-      };
-    });
+        const resolved = getDoctorRoomAndOpd({
+          doctorName: docName || doc,
+          doctorSuite: event.room || seedEvent?.room,
+          customOpd: event.opd,
+        });
+
+        return {
+          ...event,
+          doctorName: docName,
+          doctor: doc,
+          room: resolved.room,
+          opd: resolved.opd,
+          date,
+          startMinutes,
+          durationMinutes: event.durationMinutes || 15,
+          tone: isBooked ? 'confirmed' : (event.tone ?? 'confirmed'),
+          status: 'Slot Booked',
+          badge: 'SLOT BOOKED',
+        };
+      });
 
     // Also bring in every non-cancelled appointment from appointmentsService
     const appointments = appointmentsService.getEntries();
@@ -196,10 +226,17 @@ export const calendarService = {
         const date = normalizeDate(entry[11]) || getToday();
         const doctor = entry[7] || 'Doctor';
         const patient = entry[3] || 'Patient';
-        const room = entry[8] || 'Suite 105';
+        const rawRoom = entry[8] || 'Suite 105';
+        const rawOpd = entry[12];
         const startMinutes = timeToMinutes(time);
         const durationMatch = entry[1]?.match(/(\d+)\s*min/i);
         const durationMinutes = durationMatch ? Number(durationMatch[1]) : 15;
+
+        const resolved = getDoctorRoomAndOpd({
+          doctorName: doctor,
+          doctorSuite: rawRoom,
+          customOpd: rawOpd,
+        });
 
         return {
           id: entry[2] || `appt-${date}-${doctor}-${time}`,
@@ -211,7 +248,8 @@ export const calendarService = {
           patient,
           doctor,
           doctorName: doctor,
-          room,
+          room: resolved.room,
+          opd: resolved.opd,
           status: 'Slot Booked',
           tone: 'confirmed',
           badge: 'SLOT BOOKED',
@@ -247,6 +285,11 @@ export const calendarService = {
     window.dispatchEvent(new CustomEvent('clinic-calendar-updated'));
   },
 
+  clearAllEvents(): void {
+    saveToStorage(KEYS.events, []);
+    window.dispatchEvent(new CustomEvent('clinic-calendar-updated'));
+  },
+
   getDoctorOptions(): CalendarDoctorOption[] {
     return doctorsService.getDoctors().map((doctor) => ({
       name: doctor[0],
@@ -275,7 +318,6 @@ export const calendarService = {
 
   getPhysicianShifts(): PhysicianShift[] {
     const seed = new Map(physicianShifts.map((physician) => [physician.name, physician.doctorName]));
-
     return loadFromStorage(KEYS.physicianShifts, physicianShifts).map((physician) => ({
       ...physician,
       doctorName: physician.doctorName ?? seed.get(physician.name),
@@ -284,6 +326,12 @@ export const calendarService = {
 
   /**
    * Calculates the availability and 15-minute slot intervals for a given doctor on a specific date.
+   * E.g. If doctor availability is 5:00 PM to 6:00 PM (17:00 to 18:00),
+   * generates 4 discrete 15-min slots:
+   * - 05:00 PM - 05:15 PM
+   * - 05:15 PM - 05:30 PM
+   * - 05:30 PM - 05:45 PM
+   * - 05:45 PM - 06:00 PM
    */
   getDoctorDaySchedule(doctorName: string, dateKey: string): DoctorScheduleDayInfo {
     const parsedDate = new Date(`${dateKey}T00:00:00`);
@@ -293,37 +341,56 @@ export const calendarService = {
 
     const normTarget = normalizeDoctor(doctorName);
 
-    // 1. Check doctorScheduleConfigs
-    let matchedConfig = Object.values(doctorScheduleConfigs).find(
-      (cfg) => normalizeDoctor(cfg.name) === normTarget,
-    );
-
-    // 2. Check registered doctors
+    // 1. Prioritize registered doctors
     const registered = doctorsService.getDoctors().find(
       (d) => normalizeDoctor(d[0]) === normTarget,
     );
 
-    let start = '09:00';
-    let end = '17:00';
-    let suite = registered?.[2] || matchedConfig?.suite || 'Suite 101';
+    // 2. Fallback to demo doctor config if exists
+    const matchedConfig = Object.values(doctorScheduleConfigs).find(
+      (cfg) => normalizeDoctor(cfg.name) === normTarget,
+    );
+
+    let start = '10:00';
+    let end = '20:00';
+    let suite = registered?.[2] || matchedConfig?.suite || 'Suite 105';
     let hasSchedule = false;
 
-    if (matchedConfig && matchedConfig.weekdays.includes(dayIndex)) {
+    if (registered) {
+      const weekly = registered[7];
+      if (weekly && weekly[dayCode]?.start && weekly[dayCode]?.end) {
+        hasSchedule = true;
+        start = weekly[dayCode].start;
+        end = weekly[dayCode].end;
+        suite = registered[2] || 'Suite 105';
+      } else if (registered[3]) {
+        // e.g. "M T W T F"
+        const weekdayLetter = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dayIndex];
+        const days = registered[3].toUpperCase();
+        if (days.includes(weekdayLetter) && registered[4] !== 'OFF DUTY') {
+          hasSchedule = true;
+          start = '10:00';
+          end = '20:00';
+          suite = registered[2] || 'Suite 105';
+        }
+      } else if (registered[4] === 'ON DUTY' && dayIndex >= 1 && dayIndex <= 5) {
+        hasSchedule = true;
+        start = '10:00';
+        end = '20:00';
+        suite = registered[2] || 'Suite 105';
+      }
+    } else if (matchedConfig && matchedConfig.weekdays.includes(dayIndex)) {
       hasSchedule = true;
       start = `${String(matchedConfig.startHour).padStart(2, '0')}:00`;
       end = `${String(matchedConfig.endHour).padStart(2, '0')}:00`;
       suite = matchedConfig.suite;
-    } else if (registered?.[7]?.[dayCode]?.start && registered?.[7]?.[dayCode]?.end) {
-      hasSchedule = true;
-      start = registered[7][dayCode].start;
-      end = registered[7][dayCode].end;
-      suite = registered[2];
-    } else if (dayIndex >= 1 && dayIndex <= 5) {
-      // General weekday schedule default if doctor is on duty
-      hasSchedule = true;
-      start = '09:00';
-      end = '17:00';
     }
+
+    const roomOpd = getDoctorRoomAndOpd({
+      doctorName,
+      specialty: registered?.[1],
+      doctorSuite: suite,
+    });
 
     if (!hasSchedule) {
       return {
@@ -332,7 +399,8 @@ export const calendarService = {
         end,
         startMinutes: 0,
         endMinutes: 0,
-        suite,
+        suite: roomOpd.room,
+        opd: roomOpd.opd,
         slots: [],
       };
     }
@@ -341,14 +409,16 @@ export const calendarService = {
     const endMinutes = timeToMinutes(end);
     const slots: DoctorSlotInfo[] = [];
 
-    for (let m = startMinutes; m < endMinutes; m += 15) {
-      const slotStart = formatTime(m);
-      const slotEnd = formatTime(m + 15);
-      slots.push({
-        time: `${slotStart} - ${slotEnd}`,
-        startMinutes: m,
-        durationMinutes: 15,
-      });
+    if (endMinutes > startMinutes) {
+      for (let m = startMinutes; m < endMinutes; m += 15) {
+        const slotStart = formatTime(m);
+        const slotEnd = formatTime(m + 15);
+        slots.push({
+          time: `${slotStart} - ${slotEnd}`,
+          startMinutes: m,
+          durationMinutes: 15,
+        });
+      }
     }
 
     return {
@@ -357,7 +427,8 @@ export const calendarService = {
       end,
       startMinutes,
       endMinutes,
-      suite,
+      suite: roomOpd.room,
+      opd: roomOpd.opd,
       slots,
     };
   },
