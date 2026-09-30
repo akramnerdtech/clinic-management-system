@@ -46,8 +46,8 @@ export function SpecialtiesPage() {
       name,
       form.code.trim() || 'MED-NEW',
       form.description.trim() || 'Newly configured specialty — description pending.',
-      form.fee.trim() || '$0.00',
-      form.duration.trim() || '30 min',
+      form.fee.trim() || '₹0.00',
+      form.duration.trim() || '15 min',
       '0 Doctors',
     ];
     addSpecialty(newSpecialty);
@@ -125,11 +125,11 @@ export function SpecialtiesPage() {
             </label>
             <label>
               <span>Consultation Fee</span>
-              <input placeholder="e.g. $80.00" value={form.fee} onChange={(e) => updateForm('fee', e.target.value)} />
+              <input placeholder="e.g. ₹800.00" value={form.fee} onChange={(e) => updateForm('fee', e.target.value)} />
             </label>
             <label>
               <span>Slot Duration</span>
-              <input placeholder="e.g. 30 min" value={form.duration} onChange={(e) => updateForm('duration', e.target.value)} />
+              <input placeholder="e.g. 15 min" value={form.duration} onChange={(e) => updateForm('duration', e.target.value)} />
             </label>
             <label className="wide">
               <span>Description</span>

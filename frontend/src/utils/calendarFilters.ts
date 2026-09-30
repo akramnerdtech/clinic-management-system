@@ -1,7 +1,7 @@
 import type { CalendarEvent } from '@/types';
 
 /** Status filter choices, in the order they appear in the dropdown. */
-export const CALENDAR_STATUS_OPTIONS = ['Confirmed', 'Scheduled', 'Waiting', 'In Consult', 'Urgent'];
+export const CALENDAR_STATUS_OPTIONS = ['Slot Booked', 'Confirmed', 'Waiting', 'In Consult', 'Urgent'];
 
 export interface CalendarEventFilters {
   doctor: string | null;
@@ -9,10 +9,24 @@ export interface CalendarEventFilters {
   status: string | null;
 }
 
-/** Events with no explicit status are plain bookings ("Scheduled"); urgent walk-ins are "Urgent". */
+export function matchesDoctor(eventDoctor?: string, filterDoctor?: string | null): boolean {
+  if (!filterDoctor) return true;
+  if (!eventDoctor) return false;
+  const a = eventDoctor.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+  const b = filterDoctor.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+  return a === b || a.includes(b) || b.includes(a);
+}
+
+/** Events with no explicit status are plain bookings ("Slot Booked"); urgent walk-ins are "Urgent". */
 export function eventStatus(event: CalendarEvent): string {
-  if (event.status) return event.status;
-  return event.tone === 'urgent' ? 'Urgent' : 'Scheduled';
+  if (event.status) {
+    const s = event.status.trim().toLowerCase();
+    if (s === 'confirmed' || s === 'booked' || s === 'slot booked') {
+      return 'Slot Booked';
+    }
+    return event.status;
+  }
+  return event.tone === 'urgent' ? 'Urgent' : 'Slot Booked';
 }
 
 /**
@@ -25,9 +39,16 @@ export function filterCalendarEvents(
   skip?: keyof CalendarEventFilters,
 ): CalendarEvent[] {
   return events.filter((e) => {
-    if (skip !== 'doctor' && filters.doctor && e.doctorName !== filters.doctor) return false;
+    if (skip !== 'doctor' && filters.doctor) {
+      const docName = e.doctorName ?? e.doctor ?? '';
+      if (!matchesDoctor(docName, filters.doctor)) return false;
+    }
     if (skip !== 'room' && filters.room && e.room !== filters.room) return false;
-    if (skip !== 'status' && filters.status && eventStatus(e) !== filters.status) return false;
+    if (skip !== 'status' && filters.status) {
+      const st = eventStatus(e).toLowerCase();
+      const target = filters.status.toLowerCase();
+      if (st !== target && !(target.includes('book') && st.includes('book'))) return false;
+    }
     return true;
   });
 }

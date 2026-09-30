@@ -1,10 +1,20 @@
 import { useNavigate } from 'react-router-dom';
-import { Lock, CalendarCheck2, Stethoscope, User, MapPin, Clock3, FileEdit, X, CheckCircle2 } from 'lucide-react';
+import { Lock, CalendarCheck2, Stethoscope, User, MapPin, Clock3, FileEdit, X, CheckCircle2, Building2 } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 
 interface Props {
   holdMinutesLabel: string;
-  overview: { schedule: string; doctor: string; patient: string; suite: string; duration: string };
+  overview: {
+    schedule: string;
+    doctor: string;
+    patient: string;
+    suite: string;
+    duration: string;
+    ward?: string;
+    room?: string;
+    allocationReason?: string;
+    features?: string[];
+  };
   fee: string;
   feeNote: string;
   syncNote: string;
@@ -21,7 +31,8 @@ export function AppointmentOverviewCard({ holdMinutesLabel, overview, fee, feeNo
     { icon: CalendarCheck2, label: 'Selected Schedule', value: overview.schedule },
     { icon: Stethoscope, label: 'Attending Doctor', value: overview.doctor },
     { icon: User, label: 'Patient', value: overview.patient },
-    { icon: MapPin, label: 'Clinical Suite', value: overview.suite },
+    ...(overview.ward ? [{ icon: Building2, label: 'Assigned Ward', value: overview.ward }] : []),
+    { icon: MapPin, label: 'Room / Suite', value: overview.room || overview.suite },
     { icon: Clock3, label: 'Visit Duration', value: overview.duration },
   ];
 

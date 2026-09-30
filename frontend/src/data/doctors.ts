@@ -2,10 +2,41 @@ import { Stethoscope, Clock3, CheckCircle2, Building2 } from 'lucide-react';
 import type { Doctor, MetricConfig } from '@/types';
 
 export const doctors: Doctor[] = [
-  ['Dr. Ahmed Rahman', 'Neurology', 'Suite 304', 'M T W T', 'ON FLOOR', '8 /10', 'https://i.pravatar.cc/80?img=12'],
-  ['Dr. Elena Rostova', 'Dermatology', 'Suite 112', 'M T W T F', 'IN CONSULT', '11 /12', 'https://i.pravatar.cc/80?img=47'],
-  ['Dr. Marcus Vale', 'Pediatrics', 'Suite 201', 'M T W T F', 'ACTIVE FLOOR', '6 /8', 'https://i.pravatar.cc/80?img=11'],
-  ['Dr. Priya Patel', 'Cardiology', 'Cath Lab 2', 'M T W T F', 'ACTIVE FLOOR', '5 /6', 'https://i.pravatar.cc/80?img=45'],
+  ['Dr. XYZ', 'General Medicine', 'Suite 105', 'M T W T F', 'ON DUTY', '0 /4', 'https://i.pravatar.cc/80?img=33', {
+    MON: { start: '15:00', end: '16:00' },
+    TUE: { start: '15:00', end: '16:00' },
+    WED: { start: '15:00', end: '16:00' },
+    THU: { start: '15:00', end: '16:00' },
+    FRI: { start: '15:00', end: '16:00' },
+  }],
+  ['Dr. Ahmed Rahman', 'Neurology', 'Suite 304', 'M T W T F', 'ON FLOOR', '8 /10', 'https://i.pravatar.cc/80?img=12', {
+    MON: { start: '09:00', end: '17:00' },
+    TUE: { start: '09:00', end: '17:00' },
+    WED: { start: '09:00', end: '17:00' },
+    THU: { start: '09:00', end: '17:00' },
+    FRI: { start: '09:00', end: '17:00' },
+  }],
+  ['Dr. Elena Rostova', 'Dermatology', 'Suite 112', 'M T W T F', 'IN CONSULT', '11 /12', 'https://i.pravatar.cc/80?img=47', {
+    MON: { start: '10:00', end: '17:00' },
+    TUE: { start: '10:00', end: '17:00' },
+    WED: { start: '10:00', end: '17:00' },
+    THU: { start: '10:00', end: '17:00' },
+    FRI: { start: '10:00', end: '17:00' },
+  }],
+  ['Dr. Marcus Vale', 'Pediatrics', 'Suite 201', 'M T W T F', 'ACTIVE FLOOR', '6 /8', 'https://i.pravatar.cc/80?img=11', {
+    MON: { start: '08:00', end: '17:00' },
+    TUE: { start: '08:00', end: '17:00' },
+    WED: { start: '08:00', end: '17:00' },
+    THU: { start: '08:00', end: '17:00' },
+    FRI: { start: '08:00', end: '17:00' },
+  }],
+  ['Dr. Priya Patel', 'Cardiology', 'Cath Lab 2', 'M T W T F', 'ACTIVE FLOOR', '5 /6', 'https://i.pravatar.cc/80?img=45', {
+    MON: { start: '11:00', end: '18:00' },
+    TUE: { start: '11:00', end: '18:00' },
+    WED: { start: '11:00', end: '18:00' },
+    THU: { start: '11:00', end: '18:00' },
+    FRI: { start: '11:00', end: '18:00' },
+  }],
   ['Dr. Kenneth Moore', 'Orthopedics', 'Suite 408', 'M T W T F', 'ACTIVE FLOOR', '3 /8', 'https://i.pravatar.cc/80?img=60'],
   ['Dr. Sandra Chen', 'Internal Med', 'Suite 105', 'M T W T F', 'OFF DUTY', '0 /0', 'https://i.pravatar.cc/80?img=32'],
 ];

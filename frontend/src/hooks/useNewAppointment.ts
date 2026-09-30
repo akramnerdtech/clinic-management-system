@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { newAppointmentService, type NewAppointmentFormState } from '@/services/newAppointmentService';
 import { appointmentsService } from '@/services/appointmentsService';
 import { patientsService } from '@/services/patientsService';
+import { allocateWardAndRoom, type WardAllocationResult } from '@/services/wardAllocationService';
 import { useToast } from '@/utils/toast';
 import type { AppointmentEntry, Patient } from '@/types';
 
@@ -154,13 +155,30 @@ export function useNewAppointment(editToken?: string) {
     [specialist, specialty],
   );
 
+  const selectedPriorityObj = priorityOptions.find((p) => p.id === priorityId);
+  const wardAllocation = useMemo(
+    () =>
+      allocateWardAndRoom({
+        specialty,
+        doctorName: specialist,
+        priority: selectedPriorityObj?.label || 'Routine',
+        doctorSuite: selectedDoctor.suite,
+        patientAgeSex: patient?.[2] || '',
+      }),
+    [specialty, specialist, selectedPriorityObj, selectedDoctor.suite, patient],
+  );
+
   const overview = useMemo(() => ({
     schedule: `${selectedDayLabel} @ ${selectedSlot}`,
     doctor: selectedDoctor.name,
     patient: patient ? `${patient[1]} (${patient[0]})` : 'Select a patient',
-    suite: selectedDoctor.suite,
+    suite: wardAllocation.displayLabel,
     duration: `${selectedFormat.meta.split(' • ')[0]} (${selectedFormat.label})`,
-  }), [selectedDayLabel, selectedSlot, selectedDoctor, patient, selectedFormat]);
+    ward: wardAllocation.wardName,
+    room: wardAllocation.roomNumber,
+    allocationReason: wardAllocation.allocationReason,
+    features: wardAllocation.features,
+  }), [selectedDayLabel, selectedSlot, selectedDoctor, patient, selectedFormat, wardAllocation]);
 
   const saveDraft = () => {
     if (isEditing) return;
@@ -195,19 +213,21 @@ export function useNewAppointment(editToken?: string) {
       // Keep values the form cannot change (or never knew about) when the user did not touch them.
       const updated: AppointmentEntry = [
         selectedSlot,
-        sameSlot ? editEntry[1] : '30 min slot',
+        sameSlot ? editEntry[1] : '15 min slot',
         editToken,
         patient[1],
         patient[2],
         reason.trim(),
         intakeMemo.trim(),
         specialist,
-        sameDoctor ? editEntry[8] : selectedDoctor.suite,
+        sameDoctor ? editEntry[8] : wardAllocation.displayLabel,
         !originalFormat && formatId === formatOptions[0].id ? editEntry[9] : selectedFormat.label,
-        editEntry[10],
+        'Slot Booked',
         selectedDay,
       ];
       appointmentsService.updateEntry(editToken, updated);
+      newAppointmentService.saveAppointmentToCalendar(updated);
+      window.dispatchEvent(new CustomEvent('clinic-appointments-updated'));
       setStatus('Appointment updated successfully.');
       toast.success(`Appointment ${editToken} updated for ${patient[1]}.`);
       return updated;
@@ -215,20 +235,22 @@ export function useNewAppointment(editToken?: string) {
 
     const entry: AppointmentEntry = [
       selectedSlot,
-      '30 min slot',
+      '15 min slot',
       appointmentsService.getNextToken(),
       patient[1],
       patient[2],
       reason.trim(),
       intakeMemo.trim(),
       specialist,
-      selectedDoctor.suite,
+      wardAllocation.displayLabel,
       selectedFormat.label,
-      'Confirmed',
+      'Slot Booked',
       selectedDay,
     ];
 
     appointmentsService.addEntry(entry);
+    newAppointmentService.saveAppointmentToCalendar(entry);
+    window.dispatchEvent(new CustomEvent('clinic-appointments-updated'));
     newAppointmentService.resetFormState();
     setStatus('Appointment booked successfully.');
     toast.success(`Appointment booked for ${patient[1]} with ${selectedDoctor.name} at ${selectedSlot}.`);
@@ -247,6 +269,7 @@ export function useNewAppointment(editToken?: string) {
     reason, setReason,
     intakeMemo, setIntakeMemo,
     overview,
+    wardAllocation,
     status, saveDraft, bookAppointment,
     isEditing, editNotFound,
   };

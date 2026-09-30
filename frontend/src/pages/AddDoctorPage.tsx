@@ -6,7 +6,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { DoctorFormField } from '@/components/doctors/DoctorFormField';
 import { DutyDaySelector } from '@/components/doctors/DutyDaySelector';
 import { useAddDoctor } from '@/hooks/useAddDoctor';
-import {useToast} from '@/utils/toast';
+import { useToast } from '@/utils/toast';
 
 export function AddDoctorPage() {
   const {
@@ -34,9 +34,9 @@ export function AddDoctorPage() {
 
   const handleRegister = () => {
     const doctor = registerDoctor();
-    if (doctor){
-       
-       navigate('/doctors');
+    if (doctor) {
+
+      navigate('/doctors');
     }
   };
 
@@ -121,7 +121,7 @@ export function AddDoctorPage() {
               </div>
               <DutyDaySelector days={dutyDays} onToggle={toggleDutyDay} onTimeChange={(dayKey, part, value) => updateDaySchedule(dayKey, { [part]: value })} />
             </div>
-           
+
           </section>
         </div>
 

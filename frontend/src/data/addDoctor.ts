@@ -22,17 +22,17 @@ export const credentialFields: DoctorFormField[] = [
   { id: 'degrees', label: 'Degrees & Qualifications *', placeholder: 'e.g. MD (Johns Hopkins), MBBS, MRCP (UK), FACC' },
   { id: 'experience', label: 'Years of Experience', placeholder: '12', suffix: 'Years' },
   { id: 'suite', label: 'Assigned Consultation Suite *', placeholder: 'Suite 101 — North Pavillion (Ground Floor)' },
-  { id: 'fee', label: 'Standard Consultation Fee ($ USD)', placeholder: '180', icon: DollarSign, suffix: '/ 30 min' },
+  { id: 'fee', label: 'Standard Consultation Fee (₹ INR)', placeholder: '800', suffix: '/ 15 min' },
 ];
 
 export const dutyDaysDefault: DutyDay[] = [
-  { key: 'MON', active: true, start: '09:00', end: '17:00' },
-  { key: 'TUE', active: true, start: '09:00', end: '17:00' },
-  { key: 'WED', active: true, start: '09:00', end: '17:00' },
-  { key: 'THU', active: true, start: '09:00', end: '17:00' },
-  { key: 'FRI', active: true, start: '09:00', end: '17:00' },
-  { key: 'SAT', active: false, start: '09:00', end: '13:00' },
-  { key: 'SUN', active: false, start: '09:00', end: '13:00' },
+  { key: 'MON', active: true, start: '10:00', end: '20:00' },
+  { key: 'TUE', active: true, start: '10:00', end: '20:00' },
+  { key: 'WED', active: true, start: '10:00', end: '20:00' },
+  { key: 'THU', active: true, start: '10:00', end: '20:00' },
+  { key: 'FRI', active: true, start: '10:00', end: '20:00' },
+  { key: 'SAT', active: false, start: '10:00', end: '14:00' },
+  { key: 'SUN', active: false, start: '10:00', end: '14:00' },
 ];
 
 export const shiftTimesDefault = { start: '', end: '' };
@@ -57,7 +57,7 @@ export const addDoctorPreview: AddDoctorPreview = {
   specialty: 'Neurology Specialist',
   location: 'Suite 101 · North Pavillion',
   avatar: 'https://i.pravatar.cc/100?img=48',
-  fee: '$180.00',
+  fee: '₹800.00',
   capacity: '16 / Day',
 };
 

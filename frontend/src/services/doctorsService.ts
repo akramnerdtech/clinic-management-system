@@ -10,7 +10,16 @@ const KEYS = {
 
 export const doctorsService = {
   getDoctors(): Doctor[] {
-    return loadFromStorage(KEYS.doctors, doctors).map((doctor) => [
+    const loaded = loadFromStorage<Doctor[]>(KEYS.doctors, doctors);
+    const names = new Set(loaded.map((d) => d[0]));
+    const merged = [...loaded];
+    for (const d of doctors) {
+      if (!names.has(d[0])) {
+        merged.push(d);
+        names.add(d[0]);
+      }
+    }
+    return merged.map((doctor) => [
       doctor[0], doctor[1], doctor[2], doctor[3],
       doctor[4] === 'OFF DUTY' ? 'OFF DUTY' : 'ON DUTY',
       doctor[5], doctor[6], doctor[7],

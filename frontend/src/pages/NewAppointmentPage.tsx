@@ -16,7 +16,7 @@ export function NewAppointmentPage() {
     formatId, setFormatId, priorityId, setPriorityId,
     specialty, setSpecialty, specialist, setSpecialist,
     reason, setReason, intakeMemo, setIntakeMemo,
-    overview, status, saveDraft, bookAppointment, isEditing, editNotFound,
+    overview, wardAllocation, status, saveDraft, bookAppointment, isEditing, editNotFound,
   } = useNewAppointment(tokenId);
   const navigate = useNavigate();
 
@@ -72,6 +72,7 @@ export function NewAppointmentPage() {
             priorityOptions={priorityOptions}
             priorityId={priorityId}
             onPriorityChange={setPriorityId}
+            wardAllocation={wardAllocation}
           />
         </div>
 

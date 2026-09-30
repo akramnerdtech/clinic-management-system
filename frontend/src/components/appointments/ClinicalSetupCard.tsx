@@ -1,5 +1,6 @@
-import { ClipboardPlus } from 'lucide-react';
+import { ClipboardPlus, Bed, Building2, ShieldCheck, ShieldAlert, Sparkles } from 'lucide-react';
 import type { AppointmentFormatOption, PriorityOption } from '@/types';
+import type { WardAllocationResult } from '@/services/wardAllocationService';
 
 interface Props {
   medicalSpecialties: string[];
@@ -20,6 +21,7 @@ interface Props {
   priorityOptions: PriorityOption[];
   priorityId: string;
   onPriorityChange: (id: string) => void;
+  wardAllocation?: WardAllocationResult;
 }
 
 export function ClinicalSetupCard({
@@ -27,6 +29,7 @@ export function ClinicalSetupCard({
   specialty, onSpecialtyChange, specialist, onSpecialistChange,
   reason, onReasonChange, intakeMemo, onIntakeMemoChange,
   formatOptions, formatId, onFormatChange, priorityOptions, priorityId, onPriorityChange,
+  wardAllocation,
 }: Props) {
   return (
     <section className="content-card appointment-form-card">
@@ -98,6 +101,51 @@ export function ClinicalSetupCard({
           <span>Intake Memo & Pre-Visit Notes <em className="label-hint">Optional for Physician</em></span>
           <textarea rows={3} placeholder="Optional notes for the physician before the visit" value={intakeMemo} onChange={(e) => onIntakeMemoChange(e.target.value)} />
         </label>
+
+        {wardAllocation && (
+          <div className="ward-allocation-panel wide">
+            <div className="ward-panel-header">
+              <div className="ward-badge-pill">
+                <Building2 size={14} />
+                <span>Ward & Room Allocation Logic</span>
+              </div>
+              <span className={`ward-urgency-badge ${priorityId === 'urgent' ? 'urgent' : 'routine'}`}>
+                {priorityId === 'urgent' ? <ShieldAlert size={13} /> : <ShieldCheck size={13} />}
+                {priorityId === 'urgent' ? 'Emergency Protocol' : 'Assigned Outpatient / Ward'}
+              </span>
+            </div>
+
+            <div className="ward-details-grid">
+              <div className="ward-detail-card">
+                <span className="ward-detail-label">Designated Hospital Ward</span>
+                <b className="ward-detail-value">{wardAllocation.wardName}</b>
+                <span className="ward-detail-sub">{wardAllocation.wing} • {wardAllocation.floor}</span>
+              </div>
+
+              <div className="ward-detail-card highlight">
+                <span className="ward-detail-label">Assigned Room / Consultation Suite</span>
+                <b className="ward-detail-value text-emerald">{wardAllocation.roomNumber}</b>
+                <span className="ward-detail-sub"><Bed size={12} style={{ display: 'inline', marginRight: 4 }} />{wardAllocation.bedStation}</span>
+              </div>
+            </div>
+
+            <div className="ward-reason-box">
+              <Sparkles size={14} className="text-emerald" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <strong>Allocation Reason:</strong> {wardAllocation.allocationReason}
+              </div>
+            </div>
+
+            {wardAllocation.features && wardAllocation.features.length > 0 && (
+              <div className="ward-features-row">
+                <span className="features-label">Suite Facilities:</span>
+                {wardAllocation.features.map((feat) => (
+                  <span key={feat} className="ward-feature-tag">✓ {feat}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </form>
     </section>
   );

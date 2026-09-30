@@ -1,117 +1,485 @@
-import { useCallback, useMemo, useState } from 'react';
-import { calendarService } from '@/services/calendarService';
 import {
-  getColumnDates, getMonthWeeks, getRangeLabel, getVisibleRange, parseISO, shiftAnchor, weekdayIndex, WEEKDAY_SHORT,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import { calendarService } from '@/services/calendarService';
+
+import {
+  getColumnDates,
+  getMonthWeeks,
+  getRangeLabel,
+  getVisibleRange,
+  parseISO,
+  shiftAnchor,
+  weekdayIndex,
+  WEEKDAY_SHORT,
 } from '@/utils/calendarDates';
+
 import type { CalendarView } from '@/utils/calendarDates';
-import { CALENDAR_STATUS_OPTIONS, countBy, eventStatus, filterCalendarEvents } from '@/utils/calendarFilters';
+
+import {
+  CALENDAR_STATUS_OPTIONS,
+  countBy,
+  eventStatus,
+  filterCalendarEvents,
+} from '@/utils/calendarFilters';
+
 import type { CalendarColumn } from '@/types';
 
 export function useMasterCalendar() {
-  const [gridBounds] = useState(() => calendarService.getGridBounds());
-  const [syncLabel] = useState(() => calendarService.getSyncLabel());
-  const [now] = useState(() => calendarService.getNow());
-  const [today] = useState(() => calendarService.getToday());
-  const [allEvents] = useState(() => calendarService.getEvents());
+  const [gridBounds] =
+    useState(() =>
+      calendarService.getGridBounds(),
+    );
+
+  const [syncLabel] =
+    useState(() =>
+      calendarService.getSyncLabel(),
+    );
+
+  const [today] =
+    useState(() =>
+      calendarService.getToday(),
+    );
+
+  const [now] =
+    useState(() =>
+      calendarService.getNow(),
+    );
+
+  const [allEvents, setAllEvents] = useState(() => calendarService.getEvents());
   const [middayBanner] = useState(() => calendarService.getMiddayBanner());
   const [endBannerLabel] = useState(() => calendarService.getEndBannerLabel());
   const [suiteUtilizationRows] = useState(() => calendarService.getSuiteUtilizationRows());
   const [roomStatuses] = useState(() => calendarService.getRoomStatuses());
   const [physicianShifts] = useState(() => calendarService.getPhysicianShifts());
-  const [doctorOptions] = useState(() => calendarService.getDoctorOptions());
+  const [doctorOptions, setDoctorOptions] = useState(() => calendarService.getDoctorOptions());
 
-  const [view, setView] = useState<CalendarView>('Week');
-  const [anchor, setAnchor] = useState(today);
-  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-
-  const goToday = useCallback(() => setAnchor(today), [today]);
-  const goPrev = useCallback(() => setAnchor((a) => shiftAnchor(view, a, -1)), [view]);
-  const goNext = useCallback(() => setAnchor((a) => shiftAnchor(view, a, 1)), [view]);
-  /** Jump to a single day (used when a month cell is clicked). */
-  const openDay = useCallback((iso: string) => {
-    setAnchor(iso);
-    setView('Day');
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAllEvents(calendarService.getEvents());
+      setDoctorOptions(calendarService.getDoctorOptions());
+    };
+    window.addEventListener('clinic-appointments-updated', handleUpdate);
+    window.addEventListener('clinic-calendar-updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('clinic-appointments-updated', handleUpdate);
+      window.removeEventListener('clinic-calendar-updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
   }, []);
 
-  const range = useMemo(() => getVisibleRange(view, anchor), [view, anchor]);
-  const rangeLabel = useMemo(() => getRangeLabel(view, anchor), [view, anchor]);
-  const isCurrentPeriod = today >= range.start && today <= range.end;
-
-  const columns = useMemo<CalendarColumn[]>(
-    () => getColumnDates(view, anchor).map((iso) => ({
-      iso,
-      label: WEEKDAY_SHORT[weekdayIndex(iso)],
-      date: parseISO(iso).getDate(),
-      today: iso === today,
-    })),
-    [view, anchor, today],
-  );
-  const monthWeeks = useMemo(() => (view === 'Month' ? getMonthWeeks(anchor) : []), [view, anchor]);
-
-  const filters = useMemo(
-    () => ({ doctor: selectedDoctor, room: selectedRoom, status: selectedStatus }),
-    [selectedDoctor, selectedRoom, selectedStatus],
-  );
-
-  /** Everything scheduled in the visible period, before the doctor / room / status filters. */
-  const periodEvents = useMemo(
-    () => allEvents.filter((e) => e.date && e.date >= range.start && e.date <= range.end),
-    [allEvents, range],
-  );
-  const events = useMemo(() => filterCalendarEvents(periodEvents, filters), [periodEvents, filters]);
-
-  // Each dropdown's counts ignore its own filter, so they show what picking that option would give.
-  const appointmentCounts = useMemo(
-    () => countBy(filterCalendarEvents(periodEvents, filters, 'doctor'), (e) => e.doctorName),
-    [periodEvents, filters],
-  );
-  const totalAppointments = useMemo(
-    () => filterCalendarEvents(periodEvents, filters, 'doctor').length,
-    [periodEvents, filters],
-  );
-
-  const roomOptions = useMemo(() => {
-    const counts = countBy(filterCalendarEvents(periodEvents, filters, 'room'), (e) => e.room);
-    const rooms = Array.from(new Set(allEvents.map((e) => e.room).filter((r): r is string => Boolean(r))))
-      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-    return rooms.map((r) => ({ value: r, label: r, count: counts[r] ?? 0 }));
-  }, [allEvents, periodEvents, filters]);
-
-  const statusOptions = useMemo(() => {
-    const counts = countBy(filterCalendarEvents(periodEvents, filters, 'status'), eventStatus);
-    return CALENDAR_STATUS_OPTIONS.map((s) => ({ value: s, label: s, count: counts[s] ?? 0 }));
-  }, [periodEvents, filters]);
-  const roomTotal = useMemo(
-    () => filterCalendarEvents(periodEvents, filters, 'room').length,
-    [periodEvents, filters],
-  );
-  const statusTotal = useMemo(
-    () => filterCalendarEvents(periodEvents, filters, 'status').length,
-    [periodEvents, filters],
-  );
-
-  const hasActiveFilters = Boolean(selectedDoctor || selectedRoom || selectedStatus);
-  const clearFilters = useCallback(() => {
-    setSelectedDoctor(null);
-    setSelectedRoom(null);
-    setSelectedStatus(null);
+  const refreshEvents = useCallback(() => {
+    setAllEvents(calendarService.getEvents());
+    setDoctorOptions(calendarService.getDoctorOptions());
   }, []);
+
+  const getDoctorSchedule = useCallback(
+    (doctor: string, dateKey: string) => calendarService.getDoctorDaySchedule(doctor, dateKey),
+    [],
+  );
+
+  const [view, setView] =
+    useState<CalendarView>(
+      'Week',
+    );
+
+  const [anchor, setAnchor] =
+    useState(today);
+
+  const [selectedDoctor, setSelectedDoctor] =
+    useState<string | null>(
+      null,
+    );
+
+  const [selectedRoom, setSelectedRoom] =
+    useState<string | null>(
+      null,
+    );
+
+  const [selectedStatus, setSelectedStatus] =
+    useState<string | null>(
+      null,
+    );
+
+  const goToday =
+    useCallback(() => {
+      setAnchor(today);
+    }, [today]);
+
+  const goPrev =
+    useCallback(() => {
+      setAnchor(
+        (current) =>
+          shiftAnchor(
+            view,
+            current,
+            -1,
+          ),
+      );
+    }, [view]);
+
+  const goNext =
+    useCallback(() => {
+      setAnchor(
+        (current) =>
+          shiftAnchor(
+            view,
+            current,
+            1,
+          ),
+      );
+    }, [view]);
+
+  const openDay =
+    useCallback(
+      (date: string) => {
+        setAnchor(date);
+        setView('Day');
+      },
+      [],
+    );
+
+  const range =
+    useMemo(
+      () =>
+        getVisibleRange(
+          view,
+          anchor,
+        ),
+      [view, anchor],
+    );
+
+  const rangeLabel =
+    useMemo(
+      () =>
+        getRangeLabel(
+          view,
+          anchor,
+        ),
+      [view, anchor],
+    );
+
+  const columns =
+    useMemo<CalendarColumn[]>(
+      () =>
+        getColumnDates(
+          view,
+          anchor,
+        ).map((iso) => ({
+          iso,
+
+          label:
+            WEEKDAY_SHORT[
+              weekdayIndex(iso)
+            ],
+
+          date:
+            parseISO(
+              iso,
+            ).getDate(),
+
+          today:
+            iso === today,
+        })),
+      [
+        view,
+        anchor,
+        today,
+      ],
+    );
+
+  const monthWeeks =
+    useMemo(
+      () =>
+        view === 'Month'
+          ? getMonthWeeks(
+              anchor,
+            )
+          : [],
+      [view, anchor],
+    );
+
+  const filters =
+    useMemo(
+      () => ({
+        doctor:
+          selectedDoctor,
+        room:
+          selectedRoom,
+        status:
+          selectedStatus,
+      }),
+      [
+        selectedDoctor,
+        selectedRoom,
+        selectedStatus,
+      ],
+    );
+
+  const periodEvents =
+    useMemo(
+      () =>
+        allEvents.filter(
+          (event) =>
+            Boolean(
+              event.date,
+            ) &&
+            event.date! >=
+              range.start &&
+            event.date! <=
+              range.end,
+        ),
+      [
+        allEvents,
+        range,
+      ],
+    );
+
+  const events =
+    useMemo(
+      () =>
+        filterCalendarEvents(
+          periodEvents,
+          filters,
+        ),
+      [
+        periodEvents,
+        filters,
+      ],
+    );
+
+  /*
+   * Doctor counts.
+   *
+   * Supports:
+   * doctorName
+   * doctor
+   */
+
+  const doctorEvents =
+    useMemo(
+      () =>
+        filterCalendarEvents(
+          periodEvents,
+          filters,
+          'doctor',
+        ),
+      [
+        periodEvents,
+        filters,
+      ],
+    );
+
+  const appointmentCounts =
+    useMemo(() => {
+      const result: Record<
+        string,
+        number
+      > = {};
+
+      doctorEvents.forEach(
+        (event) => {
+          const name =
+            calendarService.getEventDoctorName(
+              event,
+            );
+
+          if (!name) {
+            return;
+          }
+
+          result[name] =
+            (result[name] ??
+              0) + 1;
+        },
+      );
+
+      return result;
+    }, [doctorEvents]);
+
+  const totalAppointments =
+    doctorEvents.length;
+
+  /*
+   * Room counts
+   */
+
+  const roomOptions =
+    useMemo(() => {
+      const counts =
+        countBy(
+          filterCalendarEvents(
+            periodEvents,
+            filters,
+            'room',
+          ),
+          (event) =>
+            event.room,
+        );
+
+      const rooms =
+        Array.from(
+          new Set(
+            allEvents
+              .map(
+                (event) =>
+                  event.room,
+              )
+              .filter(
+                (
+                  room,
+                ): room is string =>
+                  Boolean(
+                    room,
+                  ),
+              ),
+          ),
+        ).sort(
+          (
+            a,
+            b,
+          ) =>
+            a.localeCompare(
+              b,
+              undefined,
+              {
+                numeric: true,
+              },
+            ),
+        );
+
+      return rooms.map(
+        (room) => ({
+          value: room,
+          label: room,
+          count:
+            counts[room] ??
+            0,
+        }),
+      );
+    }, [
+      allEvents,
+      periodEvents,
+      filters,
+    ]);
+
+  /*
+   * Status counts
+   */
+
+  const statusOptions =
+    useMemo(() => {
+      const counts =
+        countBy(
+          filterCalendarEvents(
+            periodEvents,
+            filters,
+            'status',
+          ),
+          eventStatus,
+        );
+
+      return CALENDAR_STATUS_OPTIONS.map(
+        (status) => ({
+          value: status,
+          label: status,
+          count:
+            counts[status] ??
+            0,
+        }),
+      );
+    }, [
+      periodEvents,
+      filters,
+    ]);
+
+  const roomTotal =
+    filterCalendarEvents(
+      periodEvents,
+      filters,
+      'room',
+    ).length;
+
+  const statusTotal =
+    filterCalendarEvents(
+      periodEvents,
+      filters,
+      'status',
+    ).length;
+
+  const hasActiveFilters =
+    Boolean(
+      selectedDoctor ||
+      selectedRoom ||
+      selectedStatus,
+    );
+
+  const clearFilters =
+    useCallback(() => {
+      setSelectedDoctor(null);
+      setSelectedRoom(null);
+      setSelectedStatus(null);
+    }, []);
 
   return {
-    gridBounds, syncLabel, middayBanner, endBannerLabel, suiteUtilizationRows, roomStatuses, physicianShifts,
-    // navigation
-    view, setView, rangeLabel, isCurrentPeriod, goToday, goPrev, goNext, openDay,
-    columns, monthWeeks, today,
-    // the now-line only makes sense while today is on screen
-    now: columns.some((c) => c.today) ? now : null,
-    // data
+    gridBounds,
+    syncLabel,
+
+    now:
+      columns.some(
+        (column) =>
+          column.today,
+      )
+        ? now
+        : null,
+
     events,
-    // filters
-    doctorOptions, selectedDoctor, setSelectedDoctor, appointmentCounts, totalAppointments,
-    roomOptions, selectedRoom, setSelectedRoom, roomTotal,
-    statusOptions, selectedStatus, setSelectedStatus, statusTotal,
-    hasActiveFilters, clearFilters,
+    today,
+    columns,
+    monthWeeks,
+
+    middayBanner,
+    endBannerLabel,
+
+    suiteUtilizationRows,
+    roomStatuses,
+    physicianShifts,
+
+    view,
+    setView,
+
+    rangeLabel,
+
+    goToday,
+    goPrev,
+    goNext,
+    openDay,
+
+    doctorOptions,
+    selectedDoctor,
+    setSelectedDoctor,
+
+    appointmentCounts,
+    totalAppointments,
+
+    roomOptions,
+    selectedRoom,
+    setSelectedRoom,
+    roomTotal,
+
+    statusOptions,
+    selectedStatus,
+    setSelectedStatus,
+    statusTotal,
+
+    hasActiveFilters,
+    clearFilters,
+    refreshEvents,
+    getDoctorSchedule,
   };
 }
