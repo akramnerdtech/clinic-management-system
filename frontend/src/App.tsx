@@ -11,6 +11,7 @@ import { AppointmentsPage } from '@/pages/AppointmentsPage';
 import { NewAppointmentPage } from '@/pages/NewAppointmentPage';
 import { AddPatientPage } from '@/pages/AddPatientPage';
 import { EditPatientPage } from '@/pages/EditPatientPage';
+import { RoomsPage } from '@/pages/RoomsPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { MasterCalendarPage } from '@/pages/MasterCalendarPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -36,6 +37,7 @@ function MainProjectRoutes() {
           <Route path="/appointments/new" element={<NewAppointmentPage />} />
           <Route path="/appointments/:tokenId/edit" element={<NewAppointmentPage />} />
           <Route path="/calendar" element={<MasterCalendarPage />} />
+          <Route path="/rooms" element={<RoomsPage />} />
           <Route path="/specialties" element={<SpecialtiesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/account" element={<AccountSettingsPage />} />
