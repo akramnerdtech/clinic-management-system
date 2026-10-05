@@ -1,4 +1,9 @@
-import { Activity, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
+import {
+  Building2, CheckCircle2, Clock, Download, FileJson, FileText, Hash, Mail, MapPin, Phone, ShieldCheck,
+  Siren, TriangleAlert, Users, BedDouble, Globe, Activity, Upload, ConciergeBell, Database,
+} from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IconButton } from '@/components/ui/IconButton';
 import { Field } from '@/components/settings/Field';
@@ -8,14 +13,31 @@ import { useSettingsData } from '@/hooks/useSettingsData';
 import { useToast } from '@/utils/toast';
 import { downloadCsv, exportAllLocalStorage } from '@/utils/exportFile';
 import { appointmentsService } from '@/services/appointmentsService';
+import '@/styles/settings.css';
+
+const TABS: { label: string; icon: ReactNode }[] = [
+  { label: 'Clinic Profile', icon: <Building2 size={15} /> },
+  { label: 'Hours & Slots', icon: <Clock size={15} /> },
+  { label: 'Reception', icon: <ConciergeBell size={15} /> },
+  { label: 'Data & Compliance', icon: <Database size={15} /> },
+];
+
+/** Icons for the identity fields, in the same order as the data. */
+const FIELD_ICONS: ReactNode[] = [
+  <Building2 size={16} />, <Hash size={16} />, <MapPin size={16} />,
+  <Phone size={16} />, <Siren size={16} />, <Mail size={16} />, <FileText size={16} />,
+];
+
+const SLOT_HOURS = ['8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM'];
 
 export function SettingsPage() {
   const {
-    tabs, identityFields, updateIdentityField, scheduleRows, durationOptions,
+    identityFields, updateIdentityField, scheduleRows, durationOptions,
     receptionDefaults, toggleWalkInAutoCheckin, campusInfo, slotSaturationBars, complianceInfo,
     status, saveChanges, discardChanges,
   } = useSettingsData();
   const toast = useToast();
+  const [tab, setTab] = useState(0);
 
   const handleExportLogs = () => {
     const entries = appointmentsService.getEntries();
@@ -32,81 +54,158 @@ export function SettingsPage() {
     toast.success('Full audit trail exported as JSON.');
   };
 
+  const renderField = (index: number) => {
+    const f = identityFields[index];
+    if (!f) return null;
+    return <Field key={f.label} {...f} icon={FIELD_ICONS[index]} onChange={(v) => updateIdentityField(index, v)} />;
+  };
+
+  const maxBar = Math.max(...slotSaturationBars, 1);
+  const peakIndex = slotSaturationBars.indexOf(Math.max(...slotSaturationBars));
+
   return (
-    <>
+    <div className="sp">
       <PageHeader
-        eyebrow="FACILITY MANAGEMENT / SYSTEM SETTINGS"
-        title="Clinic Profile & System Settings"
-        description="Configure clinic operating hours, branch contact details, receptionist preferences, and triage rules."
+        eyebrow="Facility management"
+        title="Clinic settings"
+        description="Manage your clinic's details, opening hours and reception preferences."
         actions={<>
-          <span className="autosaved"><i /> {status ?? 'Autosaved 2 mins ago'}</span>
-          <IconButton className="white-button" onClick={discardChanges}>Discard Changes</IconButton>
-          <IconButton className="teal-button" onClick={saveChanges}><CheckCircle2 size={14} /> Save Changes</IconButton>
+          {status && <span className="sp-status"><i /> {status}</span>}
+          <IconButton className="white-button" onClick={discardChanges}>Discard</IconButton>
+          <IconButton className="teal-button" onClick={saveChanges}><CheckCircle2 size={14} /> Save changes</IconButton>
         </>}
       />
-      <div className="settings-tabs">
-        {tabs.map((t, i) => i === 0 ? <b key={t}>{t}</b> : <span key={t}>{t}{i === 2 && <i>14</i>}</span>)}
-      </div>
-      <div className="settings-layout">
-        <div>
-          <section className="content-card identity-card">
-            <div className="card-title">
+
+      <nav className="sp-tabs" role="tablist" aria-label="Settings sections">
+        {TABS.map((t, i) => (
+          <button
+            key={t.label}
+            type="button"
+            role="tab"
+            aria-selected={tab === i}
+            className={tab === i ? 'active' : ''}
+            onClick={() => setTab(i)}
+          >{t.icon}{t.label}</button>
+        ))}
+      </nav>
+
+      {tab === 0 && (
+        <>
+          <section className="sp-card">
+            <header className="sp-card-head">
+              <span className="sp-card-icon"><Building2 size={18} /></span>
               <div>
-                <h2>▦ Clinic Identity & Branch Info</h2>
-                <p>Primary legal identity and accredited registry attributes for patient records and billing invoices.</p>
+                <h2>Clinic identity</h2>
+                <p>Shown on patient records, invoices and prescriptions.</p>
               </div>
-              <em>ACTIVE<br />ACCREDITATION</em>
+              <span className="sp-badge green"><i className="sp-dot" /> Accredited</span>
+            </header>
+
+            <div className="sp-logo-row">
+              <div className="sp-logo"><Building2 size={26} /></div>
+              <div className="sp-logo-text">
+                <b>Branch logo</b>
+                <p>Appears on prescription headers, lab requests and reminders. PNG, SVG or WebP, 512×512 recommended.</p>
+              </div>
+              <div className="sp-logo-actions">
+                <button type="button" className="sp-btn" onClick={() => toast.info('Logo uploads require a connected file store — not available in this demo.')}><Upload size={14} /> Replace</button>
+                <button type="button" className="sp-btn ghost" onClick={() => toast.info('Branch monogram removed (demo only — not persisted).')}>Remove</button>
+              </div>
             </div>
-            <div className="monogram">
-              <div className="logo-box">◉</div>
+
+            <h3 className="sp-section">Basic details</h3>
+            <div className="sp-grid">{renderField(0)}{renderField(1)}</div>
+
+            <h3 className="sp-section">Location</h3>
+            <div className="sp-grid">{renderField(2)}</div>
+
+            <h3 className="sp-section">Contact</h3>
+            <div className="sp-grid">{renderField(3)}{renderField(4)}{renderField(5)}{renderField(6)}</div>
+          </section>
+
+          <section className="sp-card">
+            <header className="sp-card-head">
+              <span className="sp-card-icon"><MapPin size={18} /></span>
               <div>
-                <h3>Official Branch Monogram</h3>
-                <p>Appears on verified prescription headers, diagnostic lab requests, and patient appointment reminders.</p>
-                <button onClick={() => toast.info('Logo uploads require a connected file store — not available in this demo.')}>Replace Seal</button> <b onClick={() => toast.info('Branch monogram removed (demo only — not persisted).')}>Remove</b>
+                <h2>Campus at a glance</h2>
+                <p>{campusInfo.locationLabel} · {campusInfo.buildingLabel}</p>
               </div>
-              <small>Recommended 512×512 PNG, SVG, or high-res WebP</small>
+              <span className="sp-badge teal">Geo-verified</span>
+            </header>
+            <div className="sp-stats">
+              <div className="sp-stat"><Globe size={16} /><small>Time zone</small><b>{campusInfo.timeZone}</b></div>
+              <div className="sp-stat"><BedDouble size={16} /><small>Beds &amp; suites</small><b>{campusInfo.suites}</b></div>
+              <div className="sp-stat"><Users size={16} /><small>Clinical staff</small><b>{campusInfo.activeStaff}</b></div>
             </div>
-            <div className="form-grid">
-              {identityFields.map((f, i) => (
-                <Field key={f.label} {...f} onChange={(v) => updateIdentityField(i, v)} />
+          </section>
+        </>
+      )}
+
+      {tab === 1 && (
+        <>
+          <ScheduleCard scheduleRows={scheduleRows} durationOptions={durationOptions} />
+          <section className="sp-card">
+            <header className="sp-card-head">
+              <span className="sp-card-icon"><Activity size={18} /></span>
+              <div>
+                <h2>Today&apos;s patient load</h2>
+                <p>Projected from the current 30-minute consultation cadence.</p>
+              </div>
+              <span className="sp-badge green">Optimal pacing</span>
+            </header>
+            <div className="sp-chart">
+              {slotSaturationBars.map((v, i) => (
+                <div className={`sp-bar ${i === peakIndex ? 'peak' : ''}`} key={i}>
+                  <div className="sp-bar-track"><i style={{ height: `${(v / maxBar) * 100}%` }} /></div>
+                  <small>{SLOT_HOURS[i] ?? ''}</small>
+                </div>
               ))}
             </div>
+            <p className="sp-note">Busiest around <b>{SLOT_HOURS[peakIndex] ?? '—'}</b>.</p>
           </section>
-          <ScheduleCard scheduleRows={scheduleRows} durationOptions={durationOptions} />
-          <ReceptionCard receptionDefaults={receptionDefaults} onToggleWalkInAutoCheckin={toggleWalkInAutoCheckin} />
-        </div>
-        <div className="settings-rail">
-          <section className="content-card rail-card">
-            <h2>▧ Campus Location <em>GEO-VERIFIED</em></h2>
-            <div className="map-placeholder">
-              <MapPin size={22} />
-              <span>{campusInfo.locationLabel}<br />{campusInfo.buildingLabel}</span>
-            </div>
-            <p>Time Zone <b>{campusInfo.timeZone}</b></p>
-            <p>Assigned Beds / Suites <b>{campusInfo.suites}</b></p>
-            <p>Active Clinical Staff <b className="text-green">{campusInfo.activeStaff}</b></p>
-          </section>
-          <section className="content-card rail-card">
-            <h2><Activity size={15} /> Slot Saturation Matrix <small>Today</small></h2>
-            <p>Projected daily patient load based on current 30-minute default consultation cadence.</p>
-            <div className="slot-bars">
-              {slotSaturationBars.map((h, i) => <i style={{ height: `${h}px` }} key={i} />)}
-            </div>
-            <small>Peak throughput: 12:00 PM <b className="text-green">Optimal Pacing</b></small>
-          </section>
-          <section className="content-card rail-card compliance">
-            <h2><ShieldCheck size={15} /> Data Custody & Compliance</h2>
-            <p>{complianceInfo.description}</p>
-            <button onClick={handleExportLogs}>◉ Export Clinical Logs (CSV)</button>
-            <button onClick={handleExportAuditTrail}>‹ Full Audit Trail (Encrypted JSON)</button>
-            <div className="danger-box">
-              <b>⚠ Danger Zone</b>
-              <p>{complianceInfo.dangerZoneNote}</p>
-              <strong>{complianceInfo.branchLabel}</strong>
+        </>
+      )}
+
+      {tab === 2 && (
+        <ReceptionCard receptionDefaults={receptionDefaults} onToggleWalkInAutoCheckin={toggleWalkInAutoCheckin} />
+      )}
+
+      {tab === 3 && (
+        <>
+          <section className="sp-card">
+            <header className="sp-card-head">
+              <span className="sp-card-icon"><ShieldCheck size={18} /></span>
+              <div>
+                <h2>Data &amp; compliance</h2>
+                <p>{complianceInfo.description}</p>
+              </div>
+            </header>
+            <div className="sp-list">
+              <div className="sp-list-row">
+                <span className="sp-list-icon"><FileText size={16} /></span>
+                <div><b>Clinical logs</b><p>Appointments and visit records as a spreadsheet (CSV).</p></div>
+                <button type="button" className="sp-btn" onClick={handleExportLogs}><Download size={14} /> Export CSV</button>
+              </div>
+              <div className="sp-list-row">
+                <span className="sp-list-icon"><FileJson size={16} /></span>
+                <div><b>Full audit trail</b><p>Everything stored in the system, as a JSON file.</p></div>
+                <button type="button" className="sp-btn" onClick={handleExportAuditTrail}><Download size={14} /> Export JSON</button>
+              </div>
             </div>
           </section>
-        </div>
-      </div>
-    </>
+
+          <section className="sp-card sp-danger">
+            <header className="sp-card-head">
+              <span className="sp-card-icon"><TriangleAlert size={18} /></span>
+              <div>
+                <h2>Danger zone</h2>
+                <p>{complianceInfo.dangerZoneNote}</p>
+              </div>
+            </header>
+            <button type="button" className="sp-btn danger" onClick={() => toast.info('Branch decommissioning is disabled in this demo.')}>{complianceInfo.branchLabel}</button>
+          </section>
+        </>
+      )}
+    </div>
   );
 }

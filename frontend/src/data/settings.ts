@@ -1,21 +1,20 @@
 import type { ClinicField, ScheduleRow, DurationOption } from '@/types';
 
 export const settingsTabs = [
-  '▦ Clinic Profile',
-  '◷ Operating Hours & Slots',
-  '♧ Staff & Access Roles',
-  '♧ Notifications & SMS',
-  '▣ Billing & Compliance',
+  'Clinic Profile',
+  'Hours & Slots',
+  'Reception',
+  'Data & Compliance',
 ];
 
 export const clinicIdentityFields: ClinicField[] = [
-  { label: 'LEGAL ENTITY NAME', value: 'CuraClinic Outpatient Medical Center (Main' },
-  { label: 'BRANCH CODE / STATE LICENSE', value: 'CLN-2026-NY-904' },
-  { label: 'PHYSICAL FACILITY ADDRESS', value: '⌖ 450 Lexington Avenue, Suite 1200, New York, NY 10017', wide: true },
-  { label: 'GENERAL INQUIRIES PHONE', value: '⌕ +1 (212) 555-0188' },
-  { label: 'EMERGENCY DIRECT LINE', value: '⌖ +1 (212) 555-0911', danger: true },
-  { label: 'SUPPORT & FRONT DESK EMAIL', value: '✉ frontdesk@curaclinic.health' },
-  { label: 'MEDICAL RECORDS LIAISON', value: '▣ records-ny@curaclinic.health' },
+  { label: 'Legal entity name', value: 'CuraClinic Outpatient Medical Center (Main Campus)' },
+  { label: 'Branch code / state license', value: 'CLN-2026-NY-904' },
+  { label: 'Facility address', value: '450 Lexington Avenue, Suite 1200, New York, NY 10017', wide: true },
+  { label: 'General inquiries phone', value: '+1 (212) 555-0188' },
+  { label: 'Emergency direct line', value: '+1 (212) 555-0911', danger: true },
+  { label: 'Front desk email', value: 'frontdesk@curaclinic.health' },
+  { label: 'Medical records liaison', value: 'records-ny@curaclinic.health' },
 ];
 
 export const scheduleRows: ScheduleRow[] = [
