@@ -18,10 +18,24 @@ import { usePatients } from '@/hooks/usePatients';
 import { useToast } from '@/utils/toast';
 import { downloadCsv } from '@/utils/exportFile';
 import type { Patient } from '@/types';
+import '@/styles/patient-export.css';
+
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
 function todayDate(): string {
-  const today = new Date();
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  return dateKey(new Date());
+}
+
+function yesterdayDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return dateKey(d);
+}
+
+function longDayLabel(key: string): string {
+  return new Date(`${key}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export function PatientsPage() {
@@ -29,8 +43,7 @@ export function PatientsPage() {
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'today'>('all');
   const [exportRangeOpen, setExportRangeOpen] = useState(false);
-  const [exportFrom, setExportFrom] = useState(todayDate());
-  const [exportTo, setExportTo] = useState(todayDate());
+  const [exportDate, setExportDate] = useState(todayDate());
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
 
@@ -45,17 +58,23 @@ export function PatientsPage() {
     `${p[0]} ${p[1]} ${p[3]}`.toLowerCase().includes(query.trim().toLowerCase()),
   );
 
+  /** Only the patients registered on the chosen day — never earlier or later records. */
+  const exportPatients = exportDate ? patients.filter((patient) => patient[9] === exportDate) : [];
+
+  const openExport = () => {
+    setExportDate(todayDate());
+    setExportRangeOpen(true);
+  };
+
   const handleExport = () => {
-    if (!exportFrom || !exportTo || exportFrom > exportTo) {
-      toast.error('Choose a valid date range.');
+    if (!exportDate) {
+      toast.error('Choose a date to export.');
       return;
     }
-    const exportPatients = patients.filter(
-      (patient) =>
-        Boolean(patient[9]) &&
-        patient[9]! >= exportFrom &&
-        patient[9]! <= exportTo,
-    );
+    if (exportPatients.length === 0) {
+      toast.error(`No patients were registered on ${exportDate}.`);
+      return;
+    }
     const exportRows = exportPatients.map((patient) => [
       patient[0],
       patient[1],
@@ -68,7 +87,7 @@ export function PatientsPage() {
       patient[9] ?? '',
     ]);
     downloadCsv(
-      `patients-${exportFrom}-to-${exportTo}`,
+      `patients-${exportDate}`,
       [
         'ID',
         'Name',
@@ -82,7 +101,7 @@ export function PatientsPage() {
       ],
       exportRows,
     );
-    toast.success(`${exportPatients.length} patient records exported.`);
+    toast.success(`${exportPatients.length} patient record${exportPatients.length === 1 ? '' : 's'} for ${exportDate} exported.`);
     setExportRangeOpen(false);
   };
 
@@ -110,7 +129,7 @@ export function PatientsPage() {
           <>
             <IconButton
               className="white-button"
-              onClick={() => setExportRangeOpen(true)}
+              onClick={openExport}
             >
               <Download size={14} /> Export by Date
             </IconButton>
@@ -420,7 +439,7 @@ export function PatientsPage() {
             <div className="modal-header">
               <div>
                 <h2 id="patient-export-title">Export patient records</h2>
-                <p>Choose the registration date range to include.</p>
+                <p>Download the patients registered on a single day.</p>
               </div>
               <button
                 type="button"
@@ -431,25 +450,42 @@ export function PatientsPage() {
                 <X size={16} />
               </button>
             </div>
-            <div className="patient-export-fields">
-              <label>
-                <span>From</span>
+            <div className="pex-body">
+              <div className="pex-quick">
+                {[['Today', todayDate()], ['Yesterday', yesterdayDate()]].map(([label, key]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className={exportDate === key ? 'selected' : ''}
+                    onClick={() => setExportDate(key)}
+                  >{label}</button>
+                ))}
+              </div>
+              <label className="pex-date">
+                <span>Date</span>
                 <input
                   type="date"
-                  value={exportFrom}
-                  max={exportTo || undefined}
-                  onChange={(event) => setExportFrom(event.target.value)}
+                  value={exportDate}
+                  max={todayDate()}
+                  onChange={(event) => setExportDate(event.target.value)}
                 />
               </label>
-              <label>
-                <span>To</span>
-                <input
-                  type="date"
-                  value={exportTo}
-                  min={exportFrom || undefined}
-                  onChange={(event) => setExportTo(event.target.value)}
-                />
-              </label>
+              <div className={`pex-summary ${exportPatients.length ? '' : 'empty'}`}>
+                {exportDate ? (
+                  <>
+                    <b>{exportPatients.length} patient{exportPatients.length === 1 ? '' : 's'}</b>
+                    <span>registered on {longDayLabel(exportDate)}</span>
+                  </>
+                ) : <span>Pick a date to see how many patients will be exported.</span>}
+              </div>
+              {exportPatients.length > 0 && (
+                <ul className="pex-list">
+                  {exportPatients.slice(0, 5).map((patient) => (
+                    <li key={patient[0]}><i>{patient[0]}</i><b>{patient[1]}</b><small>{patient[2]}</small></li>
+                  ))}
+                  {exportPatients.length > 5 && <li className="more">+ {exportPatients.length - 5} more in the file</li>}
+                </ul>
+              )}
             </div>
             <div className="modal-footer">
               <IconButton

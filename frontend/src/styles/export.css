@@ -1,0 +1,44 @@
+/* Export summary modal */
+.export-modal.modal-card { max-width: 520px; padding: 24px; border-radius: 16px; }
+.export-modal .modal-header { margin-bottom: 18px; }
+.export-modal .modal-header h2 { font-size: 18px; }
+.export-modal .modal-header p { font-size: 13.5px; max-width: none; color: #6b7587; margin-top: 4px; }
+.export-modal .modal-footer { margin-top: 22px; padding-top: 18px; }
+
+.exp-group { margin-bottom: 20px; }
+.exp-label { display: block; font-size: 13px; font-weight: 600; color: #3a4558; margin-bottom: 9px; }
+
+.exp-formats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.exp-format { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; padding: 14px; background: #fff; border: 1.5px solid #e6e9f0; border-radius: 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s, background .15s; }
+.exp-format:hover:not(:disabled) { border-color: #c9d1de; }
+.exp-format.selected { border-color: #007d72; background: #f1faf8; box-shadow: 0 0 0 4px #007d7214; }
+.exp-format-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: #e6f4f2; color: #007d72; margin-bottom: 6px; }
+.exp-format b { font-size: 14px; color: #182338; }
+.exp-format small { font-size: 12.5px; color: #6b7587; line-height: 1.4; }
+
+.exp-sections { display: flex; flex-direction: column; border: 1px solid #e6e9f0; border-radius: 12px; overflow: hidden; }
+.exp-section { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; border-top: 1px solid #eef0f5; position: relative; }
+.exp-section:first-child { border-top: 0; }
+.exp-section:hover { background: #f8faf9; }
+.exp-section input { position: absolute; opacity: 0; pointer-events: none; }
+.exp-check { width: 20px; height: 20px; flex: none; border-radius: 6px; border: 1.5px solid #c4cbd8; background: #fff; display: grid; place-items: center; transition: background .15s, border-color .15s; }
+.exp-section input:checked + .exp-check { background: #007d72; border-color: #007d72; }
+.exp-section input:checked + .exp-check::after { content: ''; width: 5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.exp-section input:focus-visible + .exp-check { box-shadow: 0 0 0 4px #007d7229; }
+.exp-section b { display: block; font-size: 14px; color: #182338; }
+.exp-section small { font-size: 12.5px; color: #6b7587; }
+.exp-error { margin: 8px 0 0; font-size: 12.5px; color: #c0392b; }
+
+.exp-notice { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: #fff8e8; border: 1px solid #f5e2b3; border-radius: 12px; color: #8a6a14; }
+.exp-notice svg { flex: none; margin-top: 2px; }
+.exp-notice p { margin: 0; font-size: 12.5px; line-height: 1.5; color: #7a5d10; }
+
+.exp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px; font-size: 14px; font-weight: 600; border-radius: 10px; border: 1px solid #e0e4ec; background: #fff; color: #182338; cursor: pointer; }
+.exp-btn:hover:not(:disabled) { background: #f6f8fb; }
+.exp-btn.primary { background: #007d72; border-color: #007d72; color: #fff; }
+.exp-btn.primary:hover:not(:disabled) { background: #006a60; }
+.exp-btn:disabled { opacity: .6; cursor: not-allowed; }
+.exp-spin { animation: exp-spin .8s linear infinite; }
+@keyframes exp-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) { .exp-formats { grid-template-columns: 1fr; } }
