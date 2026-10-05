@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { env } from './env.js';
 
 /**
- * Nodemailer transport. Scope: sending the login OTP email only — nothing
+ * Nodemailer transport. Scope: sending the signup email-verification OTP only — nothing
  * else in this backend sends mail.
  */
 export const transporter = nodemailer.createTransport({

@@ -9,7 +9,7 @@ const app = express();
 app.use(cors({ origin: env.corsOrigin }));
 app.use(express.json());
 
-// This backend's only job: authentication (Supabase signup + OTP login via Nodemailer).
+// This backend's only job: authentication (email-OTP-verified signup + email/password login).
 // It deliberately exposes nothing else — no clinic data, no other resources.
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);

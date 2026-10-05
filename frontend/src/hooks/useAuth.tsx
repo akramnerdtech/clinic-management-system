@@ -14,7 +14,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 /**
- * Session state only — signup / OTP request / OTP verify calls live in
+ * Session state only — signup (OTP + set password) and login calls live in
  * `@/services/authService`. This provider just tracks the resulting token
  * and user, backed by its own isolated localStorage key.
  */

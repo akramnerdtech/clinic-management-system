@@ -1,15 +1,14 @@
 import { Router } from 'express';
-import { signup, requestOtp, verifyOtpAndLogin } from '../controllers/authController.js';
+import { requestSignupOtp, verifySignupOtp, setSignupPassword, login } from '../controllers/authController.js';
 
 const router = Router();
 
-// Signup: Full Name + Email → Supabase account. No OTP.
-router.post('/signup', signup);
+// Signup (3 steps). The account is only created at the very end.
+router.post('/signup/request-otp', requestSignupOtp); // Full Name + Email → email OTP
+router.post('/signup/verify-otp', verifySignupOtp);   // Email + OTP → signup token
+router.post('/signup/set-password', setSignupPassword); // signup token + Password + Confirm → account
 
-// Login step 1: Email → generate + email OTP.
-router.post('/login/request-otp', requestOtp);
-
-// Login step 2: Email + OTP → verify → session token.
-router.post('/login/verify-otp', verifyOtpAndLogin);
+// Login: Email + Password only. No OTP.
+router.post('/login', login);
 
 export default router;

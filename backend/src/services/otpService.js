@@ -5,10 +5,10 @@ import { generateOtp } from '../utils/generateOtp.js';
 /**
  * In-memory OTP store, keyed by lowercased email.
  *
- * This is intentionally simple (a single Map) since OTP login is the only
- * thing this backend does beyond Supabase signup — no database is needed
- * for it. For a multi-instance deployment, swap this Map for Redis without
- * changing the service's public interface below.
+ * OTPs exist ONLY to verify an email address during new-account signup — they
+ * are never issued for login. This is intentionally simple (a single Map). For
+ * a multi-instance deployment, swap this Map for Redis without changing the
+ * service's public interface below.
  */
 const store = new Map();
 
@@ -18,8 +18,12 @@ function hashOtp(otp) {
   return crypto.createHash('sha256').update(otp).digest('hex');
 }
 
-/** Creates and stores a fresh OTP for the email, returning the plaintext code to send. */
-export function issueOtp(email) {
+/**
+ * Creates and stores a fresh OTP for the email, returning the plaintext code to send.
+ * `meta` (e.g. the signup full name) is kept server-side and handed back on a
+ * successful verification, so it can't be altered between steps.
+ */
+export function issueOtp(email, meta = {}) {
   const key = email.toLowerCase();
   const existing = store.get(key);
   if (existing && Date.now() - existing.issuedAt < RESEND_COOLDOWN_MS) {
@@ -34,11 +38,20 @@ export function issueOtp(email) {
     issuedAt: Date.now(),
     expiresAt: Date.now() + env.otpTtlMinutes * 60 * 1000,
     attempts: 0,
+    meta,
   });
   return otp;
 }
 
-/** Verifies a submitted OTP. Throws with a status code on any failure. */
+/** Drops a pending OTP (used when the email could not be delivered, so the user can retry immediately). */
+export function discardOtp(email) {
+  store.delete(email.toLowerCase());
+}
+
+/**
+ * Verifies a submitted OTP. Single-use: a successful check consumes it.
+ * Returns the `meta` stored with the OTP. Throws with a status code on any failure.
+ */
 export function verifyOtp(email, submittedOtp) {
   const key = email.toLowerCase();
   const record = store.get(key);
@@ -72,4 +85,5 @@ export function verifyOtp(email, submittedOtp) {
   }
 
   store.delete(key);
+  return record.meta;
 }
