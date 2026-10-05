@@ -1,5 +1,5 @@
 /* Settings page — scoped under .sp so it never leaks into other screens */
-.sp { max-width: 980px; margin: 0 auto; padding-bottom: 40px; --sp-teal: #007d72; --sp-teal-soft: #e6f4f2; --sp-line: #e6e9f0; --sp-ink: #182338; --sp-muted: #6b7587; }
+.sp { width: 100%; max-width: none; margin: 0; padding-bottom: 40px; --sp-teal: #007d72; --sp-teal-soft: #e6f4f2; --sp-line: #e6e9f0; --sp-ink: #182338; --sp-muted: #6b7587; }
 .sp .page-header { align-items: flex-end; flex-wrap: wrap; margin-bottom: 22px; }
 .sp .eyebrow { font-size: 12px; letter-spacing: 0.02em; text-transform: none; color: var(--sp-teal); font-weight: 600; }
 .sp .page-header h1 { font-size: 28px; margin: 4px 0 6px; }
@@ -55,7 +55,7 @@
 .sp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .sp-field { display: flex; flex-direction: column; gap: 7px; }
 .sp-field.wide { grid-column: 1 / -1; }
-.sp-label { font-size: 13px; font-weight: 600; color: #3a4558; }
+.sp-label { font-size: 13px; font-weight: 600; color: #3a4558; text-transform: none; letter-spacing: 0; }
 .sp-input { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: #f8faf9; border: 1px solid var(--sp-line); border-radius: 11px; color: #8b95a7; transition: border-color .15s, box-shadow .15s, background .15s; }
 .sp-input:focus-within { background: #fff; border-color: var(--sp-teal); box-shadow: 0 0 0 4px #007d7219; color: var(--sp-teal); }
 .sp-input input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font-size: 14.5px; color: var(--sp-ink); font-family: inherit; }

@@ -5,7 +5,7 @@ import type { ClinicField } from '@/types';
 
 /** Older saved values may start with decorative glyphs (e.g. "⌖ 450 Lexington…"); strip them. */
 function cleanFields(fields: ClinicField[]): ClinicField[] {
-  return fields.map((f) => ({ ...f, value: f.value.replace(/^[^\p{L}\p{N}+(]+/u, '') }));
+  return fields.map((f) => ({ ...f, value: f.value.replace(/^[^\p{L}\p{N}+(]+/u, '').replace(/\(Main$/, '(Main Campus)') }));
 }
 
 export function useSettingsData() {
