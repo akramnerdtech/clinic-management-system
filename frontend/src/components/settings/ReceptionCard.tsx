@@ -1,3 +1,4 @@
+import { BellRing, Hourglass, ScanLine } from 'lucide-react';
 import type { receptionDefaults as ReceptionDefaultsType } from '@/data/settings';
 
 interface Props {
@@ -6,32 +7,49 @@ interface Props {
 }
 
 export function ReceptionCard({ receptionDefaults, onToggleWalkInAutoCheckin }: Props) {
+  const walkIn = receptionDefaults.walkInAutoCheckin;
   return (
-    <section className="content-card reception-card">
-      <h2>▱ Reception & Triage Defaults</h2>
-      <p>Automate check-in procedures, waiting room pacing, and automated notification sequences.</p>
-      <div>
-        <article>
-          <b>Intake Queue Buffer <span>{receptionDefaults.intakeQueueBuffer.value}</span></b>
-          <p>{receptionDefaults.intakeQueueBuffer.description}</p>
-        </article>
-        <article>
-          <b>Automated SMS Reminder <span>{receptionDefaults.smsReminder.value}</span></b>
-          <p>{receptionDefaults.smsReminder.description}</p>
-        </article>
+    <section className="sp-card">
+      <header className="sp-card-head">
+        <span className="sp-card-icon"><ScanLine size={18} /></span>
+        <div>
+          <h2>Reception &amp; triage</h2>
+          <p>Check-in, waiting room pacing and reminder defaults.</p>
+        </div>
+      </header>
+      <div className="sp-list">
+        <div className="sp-list-row">
+          <span className="sp-list-icon"><Hourglass size={16} /></span>
+          <div>
+            <b>Queue buffer</b>
+            <p>{receptionDefaults.intakeQueueBuffer.description}</p>
+          </div>
+          <span className="sp-chip strong">{receptionDefaults.intakeQueueBuffer.value}</span>
+        </div>
+        <div className="sp-list-row">
+          <span className="sp-list-icon"><BellRing size={16} /></span>
+          <div>
+            <b>SMS reminder</b>
+            <p>{receptionDefaults.smsReminder.description}</p>
+          </div>
+          <span className="sp-chip strong">{receptionDefaults.smsReminder.value}</span>
+        </div>
+        <div className="sp-list-row">
+          <span className="sp-list-icon"><ScanLine size={16} /></span>
+          <div>
+            <b>Walk-in auto check-in</b>
+            <p>{walkIn.description}</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={walkIn.enabled}
+            aria-label="Toggle walk-in triage auto check-in"
+            className={`sp-switch ${walkIn.enabled ? 'on' : ''}`}
+            onClick={onToggleWalkInAutoCheckin}
+          ><i /></button>
+        </div>
       </div>
-      <article className="walk-in">
-        <b>♧ Walk-in Triage Auto-Checkin</b>
-        <p>{receptionDefaults.walkInAutoCheckin.description}</p>
-        <button
-          type="button"
-          className={`toggle-switch ${receptionDefaults.walkInAutoCheckin.enabled ? 'on' : ''}`}
-          onClick={onToggleWalkInAutoCheckin}
-          aria-label="Toggle walk-in triage auto-checkin"
-        >
-          {receptionDefaults.walkInAutoCheckin.enabled ? 'ON' : 'OFF'}
-        </button>
-      </article>
     </section>
   );
 }
