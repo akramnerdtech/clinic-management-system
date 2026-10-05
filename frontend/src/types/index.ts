@@ -70,6 +70,7 @@ export interface RegistrationField {
   textarea?: boolean;
   icon?: LucideIcon;
   options?: string[];
+  numeric?: boolean;
 }
 
 // ---------- Add Doctor ----------
