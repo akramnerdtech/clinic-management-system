@@ -78,7 +78,7 @@ export function usePatientRegistration() {
       '',
       lastVisit,
       '',
-      '',
+      formValues.bloodGroup?.trim() ?? '',
       formValues.recommendedTest?.trim() ?? '',
       todayDateKey(),
     ];
