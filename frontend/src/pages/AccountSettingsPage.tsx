@@ -8,12 +8,12 @@ import { useAccountSettings } from '@/hooks/useAccountSettings';
 
 export function AccountSettingsPage() {
   const {
-    tabs, avatar,
+    tabs, avatar, avatarDirty, avatarSaving, saveAvatar, cancelAvatar,
     profileFields, updateProfileField, changeAvatar, removeAvatar,
     securityToggles, toggleSecurity,
     notificationToggles, toggleNotification,
     dangerZone, deactivateAccount,
-    status, saveChanges, discardChanges,
+    dirty, anyUnsaved, saving, saveChanges, discardChanges,
   } = useAccountSettings();
 
   return (
@@ -23,9 +23,9 @@ export function AccountSettingsPage() {
         title="Account Settings"
         description="Manage your profile, security, and notification preferences."
         actions={<>
-          <span className="autosaved"><i /> {status ?? 'Autosaved 2 mins ago'}</span>
-          <IconButton className="white-button" onClick={discardChanges}>Discard Changes</IconButton>
-          <IconButton className="teal-button" onClick={saveChanges}><CheckCircle2 size={14} /> Save Changes</IconButton>
+          <span className="autosaved"><i /> {saving ? 'Saving…' : anyUnsaved ? 'Unsaved changes' : 'All changes saved'}</span>
+          <IconButton className="white-button" disabled={saving || !anyUnsaved} onClick={discardChanges}>Discard Changes</IconButton>
+          <IconButton className="teal-button" disabled={saving || !dirty} onClick={saveChanges}>{saving ? 'Saving…' : <><CheckCircle2 size={14} /> Save Changes</>}</IconButton>
         </>}
       />
       <div className="settings-tabs">
@@ -35,6 +35,10 @@ export function AccountSettingsPage() {
         <div>
           <AccountProfileCard
             avatar={avatar}
+            avatarDirty={avatarDirty}
+            avatarSaving={avatarSaving}
+            onSaveAvatar={saveAvatar}
+            onCancelAvatar={cancelAvatar}
             profileFields={profileFields}
             onChangeField={updateProfileField}
             onChangeAvatar={changeAvatar}
