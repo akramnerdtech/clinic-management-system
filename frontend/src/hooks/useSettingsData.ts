@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { settingsService } from '@/services/settingsService';
 import { useToast } from '@/utils/toast';
+import type { ClinicField } from '@/types';
+
+/** Older saved values may start with decorative glyphs (e.g. "⌖ 450 Lexington…"); strip them. */
+function cleanFields(fields: ClinicField[]): ClinicField[] {
+  return fields.map((f) => ({ ...f, value: f.value.replace(/^[^\p{L}\p{N}+(]+/u, '') }));
+}
 
 export function useSettingsData() {
   const [tabs] = useState(() => settingsService.getTabs());
-  const [identityFields, setIdentityFields] = useState(() => settingsService.getClinicIdentityFields());
+  const [identityFields, setIdentityFields] = useState(() => cleanFields(settingsService.getClinicIdentityFields()));
   const [scheduleRows] = useState(() => settingsService.getScheduleRows());
   const [durationOptions] = useState(() => settingsService.getDurationOptions());
   const [receptionDefaults, setReceptionDefaults] = useState(() => settingsService.getReceptionDefaults());
@@ -33,7 +39,7 @@ export function useSettingsData() {
   };
 
   const discardChanges = () => {
-    setIdentityFields(settingsService.getClinicIdentityFields());
+    setIdentityFields(cleanFields(settingsService.getClinicIdentityFields()));
     setReceptionDefaults(settingsService.getReceptionDefaults());
     setStatus('Changes discarded.');
     toast.info('Changes discarded.');
