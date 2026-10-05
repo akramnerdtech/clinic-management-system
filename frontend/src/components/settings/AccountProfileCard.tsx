@@ -5,13 +5,20 @@ import { Field } from './Field';
 
 interface Props {
   avatar: string;
+  avatarDirty: boolean;
+  avatarSaving: boolean;
   profileFields: AccountProfileField[];
   onChangeField: (index: number, value: string) => void;
   onChangeAvatar: (file: File) => void;
   onRemoveAvatar: () => void;
+  onSaveAvatar: () => void;
+  onCancelAvatar: () => void;
 }
 
-export function AccountProfileCard({ avatar, profileFields, onChangeField, onChangeAvatar, onRemoveAvatar }: Props) {
+export function AccountProfileCard({
+  avatar, avatarDirty, avatarSaving, profileFields,
+  onChangeField, onChangeAvatar, onRemoveAvatar, onSaveAvatar, onCancelAvatar,
+}: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -27,14 +34,25 @@ export function AccountProfileCard({ avatar, profileFields, onChangeField, onCha
         <img src={avatar} alt="Profile" />
         <div>
           <h3>Profile Photo</h3>
-          <p>Use a clear square image. Your photo is stored in this browser.</p>
+          <p>{avatarDirty ? 'New photo selected — save it to update your profile.' : 'Use a clear square image. Your photo is saved to your account.'}</p>
           <div className="profile-photo-actions">
-            <button type="button" onClick={() => fileInputRef.current?.click()}><ImagePlus size={14} /> Change photo</button>
-            <button type="button" className="photo-reset-button" onClick={onRemoveAvatar}><RotateCcw size={13} /> Remove photo</button>
+            {avatarDirty ? (
+              <>
+                <button type="button" className="photo-save-button" disabled={avatarSaving} onClick={onSaveAvatar}>
+                  {avatarSaving ? 'Saving…' : 'Save photo'}
+                </button>
+                <button type="button" disabled={avatarSaving} onClick={onCancelAvatar}>Cancel</button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => fileInputRef.current?.click()}><ImagePlus size={14} /> Change photo</button>
+                <button type="button" className="photo-reset-button" onClick={onRemoveAvatar}><RotateCcw size={13} /> Remove photo</button>
+              </>
+            )}
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               aria-label="Choose profile photo"
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -44,7 +62,7 @@ export function AccountProfileCard({ avatar, profileFields, onChangeField, onCha
             />
           </div>
         </div>
-        <small>Up to 8 MB · resized for storage</small>
+        <small>JPG, PNG or WebP · up to 5 MB</small>
       </div>
       <div className="form-grid">
         {profileFields.map((f, i) => (

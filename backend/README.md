@@ -50,6 +50,21 @@ Password rules (enforced here, mirrored in the Signup page): at least 8 characte
 at most 72, and both entries must match. Passwords are never stored by this backend —
 Supabase Auth hashes them (bcrypt) and verifies them at login.
 
+### Account settings (authenticated)
+
+All routes below require `Authorization: Bearer <session token>`. The user is **always** taken from
+the verified token — no user id is ever read from the request body, URL or query.
+Passwords are never returned. Profile details are stored in Supabase Auth `user_metadata`;
+profile photos in a public Supabase Storage bucket named `avatars` (created automatically on first upload).
+
+| Method | Path                    | Body                                              | Notes                                                                                   |
+| ------ | ----------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| GET    | `/api/account/me`       | —                                                 | The signed-in user's saved profile.                                                     |
+| PATCH  | `/api/account/profile`  | `{ fullName, phone, extension, about }`           | Validates and saves. Email is the login identity and is not editable here.              |
+| POST   | `/api/account/avatar`   | raw image bytes (`image/jpeg`, `image/png`, `image/webp`) | Max 2 MB, real type checked from file bytes. Old image deleted; temp upload removed if saving fails. |
+| DELETE | `/api/account/avatar`   | —                                                 | Resets to the default photo.                                                            |
+| POST   | `/api/account/password` | `{ currentPassword, newPassword, confirmPassword }` | Verifies the current password via Supabase Auth, then sets the new one (bcrypt, by Supabase). Wrong current password returns `400`; bad/expired session returns `401`. |
+
 The old `/api/auth/signup`, `/api/auth/login/request-otp` and `/api/auth/login/verify-otp`
 routes have been removed.
 

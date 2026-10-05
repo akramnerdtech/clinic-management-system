@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Bell, HeartPulse, LogOut } from "lucide-react";
 import { useNavigation } from "@/hooks/useNavigation";
 import { useToast } from "@/utils/toast";
 import { useAuth } from "@/hooks/useAuth";
-import { ACCOUNT_AVATAR_EVENT, accountService } from "@/services/accountService";
+import { accountAvatar } from "@/data/account";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -17,17 +16,7 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
   const navigate = useNavigate();
   const toast = useToast();
   const { logout, user } = useAuth();
-  const [avatar, setAvatar] = useState(() => accountService.getAvatar());
-
-  useEffect(() => {
-    const refreshAvatar = () => setAvatar(accountService.getAvatar());
-    window.addEventListener(ACCOUNT_AVATAR_EVENT, refreshAvatar);
-    window.addEventListener("storage", refreshAvatar);
-    return () => {
-      window.removeEventListener(ACCOUNT_AVATAR_EVENT, refreshAvatar);
-      window.removeEventListener("storage", refreshAvatar);
-    };
-  }, []);
+  const avatar = user?.avatarUrl || accountAvatar;
 
   const handleSignOut = () => {
     logout();

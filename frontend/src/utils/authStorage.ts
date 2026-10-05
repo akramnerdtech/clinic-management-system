@@ -2,6 +2,10 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
+  phone?: string;
+  extension?: string;
+  about?: string;
+  avatarUrl?: string | null;
 }
 
 export interface AuthSession {

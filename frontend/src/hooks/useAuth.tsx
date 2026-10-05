@@ -1,7 +1,9 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { clearAuthSession, loadAuthSession, saveAuthSession } from '@/utils/authStorage';
 import type { AuthSession, AuthUser } from '@/utils/authStorage';
+import { SESSION_EXPIRED_EVENT } from '@/config/api';
+import { useToast } from '@/utils/toast';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -9,6 +11,8 @@ interface AuthContextValue {
   token: string | null;
   login: (session: AuthSession) => void;
   logout: () => void;
+  /** Merge fresh server-confirmed user data into the session (name, avatar, ...). */
+  updateUser: (patch: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -20,6 +24,27 @@ const AuthContext = createContext<AuthContextValue | null>(null);
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(() => loadAuthSession());
+  const toast = useToast();
+
+  const updateUser = useCallback((patch: Partial<AuthUser>) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, user: { ...prev.user, ...patch } };
+      saveAuthSession(next);
+      return next;
+    });
+  }, []);
+
+  // The API client fires this when an authenticated call comes back 401 (expired/invalid session).
+  useEffect(() => {
+    const onExpired = () => {
+      clearAuthSession();
+      setSession(null);
+      toast.error('Your session has expired. Please log in again.');
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, [toast]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -34,8 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearAuthSession();
         setSession(null);
       },
+      updateUser,
     }),
-    [session],
+    [session, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
