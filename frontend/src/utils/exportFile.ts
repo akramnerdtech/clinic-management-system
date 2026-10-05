@@ -30,6 +30,29 @@ export function downloadCsv(filename: string, headers: string[], rows: unknown[]
   triggerDownload(filename.endsWith('.csv') ? filename : `${filename}.csv`, blob);
 }
 
+export interface CsvSection {
+  title: string;
+  headers: string[];
+  rows: unknown[][];
+}
+
+/**
+ * Downloads a multi-section report as one CSV: a metadata preamble, then each section
+ * (title row, header row, data rows) separated by a blank line. Includes a UTF-8 BOM so
+ * Excel opens it with the right encoding.
+ */
+export function downloadCsvSections(filename: string, preamble: string[][], sections: CsvSection[]): void {
+  const lines: string[] = preamble.map((row) => row.map(escapeCsvCell).join(','));
+  sections.forEach((section) => {
+    lines.push('');
+    lines.push(escapeCsvCell(section.title));
+    lines.push(section.headers.map(escapeCsvCell).join(','));
+    section.rows.forEach((row) => lines.push(row.map(escapeCsvCell).join(',')));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  triggerDownload(filename.endsWith('.csv') ? filename : `${filename}.csv`, blob);
+}
+
 /** Downloads arbitrary JSON-serializable data as a formatted .json file. */
 export function downloadJson(filename: string, data: unknown): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

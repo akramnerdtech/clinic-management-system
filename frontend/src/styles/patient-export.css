@@ -1,0 +1,29 @@
+/* Patients: export by date dialog */
+.patient-export-modal.modal-card { max-width: 480px; padding: 24px; border-radius: 16px; }
+.patient-export-modal .modal-header h2 { font-size: 18px; }
+.patient-export-modal .modal-header p { font-size: 13.5px; max-width: none; color: #6b7587; margin-top: 4px; }
+.patient-export-modal .modal-footer { margin-top: 20px; padding-top: 18px; }
+.patient-export-modal .modal-footer button { height: 42px; font-size: 14px; border-radius: 10px; width: auto; padding: 0 18px; gap: 6px; }
+
+.pex-body { display: flex; flex-direction: column; gap: 14px; }
+.pex-quick { display: flex; gap: 8px; }
+.pex-quick button { border: 1px solid #e0e4ec; background: #fff; color: #3a4558; font-size: 13.5px; font-weight: 600; padding: 7px 16px; border-radius: 999px; cursor: pointer; }
+.pex-quick button.selected { background: #e6f4f2; border-color: #007d72; color: #007d72; }
+.pex-date { display: flex; flex-direction: column; gap: 7px; }
+.pex-date span { font-size: 13px; font-weight: 600; color: #3a4558; }
+.pex-date input { height: 44px; padding: 0 14px; border: 1px solid #e6e9f0; border-radius: 11px; background: #f8faf9; font-size: 14.5px; font-family: inherit; color: #182338; }
+.pex-date input:focus { outline: 0; border-color: #007d72; box-shadow: 0 0 0 4px #007d7219; background: #fff; }
+
+.pex-summary { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 12px; background: #f1faf8; border: 1px solid #cfe9e5; }
+.pex-summary b { font-size: 18px; color: #007d72; }
+.pex-summary span { font-size: 13.5px; color: #4a5a63; }
+.pex-summary.empty { background: #f7f8fa; border-color: #e6e9f0; }
+.pex-summary.empty b { color: #6b7587; }
+
+.pex-list { list-style: none; margin: 0; padding: 0; border: 1px solid #e6e9f0; border-radius: 12px; overflow: hidden; }
+.pex-list li { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid #eef0f5; font-size: 13.5px; }
+.pex-list li:first-child { border-top: 0; }
+.pex-list li i { font-style: normal; font-size: 12px; font-weight: 700; color: #007d72; background: #e6f4f2; padding: 3px 8px; border-radius: 6px; }
+.pex-list li b { flex: 1; color: #182338; }
+.pex-list li small { color: #6b7587; font-size: 12.5px; }
+.pex-list li.more { color: #6b7587; justify-content: center; background: #fafbfc; }
