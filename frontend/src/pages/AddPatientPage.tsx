@@ -41,7 +41,7 @@ export function AddPatientPage() {
             <em className="quick-form-pill">Quick Form</em>
           </div>
           <form onSubmit={(e) => e.preventDefault()} className="form-grid">
-            {fields.filter((f) => ['fullName', 'phone', 'dob'].includes(f.id)).map((f) => (
+            {fields.filter((f) => ['fullName', 'phone', 'age'].includes(f.id)).map((f) => (
               <RegistrationField key={f.id} field={f} value={formValues[f.id] ?? ''} onChange={(v) => updateField(f.id, v)} />
             ))}
             <label className="wide">
@@ -52,7 +52,7 @@ export function AddPatientPage() {
                 ))}
               </div>
             </label>
-            {fields.filter((f) => ['complaint', 'recommendedTest'].includes(f.id)).map((f) => (
+            {fields.filter((f) => ['bloodGroup', 'complaint', 'recommendedTest'].includes(f.id)).map((f) => (
               <RegistrationField key={f.id} field={f} value={formValues[f.id] ?? ''} onChange={(v) => updateField(f.id, v)} />
             ))}
             {fields.filter((f) => f.id === 'notes').map((f) => (

@@ -10,18 +10,6 @@ function buildInitialValues(fields: RegistrationField[], saved: Record<string, s
   return values;
 }
 
-/** Best-effort age from a free-typed DOB string; returns null if it can't be parsed. */
-function calcAge(dob: string): number | null {
-  if (!dob) return null;
-  const parsed = new Date(dob);
-  if (Number.isNaN(parsed.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - parsed.getFullYear();
-  const monthDiff = today.getMonth() - parsed.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsed.getDate())) age -= 1;
-  return age >= 0 && age < 130 ? age : null;
-}
-
 function nextPatientId(existing: Patient[]): string {
   const max = existing.reduce((acc, p) => {
     const n = parseInt(p[0].replace(/\D/g, ''), 10);
@@ -63,16 +51,23 @@ export function usePatientRegistration() {
   const registerPatient = (): Patient | null => {
     const fullName = formValues.fullName?.trim();
     const complaint = formValues.complaint?.trim();
+    const ageValue = Number(formValues.age?.trim());
     if (!fullName || !complaint) {
       const message = 'Patient name and reason for visit are required.';
       setStatus(message);
       toast.error(message);
       return null;
     }
+    if (!formValues.age?.trim() || Number.isNaN(ageValue) || ageValue < 0 || ageValue > 120) {
+      const message = 'Please enter a valid age (0–120).';
+      setStatus(message);
+      toast.error(message);
+      return null;
+    }
 
     const existing = patientsService.getPatients();
-    const age = calcAge(formValues.dob);
-    const ageSex = `${age ?? '—'} / ${gender.charAt(0)}`;
+    const age = formValues.age?.trim();
+    const ageSex = `${age || '—'} / ${gender.charAt(0)}`;
     const lastVisit = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 
     const patient: Patient = [

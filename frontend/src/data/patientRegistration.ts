@@ -4,8 +4,16 @@ import type { RegistrationField } from '@/types';
 export const patientRegistrationFields: RegistrationField[] = [
   { id: 'fullName', label: 'Patient Full Name *', defaultValue: 'Clara Vance-Montgomery', wide: true },
   { id: 'phone', label: 'Phone Number *', defaultValue: '+1 (555) 389-4021', icon: Phone },
-  { id: 'dob', label: 'Date of Birth *', defaultValue: '04/18/1992' },
+  { id: 'age', label: 'Age *', defaultValue: '', numeric: true },
   { id: 'complaint', label: 'Primary Reason for Visit / Chief Complaint *', defaultValue: 'Acute chest tightness with dyspnea on exertion', wide: true },
+  {
+    id: 'bloodGroup',
+    label: 'Blood Group',
+    defaultValue: '',
+    optional: true,
+    wide: true,
+    options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+  },
   {
     id: 'recommendedTest',
     label: 'Recommended Test / Investigation',
