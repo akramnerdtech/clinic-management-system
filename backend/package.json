@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Authentication-only backend for CuraClinic: Supabase-backed signup and OTP (Nodemailer) login. Handles nothing else — no clinic data, no app APIs.",
+  "description": "Authentication-only backend for CuraClinic: email-OTP-verified signup (Nodemailer) and Supabase-backed email + password login. Handles nothing else — no clinic data, no app APIs.",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
