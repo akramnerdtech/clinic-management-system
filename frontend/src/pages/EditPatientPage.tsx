@@ -8,6 +8,18 @@ import { patientsService } from '@/services/patientsService';
 import { useToast } from '@/utils/toast';
 import type { Patient } from '@/types';
 
+const GENDER_OPTIONS = ['Female', 'Male', 'Other'];
+const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const TEST_SUGGESTIONS = ['CBC', 'Metabolic panel', 'ECG', 'X-ray', 'Ultrasound', 'Echocardiogram', 'Urinalysis', 'Other'];
+
+/** Splits the stored "26 / M" string into a numeric age and a full gender label. */
+function parseAgeSex(ageSex: string): { age: string; gender: string } {
+  const [rawAge = '', rawSex = ''] = ageSex.split('/').map((part) => part.trim());
+  const age = /^\d+$/.test(rawAge) ? rawAge : '';
+  const gender = GENDER_OPTIONS.find((g) => g.charAt(0).toLowerCase() === rawSex.charAt(0).toLowerCase()) ?? GENDER_OPTIONS[0];
+  return { age, gender };
+}
+
 export function EditPatientPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
@@ -16,8 +28,15 @@ export function EditPatientPage() {
     patientsService.getPatients().find(([id]) => id === patientId) ?? null,
   );
 
+  const [age, setAge] = useState(() => parseAgeSex(patient?.[2] ?? '').age);
+  const [gender, setGender] = useState(() => parseAgeSex(patient?.[2] ?? '').gender);
+
   useEffect(() => {
-    setPatient(patientsService.getPatients().find(([id]) => id === patientId) ?? null);
+    const found = patientsService.getPatients().find(([id]) => id === patientId) ?? null;
+    setPatient(found);
+    const parsed = parseAgeSex(found?.[2] ?? '');
+    setAge(parsed.age);
+    setGender(parsed.gender);
   }, [patientId]);
 
   const updateField = (index: number, value: string) => {
@@ -33,14 +52,19 @@ export function EditPatientPage() {
     event?.preventDefault();
     if (!patient) return;
     if (!patient[1].trim() || !patient[3].trim()) {
-      toast.error('Patient name and condition are required.');
+      toast.error('Patient name and reason for visit are required.');
+      return;
+    }
+    const ageValue = Number(age);
+    if (!age || Number.isNaN(ageValue) || ageValue < 0 || ageValue > 120) {
+      toast.error('Please enter a valid age (0–120).');
       return;
     }
 
     const updated: Patient = [
       patient[0],
       patient[1].trim(),
-      patient[2].trim(),
+      `${age} / ${gender.charAt(0)}`,
       patient[3].trim(),
       patient[4].trim(),
       patient[5].trim(),
@@ -82,41 +106,52 @@ export function EditPatientPage() {
           </div>
           <form className="form-grid" onSubmit={savePatient}>
             <label className="wide">
-              <span>Patient Name *</span>
-              <input value={patient[1]} onChange={(event) => updateField(1, event.target.value)} required />
+              <span>Patient Full Name *</span>
+              <input placeholder="e.g. Jane Doe" value={patient[1]} onChange={(event) => updateField(1, event.target.value)} required />
             </label>
             <label>
-              <span>Age / Sex</span>
-              <input value={patient[2]} onChange={(event) => updateField(2, event.target.value)} />
+              <span>Email<em>Optional</em></span>
+              <input type="email" placeholder="e.g. jane@example.com" value={patient[6]} onChange={(event) => updateField(6, event.target.value)} />
+            </label>
+            <label>
+              <span>Age *</span>
+              <input
+                placeholder="e.g. 34"
+                inputMode="numeric"
+                maxLength={3}
+                value={age}
+                onChange={(event) => setAge(event.target.value.replace(/\D/g, '').slice(0, 3))}
+              />
             </label>
             <label className="wide">
-              <span>Condition / Reason for Visit *</span>
-              <input value={patient[3]} onChange={(event) => updateField(3, event.target.value)} required />
+              <span>Gender / Biological Sex *</span>
+              <div className="view-switch gender-switch">
+                {GENDER_OPTIONS.map((g) => (
+                  <button type="button" key={g} className={gender === g ? 'selected' : ''} onClick={() => setGender(g)}>{g}</button>
+                ))}
+              </div>
             </label>
             <label className="wide">
-              <span>Recommended Test / Investigation</span>
-              <input value={patient[8] ?? ''} onChange={(event) => updateField(8, event.target.value)} list="patient-test-suggestions" placeholder="Type a test or choose a suggestion" />
-              <datalist id="patient-test-suggestions">
-                <option value="CBC" />
-                <option value="Metabolic panel" />
-                <option value="ECG" />
-                <option value="X-ray" />
-                <option value="Ultrasound" />
-                <option value="Echocardiogram" />
-                <option value="Urinalysis" />
+              <span>Primary Reason for Visit / Chief Complaint *</span>
+              <input placeholder="e.g. Follow-up consultation" value={patient[3]} onChange={(event) => updateField(3, event.target.value)} required />
+            </label>
+            <label className="wide">
+              <span>Blood Group<em>Optional</em></span>
+              <input placeholder="e.g. O+" value={patient[7]} list="patient-blood-group-suggestions" onChange={(event) => updateField(7, event.target.value)} />
+              <datalist id="patient-blood-group-suggestions">
+                {BLOOD_GROUPS.map((group) => <option key={group} value={group} />)}
               </datalist>
             </label>
-            <label>
-              <span>Last Visit</span>
-              <input value={patient[5]} onChange={(event) => updateField(5, event.target.value)} />
-            </label>
-            <label>
-              <span>Blood Group</span>
-              <input value={patient[7]} onChange={(event) => updateField(7, event.target.value)} />
+            <label className="wide">
+              <span>Recommended Test / Investigation<em>Optional</em></span>
+              <input placeholder="Enter recommended test / investigation" value={patient[8] ?? ''} onChange={(event) => updateField(8, event.target.value)} list="patient-test-suggestions" />
+              <datalist id="patient-test-suggestions">
+                {TEST_SUGGESTIONS.map((test) => <option key={test} value={test} />)}
+              </datalist>
             </label>
             <label className="wide">
-              <span>Email</span>
-              <input type="email" value={patient[6]} onChange={(event) => updateField(6, event.target.value)} />
+              <span>Last Visit</span>
+              <input value={patient[5]} onChange={(event) => updateField(5, event.target.value)} />
             </label>
           </form>
         </section>
