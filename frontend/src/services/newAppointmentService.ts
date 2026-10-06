@@ -1,3 +1,4 @@
+import { normalizeDutySessions } from '@/utils/doctorSchedule';
 import {
   medicalSpecialtyOptions,
   specialistOptions,
@@ -775,20 +776,30 @@ function getSchedule(
               day
             ];
 
-          return times?.start &&
-            times.end &&
+          // Supports both legacy {start,end} and the newer {sessions: [...]} shape.
+          const firstSession =
+            normalizeDutySessions(
+              day,
+              times,
+            )[0];
+
+          return firstSession?.start &&
+            firstSession.end &&
             dayIndex !==
               undefined
             ? [
                 [
                   dayIndex,
-                  times,
+                  {
+                    start: firstSession.start,
+                    end: firstSession.end,
+                  },
                 ],
               ]
             : [];
         },
       ),
-    );
+    ) as Record<number, { start: string; end: string }>;
 
   const scheduleTimes =
     Object.values(

@@ -120,6 +120,9 @@ export function useAddDoctor() {
       `0 /${capacityInfo.cap}`,
       formValues.photo || `https://i.pravatar.cc/80?u=${encodeURIComponent(name)}`,
       Object.fromEntries(dutyDays.filter((day) => day.active).map((day) => [day.key, { start: day.start, end: day.end }])),
+      undefined,
+      undefined,
+      `doc-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
     ];
 
     doctorsService.addDoctor(doctor);
