@@ -10,6 +10,8 @@ import {
   Building2,
   Settings,
   BedDouble,
+  ReceiptText,
+  History,
 } from "lucide-react";
 import type { NavGroup } from "@/types";
 
@@ -43,6 +45,13 @@ export const navGroups: NavGroup[] = [
   {
     label: "WARD MANAGEMENT",
     items: [{ label: "Rooms", to: "/rooms", icon: BedDouble }],
+  },
+  {
+    label: "BILLING",
+    items: [
+      { label: "Billing", to: "/billing", icon: ReceiptText },
+      { label: "Bills / History", to: "/billing/history", icon: History },
+    ],
   },
   {
     label: "SPECIALTIES",

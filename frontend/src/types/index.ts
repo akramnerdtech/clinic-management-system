@@ -13,19 +13,28 @@ export interface NavGroup {
 }
 
 // ---------- Patients ----------
-/** Tuple shape: [id, name, ageSex, condition, specialist, lastVisit, email, bloodGroup, recommendedTest?, registrationDate?] */
-export type Patient = [string, string, string, string, string, string, string, string, string?, string?];
+/** Tuple shape: [id, name, ageSex, condition, specialist, lastVisit, email, bloodGroup, recommendedTest?, registrationDate?, mobile?] */
+export type Patient = [string, string, string, string, string, string, string, string, string?, string?, string?];
 
 // ---------- Doctors ----------
-export interface DoctorDaySchedule {
+export interface DutySession {
+  id?: string;
   start: string;
   end: string;
 }
 
+export interface DoctorDaySchedule {
+  /** Legacy single-shift fields (older saved data). */
+  start?: string;
+  end?: string;
+  active?: boolean;
+  sessions?: DutySession[];
+}
+
 export type DoctorWeeklySchedule = Record<string, DoctorDaySchedule>;
 
-/** Tuple shape: [name, specialty, room, workingDays, status, patients, avatarUrl, weeklySchedule?] */
-export type Doctor = [string, string, string, string, string, string, string, DoctorWeeklySchedule?];
+/** Tuple shape: [name, specialty, room, workingDays, status, patients, avatarUrl, weeklySchedule?, reserved?, reserved?, doctorId?] */
+export type Doctor = [string, string, string, string, string, string, string, DoctorWeeklySchedule?, string?, string?, string?];
 
 // ---------- Specialties ----------
 /** Tuple shape: [name, code, description, fee, duration, doctorsCount] */
@@ -57,8 +66,10 @@ export interface TrafficPoint {
 }
 
 // ---------- Appointments ----------
-/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status, appointmentDate?, opd?] */
-export type AppointmentEntry = [string, string, string, string, string, string, string, string, string, string, string, string?, string?];
+export type AppointmentStatus = 'SCHEDULED' | 'CONFIRMED' | 'WAITING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+
+/** Tuple shape: [time, subLabel, tokenId, patientName, ageSex, complaint, note, doctor, room, visitType, status, appointmentDate?, opd?, patientId?, doctorId?] */
+export type AppointmentEntry = [string, string, string, string, string, string, string, string, string, string, string, string?, string?, string?, string?];
 
 // ---------- Patient Registration ----------
 export interface RegistrationField {
@@ -124,7 +135,7 @@ export type CalendarEventTone = 'default' | 'confirmed' | 'consult' | 'waiting' 
 
 export interface CalendarEvent {
   id: string;
-  day: number;
+  day?: number;
   startMinutes: number;
   durationMinutes: number;
   time: string;

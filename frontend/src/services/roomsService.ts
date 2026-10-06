@@ -14,6 +14,14 @@ export const roomsService = {
   getRates(): WardRate[] {
     return loadFromStorage<WardRate[]>(KEYS.rates, wardRates);
   },
+  /** Persists the full room list (used by stay migration / inventory cleanup). */
+  saveRooms(updated: Room[]): void {
+    saveToStorage(KEYS.rooms, updated);
+  },
+  /** Persists the ward rate card. */
+  saveRates(updated: WardRate[]): void {
+    saveToStorage(KEYS.rates, updated);
+  },
   /** Places `patient` in the given (free) bed and persists the result. */
   assignPatient(roomId: string, bedIndex: number, patient: string): Room[] {
     const updated = this.getRooms().map((r) =>

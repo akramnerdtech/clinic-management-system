@@ -9,6 +9,11 @@ const KEYS = {
   profile: 'curaclinic.doctors.profile',
 };
 
+/** Stable id for doctors saved before ids were stored. */
+function doctorIdFromName(name: string): string {
+  return `doc-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+}
+
 export const doctorsService = {
   getDoctors(): Doctor[] {
     const loaded = loadFromStorage<Doctor[]>(KEYS.doctors, []);
@@ -21,6 +26,9 @@ export const doctorsService = {
       doctor[5],
       doctor[6],
       doctor[7],
+      doctor[8],
+      doctor[9],
+      doctor[10] || doctorIdFromName(doctor[0]),
     ]);
   },
 

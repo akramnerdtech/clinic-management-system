@@ -98,7 +98,7 @@ export const appointmentsService = {
   updateStatus(tokenId: string, status: string): AppointmentEntry[] {
     const current = loadFromStorage(KEYS.entries, appointmentEntries);
     const updated = current.map((entry) => entry[2] === tokenId
-      ? [...entry.slice(0, 10), status, entry[11]] as AppointmentEntry
+      ? [...entry.slice(0, 10), status, ...entry.slice(11)] as AppointmentEntry
       : entry);
     saveToStorage(KEYS.entries, updated);
     return updated;

@@ -1,15 +1,9 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Search,
-  UserPlus,
-  UserRound,
-  Trash2,
-} from 'lucide-react';
-import { IconButton } from '@/components/ui/IconButton';
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, UserPlus, UserRound, Trash2 } from "lucide-react";
+import { IconButton } from "@/components/ui/IconButton";
+import type { Patient } from "@/types";
 import "../../index.css";
-
-
 
 interface Props {
   patients: Patient[];
@@ -24,7 +18,7 @@ export function PatientIdentityCard({
 }: Props) {
   const navigate = useNavigate();
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [removedPatientIds, setRemovedPatientIds] = useState<string[]>([]);
 
   const filteredPatients = useMemo(() => {
@@ -48,9 +42,7 @@ export function PatientIdentityCard({
     });
   }, [patients, query, removedPatientIds]);
 
-  const selectedPatient = patients.find(
-    ([id]) => id === selectedPatientId,
-  );
+  const selectedPatient = patients.find(([id]) => id === selectedPatientId);
 
   const handleDeletePatient = (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -67,14 +59,11 @@ export function PatientIdentityCard({
       return;
     }
 
-    setRemovedPatientIds((currentIds) => [
-      ...currentIds,
-      patientId,
-    ]);
+    setRemovedPatientIds((currentIds) => [...currentIds, patientId]);
 
     // Clear selected patient if the deleted patient was selected
     if (selectedPatientId === patientId) {
-      onSelectPatient('');
+      onSelectPatient("");
     }
   };
 
@@ -93,7 +82,7 @@ export function PatientIdentityCard({
 
         <IconButton
           className="soft-button"
-          onClick={() => navigate('/patients/new')}
+          onClick={() => navigate("/patients/new")}
         >
           <UserPlus size={15} />
           Add Patient
@@ -133,14 +122,14 @@ export function PatientIdentityCard({
               .filter(Boolean)
               .map((part) => part[0])
               .slice(0, 2)
-              .join('')
+              .join("")
               .toUpperCase();
 
             return (
               <div
                 key={patientId}
                 className={`registered-patient-option ${
-                  isSelected ? 'selected' : ''
+                  isSelected ? "selected" : ""
                 }`}
               >
                 {/* Patient Select Button */}
@@ -151,9 +140,7 @@ export function PatientIdentityCard({
                   className="registered-patient-select"
                   onClick={() => onSelectPatient(patientId)}
                 >
-                  <span className="registered-patient-avatar">
-                    {initials}
-                  </span>
+                  <span className="registered-patient-avatar">{initials}</span>
 
                   <span className="registered-patient-name">
                     <b>{patientName}</b>
@@ -163,9 +150,7 @@ export function PatientIdentityCard({
                     </small>
                   </span>
 
-                  <span className="registered-patient-age">
-                    {patientAge}
-                  </span>
+                  <span className="registered-patient-age">{patientAge}</span>
                 </button>
 
                 {/* Delete Button */}
@@ -175,11 +160,7 @@ export function PatientIdentityCard({
                   title={`Delete ${patientName}`}
                   aria-label={`Delete ${patientName}`}
                   onClick={(event) =>
-                    handleDeletePatient(
-                      event,
-                      patientId,
-                      patientName,
-                    )
+                    handleDeletePatient(event, patientId, patientName)
                   }
                 >
                   <Trash2 size={17} />
@@ -194,13 +175,13 @@ export function PatientIdentityCard({
 
           <p>
             {query.trim()
-              ? 'No registered patients match your search.'
-              : 'No registered patients yet.'}
+              ? "No registered patients match your search."
+              : "No registered patients yet."}
           </p>
 
           <IconButton
             className="teal-button"
-            onClick={() => navigate('/patients/new')}
+            onClick={() => navigate("/patients/new")}
           >
             <UserPlus size={14} />
             Register Patient
@@ -209,21 +190,17 @@ export function PatientIdentityCard({
       )}
 
       {/* Selected Patient Summary */}
-      {selectedPatient &&
-        !removedPatientIds.includes(selectedPatient[0]) && (
-          <div className="selected-patient-summary">
-            <span>Selected patient</span>
+      {selectedPatient && !removedPatientIds.includes(selectedPatient[0]) && (
+        <div className="selected-patient-summary">
+          <span>Selected patient</span>
 
-            <b>{selectedPatient[1]}</b>
+          <b>{selectedPatient[1]}</b>
 
-            <small>
-              {selectedPatient[0]} · {selectedPatient[2]}
-            </small>
-          </div>
-        )}
+          <small>
+            {selectedPatient[0]} · {selectedPatient[2]}
+          </small>
+        </div>
+      )}
     </section>
   );
 }
-
-
-
