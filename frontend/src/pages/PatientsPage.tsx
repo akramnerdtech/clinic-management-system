@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   AlertTriangle,
   Download,
@@ -7,103 +7,47 @@ import {
   Plus,
   Search,
   Trash2,
-  X,
   Users,
-} from 'lucide-react';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { Metric } from '@/components/ui/Metric';
-import { IconButton } from '@/components/ui/IconButton';
-import { Modal } from '@/components/ui/Modal';
-import { usePatients } from '@/hooks/usePatients';
-import { useToast } from '@/utils/toast';
-import { downloadCsv } from '@/utils/exportFile';
-import type { Patient } from '@/types';
-import '@/styles/patient-export.css';
+} from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Metric } from "@/components/ui/Metric";
+import { IconButton } from "@/components/ui/IconButton";
+import { Modal } from "@/components/ui/Modal";
+import { usePatients } from "@/hooks/usePatients";
+import { useToast } from "@/utils/toast";
+import { ReportModal } from "@/components/reports/ReportModal";
+import type { Patient } from "@/types";
 
 function dateKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function todayDate(): string {
   return dateKey(new Date());
 }
 
-function yesterdayDate(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return dateKey(d);
-}
-
-function longDayLabel(key: string): string {
-  return new Date(`${key}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-}
-
 export function PatientsPage() {
   const { patients, metrics, removePatient, clearAllPatients } = usePatients();
-  const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'today'>('all');
-  const [exportRangeOpen, setExportRangeOpen] = useState(false);
-  const [exportDate, setExportDate] = useState(todayDate());
+  const [query, setQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"all" | "today">("all");
+  const [reportOpen, setReportOpen] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
 
   const navigate = useNavigate();
   const toast = useToast();
   const todayDateKey = todayDate();
-  const todayPatients = patients.filter((patient) => patient[9] === todayDateKey);
-
-  const currentList = activeTab === 'today' ? todayPatients : patients;
-
-  const filtered = currentList.filter((p) =>
-    `${p[0]} ${p[1]} ${p[3]}`.toLowerCase().includes(query.trim().toLowerCase()),
+  const todayPatients = patients.filter(
+    (patient) => patient[9] === todayDateKey,
   );
 
-  /** Only the patients registered on the chosen day — never earlier or later records. */
-  const exportPatients = exportDate ? patients.filter((patient) => patient[9] === exportDate) : [];
+  const currentList = activeTab === "today" ? todayPatients : patients;
 
-  const openExport = () => {
-    setExportDate(todayDate());
-    setExportRangeOpen(true);
-  };
-
-  const handleExport = () => {
-    if (!exportDate) {
-      toast.error('Choose a date to export.');
-      return;
-    }
-    if (exportPatients.length === 0) {
-      toast.error(`No patients were registered on ${exportDate}.`);
-      return;
-    }
-    const exportRows = exportPatients.map((patient) => [
-      patient[0],
-      patient[1],
-      patient[2],
-      patient[3],
-      patient[8] ?? '',
-      patient[5],
-      patient[6],
-      patient[7],
-      patient[9] ?? '',
-    ]);
-    downloadCsv(
-      `patients-${exportDate}`,
-      [
-        'ID',
-        'Name',
-        'Age/Sex',
-        'Condition',
-        'Recommended Test',
-        'Last Visit',
-        'Email',
-        'Blood Group',
-        'Registration Date',
-      ],
-      exportRows,
-    );
-    toast.success(`${exportPatients.length} patient record${exportPatients.length === 1 ? '' : 's'} for ${exportDate} exported.`);
-    setExportRangeOpen(false);
-  };
+  const filtered = currentList.filter((p) =>
+    `${p[0]} ${p[1]} ${p[3]}`
+      .toLowerCase()
+      .includes(query.trim().toLowerCase()),
+  );
 
   const confirmDeletePatient = () => {
     if (!patientToDelete) return;
@@ -115,7 +59,7 @@ export function PatientsPage() {
 
   const confirmClearAll = () => {
     clearAllPatients();
-    toast.success('All patient records have been permanently cleared.');
+    toast.success("All patient records have been permanently cleared.");
     setClearAllModalOpen(false);
   };
 
@@ -129,7 +73,7 @@ export function PatientsPage() {
           <>
             <IconButton
               className="white-button"
-              onClick={openExport}
+              onClick={() => setReportOpen(true)}
             >
               <Download size={14} /> Export by Date
             </IconButton>
@@ -137,14 +81,14 @@ export function PatientsPage() {
               <IconButton
                 className="white-button"
                 onClick={() => setClearAllModalOpen(true)}
-                style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+                style={{ color: "#dc2626", borderColor: "#fca5a5" }}
               >
                 <Trash2 size={14} /> Clear All Patients
               </IconButton>
             )}
             <IconButton
               className="teal-button"
-              onClick={() => navigate('/patients/new')}
+              onClick={() => navigate("/patients/new")}
             >
               <Plus size={14} /> Add Patient
             </IconButton>
@@ -185,8 +129,8 @@ export function PatientsPage() {
         <b
           role="button"
           tabIndex={0}
-          style={{ cursor: 'pointer', opacity: activeTab === 'all' ? 1 : 0.6 }}
-          onClick={() => setActiveTab('all')}
+          style={{ cursor: "pointer", opacity: activeTab === "all" ? 1 : 0.6 }}
+          onClick={() => setActiveTab("all")}
         >
           All Directory ({patients.length})
         </b>
@@ -194,11 +138,11 @@ export function PatientsPage() {
           role="button"
           tabIndex={0}
           style={{
-            cursor: 'pointer',
-            fontWeight: activeTab === 'today' ? 700 : 400,
-            color: activeTab === 'today' ? '#0f766e' : undefined,
+            cursor: "pointer",
+            fontWeight: activeTab === "today" ? 700 : 400,
+            color: activeTab === "today" ? "#0f766e" : undefined,
           }}
-          onClick={() => setActiveTab('today')}
+          onClick={() => setActiveTab("today")}
         >
           Registered Today ({todayPatients.length})
         </span>
@@ -234,7 +178,7 @@ export function PatientsPage() {
                     </td>
                     <td>
                       <b>
-                        {p[1]}{' '}
+                        {p[1]}{" "}
                         {i === 0 && (
                           <AlertTriangle size={12} className="text-red" />
                         )}
@@ -245,8 +189,8 @@ export function PatientsPage() {
                     <td>
                       <span className="condition-chip">{p[3]}</span>
                     </td>
-                    <td>{p[8] || 'Clinical Review'}</td>
-                    <td>{p[9] || 'Registered in EHR'}</td>
+                    <td>{p[8] || "Clinical Review"}</td>
+                    <td>{p[9] || "Registered in EHR"}</td>
                     <td className="patient-row-actions">
                       <button
                         type="button"
@@ -277,20 +221,26 @@ export function PatientsPage() {
                     <td
                       colSpan={7}
                       style={{
-                        textAlign: 'center',
-                        padding: '48px 16px',
-                        color: '#64748b',
+                        textAlign: "center",
+                        padding: "48px 16px",
+                        color: "#64748b",
                       }}
                     >
-                      <b style={{ display: 'block', fontSize: 15, color: '#1e293b' }}>
+                      <b
+                        style={{
+                          display: "block",
+                          fontSize: 15,
+                          color: "#1e293b",
+                        }}
+                      >
                         {patients.length === 0
-                          ? 'No patients registered in the directory'
-                          : 'No patients match this search'}
+                          ? "No patients registered in the directory"
+                          : "No patients match this search"}
                       </b>
                       <p style={{ marginTop: 6, fontSize: 13 }}>
                         {patients.length === 0
                           ? 'Click "+ Add Patient" above to register a new outpatient record.'
-                          : 'Try changing search query or switching to All Directory.'}
+                          : "Try changing search query or switching to All Directory."}
                       </p>
                     </td>
                   </tr>
@@ -310,7 +260,7 @@ export function PatientsPage() {
               <b>1</b>
               <button
                 onClick={() =>
-                  toast.info('All matching patients are shown on this page.')
+                  toast.info("All matching patients are shown on this page.")
                 }
               >
                 Next
@@ -336,7 +286,7 @@ export function PatientsPage() {
               </IconButton>
               <IconButton
                 className="teal-button auto-width"
-                style={{ backgroundColor: '#dc2626', borderColor: '#b91c1c' }}
+                style={{ backgroundColor: "#dc2626", borderColor: "#b91c1c" }}
                 onClick={confirmDeletePatient}
               >
                 <Trash2 size={14} /> Confirm Delete
@@ -344,28 +294,39 @@ export function PatientsPage() {
             </>
           }
         >
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <div
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: '50%',
-                background: '#fee2e2',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#dc2626',
+                borderRadius: "50%",
+                background: "#fee2e2",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#dc2626",
                 flexShrink: 0,
               }}
             >
               <AlertTriangle size={20} />
             </div>
             <div>
-              <p style={{ fontSize: 14, color: '#1e293b', margin: 0, fontWeight: 600 }}>
-                This will delete {patientToDelete[1]} ({patientToDelete[0]}) from the directory.
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#1e293b",
+                  margin: 0,
+                  fontWeight: 600,
+                }}
+              >
+                This will delete {patientToDelete[1]} ({patientToDelete[0]})
+                from the directory.
               </p>
-              <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0 0' }}>
-                Condition: {patientToDelete[3]}. This operation cannot be undone.
+              <p
+                style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0 0" }}
+              >
+                Condition: {patientToDelete[3]}. This operation cannot be
+                undone.
               </p>
             </div>
           </div>
@@ -388,7 +349,7 @@ export function PatientsPage() {
               </IconButton>
               <IconButton
                 className="teal-button auto-width"
-                style={{ backgroundColor: '#dc2626', borderColor: '#b91c1c' }}
+                style={{ backgroundColor: "#dc2626", borderColor: "#b91c1c" }}
                 onClick={confirmClearAll}
               >
                 <Trash2 size={14} /> Clear All Patients
@@ -396,110 +357,47 @@ export function PatientsPage() {
             </>
           }
         >
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <div
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: '50%',
-                background: '#fee2e2',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#dc2626',
+                borderRadius: "50%",
+                background: "#fee2e2",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#dc2626",
                 flexShrink: 0,
               }}
             >
               <AlertTriangle size={20} />
             </div>
             <div>
-              <p style={{ fontSize: 14, color: '#1e293b', margin: 0, fontWeight: 600 }}>
-                This will delete all {patients.length} patient records permanently.
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#1e293b",
+                  margin: 0,
+                  fontWeight: 600,
+                }}
+              >
+                This will delete all {patients.length} patient records
+                permanently.
               </p>
-              <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0 0' }}>
-                New patients can be registered anytime via &ldquo;+ Add Patient&rdquo;.
+              <p
+                style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0 0" }}
+              >
+                New patients can be registered anytime via &ldquo;+ Add
+                Patient&rdquo;.
               </p>
             </div>
           </div>
         </Modal>
       )}
 
-      {exportRangeOpen && (
-        <div
-          className="modal-overlay"
-          onClick={() => setExportRangeOpen(false)}
-        >
-          <section
-            className="modal-card patient-export-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="patient-export-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal-header">
-              <div>
-                <h2 id="patient-export-title">Export patient records</h2>
-                <p>Download the patients registered on a single day.</p>
-              </div>
-              <button
-                type="button"
-                className="modal-close"
-                aria-label="Close export dialog"
-                onClick={() => setExportRangeOpen(false)}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="pex-body">
-              <div className="pex-quick">
-                {[['Today', todayDate()], ['Yesterday', yesterdayDate()]].map(([label, key]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className={exportDate === key ? 'selected' : ''}
-                    onClick={() => setExportDate(key)}
-                  >{label}</button>
-                ))}
-              </div>
-              <label className="pex-date">
-                <span>Date</span>
-                <input
-                  type="date"
-                  value={exportDate}
-                  max={todayDate()}
-                  onChange={(event) => setExportDate(event.target.value)}
-                />
-              </label>
-              <div className={`pex-summary ${exportPatients.length ? '' : 'empty'}`}>
-                {exportDate ? (
-                  <>
-                    <b>{exportPatients.length} patient{exportPatients.length === 1 ? '' : 's'}</b>
-                    <span>registered on {longDayLabel(exportDate)}</span>
-                  </>
-                ) : <span>Pick a date to see how many patients will be exported.</span>}
-              </div>
-              {exportPatients.length > 0 && (
-                <ul className="pex-list">
-                  {exportPatients.slice(0, 5).map((patient) => (
-                    <li key={patient[0]}><i>{patient[0]}</i><b>{patient[1]}</b><small>{patient[2]}</small></li>
-                  ))}
-                  {exportPatients.length > 5 && <li className="more">+ {exportPatients.length - 5} more in the file</li>}
-                </ul>
-              )}
-            </div>
-            <div className="modal-footer">
-              <IconButton
-                className="white-button"
-                onClick={() => setExportRangeOpen(false)}
-              >
-                Cancel
-              </IconButton>
-              <IconButton className="teal-button" onClick={handleExport}>
-                <Download size={14} /> Download CSV
-              </IconButton>
-            </div>
-          </section>
-        </div>
+      {reportOpen && (
+        <ReportModal module="patients" onClose={() => setReportOpen(false)} />
       )}
     </>
   );

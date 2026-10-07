@@ -4,7 +4,7 @@
  * data and keep working unchanged once a real backend is wired in.
  */
 
-function triggerDownload(filename: string, blob: Blob): void {
+export function triggerDownload(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -42,6 +42,11 @@ export interface CsvSection {
  * Excel opens it with the right encoding.
  */
 export function downloadCsvSections(filename: string, preamble: string[][], sections: CsvSection[]): void {
+  triggerDownload(filename.endsWith('.csv') ? filename : `${filename}.csv`, csvSectionsBlob(preamble, sections));
+}
+
+/** Builds the multi-section CSV described above without downloading it. */
+export function csvSectionsBlob(preamble: string[][], sections: CsvSection[]): Blob {
   const lines: string[] = preamble.map((row) => row.map(escapeCsvCell).join(','));
   sections.forEach((section) => {
     lines.push('');
@@ -49,8 +54,7 @@ export function downloadCsvSections(filename: string, preamble: string[][], sect
     lines.push(section.headers.map(escapeCsvCell).join(','));
     section.rows.forEach((row) => lines.push(row.map(escapeCsvCell).join(',')));
   });
-  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-  triggerDownload(filename.endsWith('.csv') ? filename : `${filename}.csv`, blob);
+  return new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
 }
 
 /** Downloads arbitrary JSON-serializable data as a formatted .json file. */
