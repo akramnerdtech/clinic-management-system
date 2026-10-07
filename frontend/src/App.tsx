@@ -12,10 +12,7 @@ import { NewAppointmentPage } from '@/pages/NewAppointmentPage';
 import { AddPatientPage } from '@/pages/AddPatientPage';
 import { EditPatientPage } from '@/pages/EditPatientPage';
 import { RoomsPage } from '@/pages/RoomsPage';
-<<<<<<< Updated upstream
-=======
 import { AppointRoomPage } from '@/pages/AppointRoomPage';
->>>>>>> Stashed changes
 import { PatientBillingPage } from '@/pages/PatientBillingPage';
 import { EmergencyPage } from '@/pages/EmergencyPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
