@@ -18,6 +18,8 @@ export function AddDoctorPage() {
     toggleDutyDay,
     activeDaysCount,
     updateDaySchedule,
+    updateDaySession,
+    applyPresetToAll,
     changePhoto,
     capacityInfo,
     onCallInfo,
@@ -119,7 +121,13 @@ export function AddDoctorPage() {
                 <span>Weekly working hours</span>
                 <small>{activeDaysCount} working days</small>
               </div>
-              <DutyDaySelector days={dutyDays} onToggle={toggleDutyDay} onTimeChange={(dayKey, part, value) => updateDaySchedule(dayKey, { [part]: value })} />
+              <DutyDaySelector
+                days={dutyDays}
+                onToggle={toggleDutyDay}
+                onTimeChange={(dayKey, part, value) => updateDaySchedule(dayKey, { [part]: value })}
+                onSessionChange={updateDaySession}
+                onApplyPreset={applyPresetToAll}
+              />
             </div>
 
           </section>

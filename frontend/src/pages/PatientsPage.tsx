@@ -15,7 +15,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Modal } from "@/components/ui/Modal";
 import { usePatients } from "@/hooks/usePatients";
 import { useToast } from "@/utils/toast";
-import { ReportModal } from "@/components/reports/ReportModal";
+import { ReportModal } from "@/components/reports/Reportmodal";
 import type { Patient } from "@/types";
 
 function dateKey(date: Date): string {
@@ -44,7 +44,7 @@ export function PatientsPage() {
   const currentList = activeTab === "today" ? todayPatients : patients;
 
   const filtered = currentList.filter((p) =>
-    `${p[0]} ${p[1]} ${p[3]}`
+    `${p[0]} ${p[1]} ${p[3]} ${p[6] || ''} ${p[10] || ''}`
       .toLowerCase()
       .includes(query.trim().toLowerCase()),
   );
@@ -183,7 +183,7 @@ export function PatientsPage() {
                           <AlertTriangle size={12} className="text-red" />
                         )}
                       </b>
-                      <small>{p[6]}</small>
+                      <small>{p[10] ? `${p[10]} • ${p[6] || 'Outpatient'}` : (p[6] || 'Outpatient')}</small>
                     </td>
                     <td>{p[2]}</td>
                     <td>

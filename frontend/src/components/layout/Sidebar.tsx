@@ -59,7 +59,34 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
         ))}
       </nav>
       <div className="receptionist">
-        <img src={avatar} alt={user?.fullName || 'Profile'} />
+        {avatar ? (
+          <img src={avatar} alt={user?.fullName || 'Profile'} />
+        ) : (
+          <div
+            className="empty-avatar-circle"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              backgroundColor: '#e0f2fe',
+              color: '#0369a1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: 13,
+              flexShrink: 0,
+              border: '1.5px solid #bae6fd',
+            }}
+          >
+            {(user?.fullName || 'Sarah Jenkins')
+              .split(' ')
+              .map((n) => n[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase()}
+          </div>
+        )}
         <div className="">
           <strong>{user?.fullName || 'Sarah Jenkins'}</strong>
        

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DoorOpen, Pencil, Trash2 } from 'lucide-react';
+import { DoorOpen, MessageCircle, Pencil, Trash2 } from 'lucide-react';
 
 import { useToast } from '@/utils/toast';
 import { Modal } from '@/components/ui/Modal';
+import { WhatsAppPromptModal } from '@/components/appointments/WhatsAppPromptModal';
+import type { AppointmentNotificationParams } from '@/services/whatsappService';
 import type { AppointmentEntry } from '@/types';
 
 function formatAppointmentDate(value?: string): string {
@@ -51,6 +53,9 @@ export function AppointmentsTable({
 
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentEntry | null>(null);
+
+  const [whatsappTarget, setWhatsappTarget] =
+    useState<AppointmentNotificationParams | null>(null);
 
   const notice = () => {
     toast.info(
@@ -222,6 +227,34 @@ export function AppointmentsTable({
 
                   <button
                     type="button"
+                    className="appointment-action-icon whatsapp-action-icon"
+                    title={`Send WhatsApp push to ${r[7]}`}
+                    aria-label={`Send WhatsApp push to ${r[7]}`}
+                    onClick={() =>
+                      setWhatsappTarget({
+                        doctorName: r[7],
+                        patientName: r[3],
+                        patientAgeSex: r[4],
+                        date: r[11] || '',
+                        timeSlot: r[0],
+                        roomSuite: r[8],
+                        opdUnit: r[12],
+                        reason: r[5],
+                        token: r[2],
+                      })
+                    }
+                    style={{
+                      marginLeft: '10px',
+                      color: '#10b981',
+                      borderColor: '#a7f3d0',
+                      backgroundColor: '#f0fdf4',
+                    }}
+                  >
+                    <MessageCircle size={15} />
+                  </button>
+
+                  <button
+                    type="button"
                     className="appointment-action-icon delete-appointment-icon"
                     title={`Delete ${r[2]}`}
                     aria-label={`Delete appointment ${r[2]}`}
@@ -336,6 +369,48 @@ export function AppointmentsTable({
             setSelectedAppointment(null)
           }
           className="appointment-details-modal"
+          footer={
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+              <button
+                type="button"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 14px',
+                  borderRadius: 6,
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setWhatsappTarget({
+                    doctorName: selectedAppointment[7],
+                    patientName: selectedAppointment[3],
+                    patientAgeSex: selectedAppointment[4],
+                    date: selectedAppointment[11] || '',
+                    timeSlot: selectedAppointment[0],
+                    roomSuite: selectedAppointment[8],
+                    opdUnit: selectedAppointment[12],
+                    reason: selectedAppointment[5],
+                    token: selectedAppointment[2],
+                  });
+                }}
+              >
+                <MessageCircle size={15} /> Send WhatsApp to Doctor
+              </button>
+              <button
+                type="button"
+                className="appointment-detail-button"
+                onClick={() => setSelectedAppointment(null)}
+              >
+                Close
+              </button>
+            </div>
+          }
         >
           <div className="appointment-detail-grid">
             <div>
@@ -426,6 +501,13 @@ export function AppointmentsTable({
             </div>
           </div>
         </Modal>
+      )}
+
+      {whatsappTarget && (
+        <WhatsAppPromptModal
+          params={whatsappTarget}
+          onClose={() => setWhatsappTarget(null)}
+        />
       )}
     </div>
   );

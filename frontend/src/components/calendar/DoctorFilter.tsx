@@ -57,9 +57,7 @@ export function DoctorFilter({ doctors, counts, totalAppointments, selected, onS
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {selectedDoctor
-          ? <img src={selectedDoctor.avatar} alt="" className="doctor-filter-avatar" />
-          : <Stethoscope size={12} />}
+        <Stethoscope size={13} style={{ color: '#007d72' }} />
         <span className="doctor-filter-label">
           {selectedDoctor ? selectedDoctor.name : `All Doctors (${activeCount} Active)`}
         </span>
@@ -108,10 +106,11 @@ export function DoctorFilter({ doctors, counts, totalAppointments, selected, onS
                 className={`doctor-filter-item${selected === d.name ? ' selected' : ''}`}
                 onClick={() => choose(d.name)}
               >
-                <img src={d.avatar} alt="" className="doctor-filter-avatar large" />
-                <span className="doctor-filter-meta">
-                  <b>{d.name}</b>
-                  <small>{d.specialty} · {d.room}</small>
+                <span className="doctor-filter-meta" style={{ flex: 1 }}>
+                  <b style={{ fontSize: 13 }}>{d.name}</b>
+                  <small style={{ fontSize: 11, color: '#007d72', fontWeight: 600, marginTop: 2 }}>
+                    ⏱ Slot: {d.slotTime || '10:00 AM – 12:00 PM • 06:00 PM – 08:00 PM'}
+                  </small>
                 </span>
                 <i className={`doctor-filter-dot${d.onDuty ? ' on' : ''}`} title={d.onDuty ? 'On duty' : 'Off duty'} />
                 <em>{counts[d.name] ?? 0}</em>

@@ -81,6 +81,7 @@ export function usePatientRegistration() {
       formValues.bloodGroup?.trim() ?? '',
       formValues.recommendedTest?.trim() ?? '',
       todayDateKey(),
+      formValues.phone?.trim() ?? '',
     ];
 
     patientsService.addPatient(patient);

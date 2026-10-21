@@ -13,7 +13,29 @@ export function RegistrationPreview({ preview, dutyDays }: RegistrationPreviewPr
         <span className="floor-sync">New Entry</span>
       </div>
       <div className="preview-head">
-        <img src={preview.avatar} alt="" />
+        {preview.avatar ? (
+          <img src={preview.avatar} alt="" />
+        ) : (
+          <div
+            className="preview-avatar-fallback"
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              backgroundColor: '#f0fdfa',
+              color: '#0d9488',
+              border: '2px solid #99f6e4',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: 15,
+              flexShrink: 0,
+            }}
+          >
+            {preview.name.replace(/^Dr\.\s*/i, '').slice(0, 2).toUpperCase() || 'DR'}
+          </div>
+        )}
         <div>
           <b>{preview.name}</b>
           <span>{preview.specialty}</span>

@@ -13,6 +13,18 @@ export function validateNewPassword(password, confirmPassword) {
   if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_LENGTH) {
     return `Password must be at most ${PASSWORD_MAX_LENGTH} characters.`;
   }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain at least one uppercase letter (A-Z).';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must contain at least one lowercase letter (a-z).';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must contain at least one number (0-9).';
+  }
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {
+    return 'Password must contain at least one special character (!@#$%^&*...).';
+  }
   if (password !== confirmPassword) {
     return 'Passwords do not match.';
   }

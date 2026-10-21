@@ -24,10 +24,10 @@ export const priorityOptions: PriorityOption[] = [
 export const appointmentDoctor: AppointmentDoctorInfo = {
   name: 'Dr. XYZ',
   title: 'Consultant Physician',
-  avatar: 'https://i.pravatar.cc/100?img=33',
+  avatar: '',
   rating: '4.9',
   suite: 'Suite 105 • Wing B',
-  hours: '03:00 PM - 04:00 PM',
+  hours: 'Morning: 10:00 AM – 12:00 PM • Evening: 06:00 PM – 08:00 PM',
 };
 
 export interface DoctorScheduleConfig {
@@ -41,24 +41,24 @@ export interface DoctorScheduleConfig {
 
 export const doctorScheduleConfigs: Record<string, DoctorScheduleConfig> = {
   'Dr. XYZ (MD)': {
-    name: 'Dr. XYZ', weekdays: [1, 2, 3, 4, 5], startHour: 15, endHour: 16,
-    suite: 'Suite 105 • Wing B', avatar: 'https://i.pravatar.cc/100?img=33',
+    name: 'Dr. XYZ', weekdays: [1, 2, 3, 4, 5], startHour: 10, endHour: 20,
+    suite: 'Suite 105 • Wing B', avatar: '',
   },
   'Dr. Ahmed Rahman (MD, PhD)': {
-    name: 'Dr. Ahmed Rahman', weekdays: [1, 2, 3, 4, 5], startHour: 9, endHour: 17,
-    suite: 'Suite 102 • Wing B', avatar: 'https://i.pravatar.cc/100?img=12',
+    name: 'Dr. Ahmed Rahman', weekdays: [1, 2, 3, 4, 5], startHour: 10, endHour: 20,
+    suite: 'Suite 102 • Wing B', avatar: '',
   },
   'Dr. Elena Rostova (MD)': {
-    name: 'Dr. Elena Rostova', weekdays: [1, 2, 3, 4, 5], startHour: 10, endHour: 17,
-    suite: 'Suite 204 • Wing A', avatar: 'https://i.pravatar.cc/100?img=47',
+    name: 'Dr. Elena Rostova', weekdays: [1, 2, 3, 4, 5], startHour: 10, endHour: 20,
+    suite: 'Suite 204 • Wing A', avatar: '',
   },
   'Dr. Marcus Vale (MD)': {
-    name: 'Dr. Marcus Vale', weekdays: [1, 2, 3, 4, 5, 6], startHour: 8, endHour: 17,
-    suite: 'Suite 310 • Wing C', avatar: 'https://i.pravatar.cc/100?img=11',
+    name: 'Dr. Marcus Vale', weekdays: [1, 2, 3, 4, 5, 6], startHour: 10, endHour: 20,
+    suite: 'Suite 310 • Wing C', avatar: '',
   },
   'Dr. Priya Patel (MD, FACC)': {
-    name: 'Dr. Priya Patel', weekdays: [1, 2, 4, 5], startHour: 11, endHour: 18,
-    suite: 'Suite 205 • Wing A', avatar: 'https://i.pravatar.cc/100?img=45',
+    name: 'Dr. Priya Patel', weekdays: [1, 2, 4, 5], startHour: 10, endHour: 20,
+    suite: 'Suite 205 • Wing A', avatar: '',
   },
 };
 

@@ -1,13 +1,63 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { dashboardService } from '@/services/dashboardService';
 
 export function useDashboardData() {
-  const [metrics] = useState(() => dashboardService.getMetrics());
-  const [tabs] = useState(() => dashboardService.getTabs());
-  const [appointmentRows] = useState(() => dashboardService.getAppointmentRows());
-  const [activityItems] = useState(() => dashboardService.getActivityItems());
-  const [activityIcons] = useState(() => dashboardService.getActivityIcons());
-  const [trafficPoints] = useState(() => dashboardService.getTrafficPoints());
+  const [metrics, setMetrics] = useState(() => dashboardService.getMetrics());
+  const [tabs, setTabs] = useState(() => dashboardService.getTabs());
+  const [selectedTab, setSelectedTab] = useState(() => dashboardService.getTabs()[0]);
+  const [appointmentRows, setAppointmentRows] = useState(() =>
+    dashboardService.getAppointmentRows(dashboardService.getTabs()[0]),
+  );
+  const [activityItems, setActivityItems] = useState(() => dashboardService.getActivityItems());
+  const [activityIcons, setActivityIcons] = useState(() => dashboardService.getActivityIcons());
+  const [trafficPoints, setTrafficPoints] = useState(() => dashboardService.getTrafficPoints());
 
-  return { metrics, tabs, appointmentRows, activityItems, activityIcons, trafficPoints };
+  const refresh = useCallback((tab?: string) => {
+    const activeTab = tab ?? selectedTab;
+    setMetrics(dashboardService.getMetrics());
+    setTabs(dashboardService.getTabs());
+    setAppointmentRows(dashboardService.getAppointmentRows(activeTab));
+    setActivityItems(dashboardService.getActivityItems());
+    setActivityIcons(dashboardService.getActivityIcons());
+    setTrafficPoints(dashboardService.getTrafficPoints());
+  }, [selectedTab]);
+
+  useEffect(() => {
+    const handleUpdate = () => refresh();
+
+    window.addEventListener('clinic-appointments-updated', handleUpdate);
+    window.addEventListener('clinic-doctors-updated', handleUpdate);
+    window.addEventListener('clinic-patients-updated', handleUpdate);
+    window.addEventListener('clinic-billing-updated', handleUpdate);
+    window.addEventListener('clinic-calendar-updated', handleUpdate);
+    window.addEventListener('clinic-room-stays-updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('clinic-appointments-updated', handleUpdate);
+      window.removeEventListener('clinic-doctors-updated', handleUpdate);
+      window.removeEventListener('clinic-patients-updated', handleUpdate);
+      window.removeEventListener('clinic-billing-updated', handleUpdate);
+      window.removeEventListener('clinic-calendar-updated', handleUpdate);
+      window.removeEventListener('clinic-room-stays-updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [refresh]);
+
+  const selectTab = (tab: string) => {
+    setSelectedTab(tab);
+    setAppointmentRows(dashboardService.getAppointmentRows(tab));
+  };
+
+  return {
+    metrics,
+    tabs,
+    selectedTab,
+    selectTab,
+    appointmentRows,
+    activityItems,
+    activityIcons,
+    trafficPoints,
+    refresh,
+  };
 }

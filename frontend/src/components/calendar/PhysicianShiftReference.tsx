@@ -13,10 +13,12 @@ interface PhysicianShiftReferenceProps {
 export function PhysicianShiftReference({ shifts, selectedDoctor, onSelectDoctor }: PhysicianShiftReferenceProps) {
   const navigate = useNavigate();
 
+  const todayDateLabel = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
   return (
     <section className="content-card side-card">
       <h2>Physician Shift Reference <span><IdCard size={15} /></span></h2>
-      <p className="live-status-label">Current active medical staff assigned to suites today, September 24.</p>
+      <p className="live-status-label">Current active medical staff assigned to suites today, {todayDateLabel}.</p>
       <div className="physician-grid">
         {shifts.map((s) => {
           const doctorName = s.doctorName;
@@ -42,7 +44,25 @@ export function PhysicianShiftReference({ shifts, selectedDoctor, onSelectDoctor
               } : undefined}
             >
               <div className="physician-card-head">
-                <img src={s.avatar} alt="" />
+                <div
+                  className="physician-avatar-fallback"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: '#f0fdfa',
+                    color: '#0d9488',
+                    border: '1px solid #99f6e4',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  {s.name.replace(/^Dr\.\s*/i, '').slice(0, 2).toUpperCase() || 'DR'}
+                </div>
                 <div>
                   <b>{s.name}</b>
                   <small>{s.dept}</small>

@@ -53,24 +53,29 @@ export function useMasterCalendar() {
   const [allEvents, setAllEvents] = useState(() => calendarService.getEvents());
   const [middayBanner] = useState(() => calendarService.getMiddayBanner());
   const [endBannerLabel] = useState(() => calendarService.getEndBannerLabel());
-  const [suiteUtilizationRows] = useState(() => calendarService.getSuiteUtilizationRows());
-  const [roomStatuses] = useState(() => calendarService.getRoomStatuses());
-  const [physicianShifts] = useState(() => calendarService.getPhysicianShifts());
+  const [suiteUtilizationRows, setSuiteUtilizationRows] = useState(() => calendarService.getSuiteUtilizationRows());
+  const [roomStatuses, setRoomStatuses] = useState(() => calendarService.getRoomStatuses());
+  const [physicianShifts, setPhysicianShifts] = useState(() => calendarService.getPhysicianShifts());
   const [doctorOptions, setDoctorOptions] = useState(() => calendarService.getDoctorOptions());
 
   useEffect(() => {
     const handleUpdate = () => {
       setAllEvents(calendarService.getEvents());
       setDoctorOptions(calendarService.getDoctorOptions());
+      setPhysicianShifts(calendarService.getPhysicianShifts());
+      setSuiteUtilizationRows(calendarService.getSuiteUtilizationRows());
+      setRoomStatuses(calendarService.getRoomStatuses());
     };
     window.addEventListener('clinic-appointments-updated', handleUpdate);
     window.addEventListener('clinic-calendar-updated', handleUpdate);
     window.addEventListener('clinic-doctors-updated', handleUpdate);
+    window.addEventListener('clinic-room-stays-updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
     return () => {
       window.removeEventListener('clinic-appointments-updated', handleUpdate);
       window.removeEventListener('clinic-calendar-updated', handleUpdate);
       window.removeEventListener('clinic-doctors-updated', handleUpdate);
+      window.removeEventListener('clinic-room-stays-updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
   }, []);
@@ -78,6 +83,9 @@ export function useMasterCalendar() {
   const refreshEvents = useCallback(() => {
     setAllEvents(calendarService.getEvents());
     setDoctorOptions(calendarService.getDoctorOptions());
+    setPhysicianShifts(calendarService.getPhysicianShifts());
+    setSuiteUtilizationRows(calendarService.getSuiteUtilizationRows());
+    setRoomStatuses(calendarService.getRoomStatuses());
   }, []);
 
   const getDoctorSchedule = useCallback(

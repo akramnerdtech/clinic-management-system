@@ -52,6 +52,65 @@ export function useAddDoctor() {
     });
   };
 
+  const updateDaySession = (dayKey: string, sessionIndex: number, part: 'start' | 'end', value: string) => {
+    setDutyDays((prev) => {
+      const updated = prev.map((day) => {
+        if (day.key !== dayKey) return day;
+        const currentSessions = day.sessions && day.sessions.length > 0
+          ? [...day.sessions]
+          : [
+            { id: `${day.key.toLowerCase()}-morn`, label: 'Morning', start: '10:00', end: '12:00' },
+            { id: `${day.key.toLowerCase()}-eve`, label: 'Evening', start: '18:00', end: '20:00' },
+          ];
+        if (currentSessions[sessionIndex]) {
+          currentSessions[sessionIndex] = { ...currentSessions[sessionIndex], [part]: value };
+        }
+        return {
+          ...day,
+          start: currentSessions[0]?.start || day.start,
+          end: currentSessions[currentSessions.length - 1]?.end || day.end,
+          sessions: currentSessions,
+        };
+      });
+      addDoctorService.saveDutyDays(updated);
+      return updated;
+    });
+  };
+
+  const applyPresetToAll = (preset: 'both' | 'morning' | 'evening' | 'full') => {
+    setDutyDays((prev) => {
+      const updated = prev.map((day) => {
+        if (!day.active) return day;
+        let sessions: DutyDay['sessions'];
+        let start = '10:00';
+        let end = '20:00';
+        if (preset === 'both') {
+          sessions = [
+            { id: `${day.key.toLowerCase()}-morn`, label: 'Morning', start: '10:00', end: '12:00' },
+            { id: `${day.key.toLowerCase()}-eve`, label: 'Evening', start: '18:00', end: '20:00' },
+          ];
+          start = '10:00';
+          end = '20:00';
+        } else if (preset === 'morning') {
+          sessions = [{ id: `${day.key.toLowerCase()}-morn`, label: 'Morning', start: '10:00', end: '12:00' }];
+          start = '10:00';
+          end = '12:00';
+        } else if (preset === 'evening') {
+          sessions = [{ id: `${day.key.toLowerCase()}-eve`, label: 'Evening', start: '18:00', end: '20:00' }];
+          start = '18:00';
+          end = '20:00';
+        } else {
+          sessions = [{ id: `${day.key.toLowerCase()}-full`, label: 'Full Shift', start: '10:00', end: '20:00' }];
+          start = '10:00';
+          end = '20:00';
+        }
+        return { ...day, start, end, sessions };
+      });
+      addDoctorService.saveDutyDays(updated);
+      return updated;
+    });
+  };
+
   const changePhoto = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.error('Choose an image file for the doctor photo.');
@@ -111,6 +170,12 @@ export function useAddDoctor() {
     const room = formValues.suite?.trim() || 'Unassigned';
     const workingDays = dutyDays.filter((d) => d.active).map((d) => d.key[0]).join(' ') || '—';
 
+    const rawFee = formValues.fee?.trim();
+    const fee = rawFee
+      ? (rawFee.startsWith('₹') ? rawFee : `₹${rawFee.replace(/[^0-9.]/g, '')}`)
+      : '₹800.00';
+    const doctorMobile = formValues.mobile?.trim() || undefined;
+
     const doctor: Doctor = [
       name,
       specialty,
@@ -118,10 +183,28 @@ export function useAddDoctor() {
       workingDays,
       'ON DUTY',
       `0 /${capacityInfo.cap}`,
-      formValues.photo || `https://i.pravatar.cc/80?u=${encodeURIComponent(name)}`,
-      Object.fromEntries(dutyDays.filter((day) => day.active).map((day) => [day.key, { start: day.start, end: day.end }])),
-      undefined,
-      undefined,
+      formValues.photo || '',
+      Object.fromEntries(
+        dutyDays.filter((day) => day.active).map((day) => {
+          const sessions = day.sessions && day.sessions.length > 0
+            ? day.sessions
+            : [
+              { id: `${day.key.toLowerCase()}-morn`, label: 'Morning', start: '10:00', end: '12:00' },
+              { id: `${day.key.toLowerCase()}-eve`, label: 'Evening', start: '18:00', end: '20:00' },
+            ];
+          return [
+            day.key,
+            {
+              active: true,
+              start: sessions[0]?.start || day.start,
+              end: sessions[sessions.length - 1]?.end || day.end,
+              sessions,
+            },
+          ];
+        })
+      ),
+      fee,
+      doctorMobile,
       `doc-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
     ];
 
@@ -146,6 +229,8 @@ export function useAddDoctor() {
     activeDaysCount,
     shiftTimes,
     updateDaySchedule,
+    updateDaySession,
+    applyPresetToAll,
     changePhoto,
     capacityInfo,
     onCallInfo,

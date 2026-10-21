@@ -14,7 +14,29 @@ export function DoctorScheduleRail({ chips, doctor }: { chips: AppointmentMiniCh
       </div>
 
       <div className="content-card doctor-feature-card">
-        <img src={doctor.avatar} alt={doctor.name} />
+        {doctor.avatar ? (
+          <img src={doctor.avatar} alt={doctor.name} />
+        ) : (
+          <div
+            className="doctor-avatar-fallback"
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              backgroundColor: '#f0fdfa',
+              color: '#0d9488',
+              border: '2px solid #99f6e4',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: 15,
+              flexShrink: 0,
+            }}
+          >
+            {doctor.name.replace(/^Dr\.\s*/i, '').slice(0, 2).toUpperCase() || 'DR'}
+          </div>
+        )}
         <div className="doctor-feature-info">
           <h3>{doctor.name}</h3>
           <p>{doctor.title}</p>

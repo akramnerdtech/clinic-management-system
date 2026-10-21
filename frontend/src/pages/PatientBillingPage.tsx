@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Banknote,
   BedDouble,
@@ -11,6 +11,12 @@ import {
   Search,
   ShieldAlert,
   UserRound,
+  Eye,
+  Printer,
+  Clock,
+  Sparkles,
+  ArrowUpRight,
+  Filter,
 } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 import { Modal } from "@/components/ui/Modal";
@@ -22,7 +28,8 @@ import { patientsService } from "@/services/patientsService";
 import { doctorsService } from "@/services/doctorsService";
 import { WARD_LABELS } from "@/data/rooms";
 import { useToast } from "@/utils/toast";
-import { ReportModal } from "@/components/reports/ReportModal";
+import { downloadCsv } from "@/utils/exportFile";
+import { ReportModal } from "@/components/reports/Reportmodal";
 import type {
   Invoice,
   PatientBill,
@@ -462,8 +469,81 @@ export function PatientBillingPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [finalizeOpen, setFinalizeOpen] = useState(false);
   const toast = useToast();
+  const navigate = useNavigate();
   const isHistoryRoute =
     pathname.endsWith("/history") || pathname.endsWith("/invoices");
+
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<string>("ALL");
+  const [historySearch, setHistorySearch] = useState<string>("");
+
+  const totalInvoicedPaise = useMemo(
+    () => invoices.reduce((sum, inv) => sum + (inv.status !== "CANCELLED" ? inv.totalPaise : 0), 0),
+    [invoices],
+  );
+  const totalPaidPaise = useMemo(
+    () => payments.reduce((sum, p) => sum + p.amountPaise, 0),
+    [payments],
+  );
+  const totalBalancePaise = useMemo(
+    () => invoices.reduce((sum, inv) => sum + (inv.status !== "CANCELLED" ? inv.balancePaise : 0), 0),
+    [invoices],
+  );
+  const activeStaysList = useMemo(
+    () => stays.filter((stay) => stay.status === "ACTIVE"),
+    [stays],
+  );
+
+  const directoryInvoices = useMemo(() => {
+    return invoices.filter((inv) => {
+      if (historyStatusFilter !== "ALL" && inv.status !== historyStatusFilter) return false;
+      if (!historySearch.trim()) return true;
+      const q = historySearch.trim().toLowerCase();
+      const patient = patients.find(([id]) => id === inv.patientId);
+      const patientName = patient ? patient[1].toLowerCase() : "";
+      return (
+        inv.invoiceNumber.toLowerCase().includes(q) ||
+        inv.patientId.toLowerCase().includes(q) ||
+        patientName.includes(q) ||
+        (inv.billingType ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [invoices, historyStatusFilter, historySearch, patients]);
+
+  const handleExportInvoicesCsv = () => {
+    downloadCsv(
+      "clinic-invoices-directory",
+      ["Invoice #", "Patient ID", "Patient Name", "Type", "Status", "Date", "Gross Amount (INR)", "Paid (INR)", "Balance (INR)"],
+      directoryInvoices.map((inv) => {
+        const pt = patients.find(([id]) => id === inv.patientId);
+        return [
+          inv.invoiceNumber,
+          inv.patientId,
+          pt ? pt[1] : "Unknown",
+          inv.billingType ?? "IPD",
+          inv.status,
+          new Date(inv.createdAt).toLocaleDateString(),
+          (inv.totalPaise / 100).toFixed(2),
+          (inv.paidPaise / 100).toFixed(2),
+          (inv.balancePaise / 100).toFixed(2),
+        ];
+      }),
+    );
+    toast.success("Invoices directory exported.");
+  };
+
+  const handleOpenInvoiceInPos = (invoice: Invoice) => {
+    setPatientId(invoice.patientId);
+    const patient = patients.find(([id]) => id === invoice.patientId);
+    if (patient) setPatientQuery(`${patient[1]} · ${patient[0]}`);
+    navigate(`/billing?patientId=${invoice.patientId}`);
+  };
+
+  const handleSelectInpatient = (stay: RoomStay) => {
+    setPatientId(stay.patientId);
+    const patient = patients.find(([id]) => id === stay.patientId);
+    if (patient) setPatientQuery(`${patient[1]} · ${patient[0]}`);
+    navigate(`/billing?patientId=${stay.patientId}`);
+  };
 
   const refresh = useCallback(() => {
     setPatients(patientsService.getPatients());
@@ -702,20 +782,22 @@ export function PatientBillingPage() {
   return (
     <>
       <PageHeader
-        eyebrow="PATIENT SERVICES / BILLING"
+        eyebrow="PATIENT SERVICES / BILLING & REVENUE"
         title={
           bill
             ? bill.billingType === "IPD"
-              ? "Inpatient Billing Invoice"
+              ? "Inpatient Billing Statement"
               : "Outpatient Billing Statement"
             : isHistoryRoute
-              ? "Bills / History"
-              : "Billing"
+              ? "Invoices & Revenue History"
+              : "Patient Billing & POS"
         }
         description={
           bill
-            ? `${isHistoryRoute ? "Bills / History" : "Summary statement"} · ${statementNumber}`
-            : "Review a patient’s visits, admission, room-stay history, services, and payments in one bill."
+            ? `${bill.patient[1]} · ${statementNumber} · ${billStatusLabel}`
+            : isHistoryRoute
+              ? "Complete register of all hospital bills, receipts, payment statuses, and historical invoices."
+              : "Manage patient charges, admission room rent, bedside services, payment receipts, and discharge billing."
         }
         actions={
           <>
@@ -723,19 +805,26 @@ export function PatientBillingPage() {
               <div className="flex flex-wrap gap-2 print:hidden">
                 <button
                   type="button"
-                  className="inline-flex h-9 items-center gap-2 rounded border border-[#dfe5e7] bg-white px-3 text-xs font-semibold text-[#253148]"
+                  className="inline-flex h-9 items-center gap-2 rounded border border-[#dfe5e7] bg-white px-3 text-xs font-semibold text-[#253148] hover:bg-[#f8fafc]"
                   onClick={() => window.print()}
                 >
-                  <ReceiptText size={13} /> Print
+                  <ReceiptText size={13} /> Print Statement
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-9 items-center gap-2 rounded bg-[#007d72] px-3 text-xs font-semibold text-white"
+                  className="inline-flex h-9 items-center gap-2 rounded bg-[#007d72] px-3 text-xs font-semibold text-white hover:bg-[#00665d]"
                   onClick={() => window.print()}
                 >
                   <ReceiptText size={13} /> Save as PDF
                 </button>
               </div>
+            ) : isHistoryRoute ? (
+              <IconButton
+                className="white-button print:hidden"
+                onClick={handleExportInvoicesCsv}
+              >
+                <Download size={14} /> Export Invoices (CSV)
+              </IconButton>
             ) : (
               <span className="autosaved">
                 <ReceiptText size={13} /> INR · 24-hour stay policy
@@ -750,83 +839,338 @@ export function PatientBillingPage() {
           </>
         }
       />
+
+      {/* Executive Revenue & Billing KPI Metrics Strip */}
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 print:hidden">
+        <div className="content-card p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#687285] flex items-center justify-between">
+            Total Invoiced <CreditCard size={15} className="text-[#007d72]" />
+          </span>
+          <b className="text-xl lg:text-2xl font-bold text-[#182236] mt-2">
+            {amount(totalInvoicedPaise)}
+          </b>
+          <small className="text-xs text-[#687285] mt-1">
+            {invoices.length} invoices generated
+          </small>
+        </div>
+
+        <div className="content-card p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#687285] flex items-center justify-between">
+            Revenue Collected <Banknote size={15} className="text-[#059669]" />
+          </span>
+          <b className="text-xl lg:text-2xl font-bold text-[#059669] mt-2">
+            {amount(totalPaidPaise)}
+          </b>
+          <small className="text-xs text-[#687285] mt-1">
+            {payments.length} settled receipts
+          </small>
+        </div>
+
+        <div className="content-card p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#687285] flex items-center justify-between">
+            Net Receivables <ReceiptText size={15} className="text-[#d97706]" />
+          </span>
+          <b className="text-xl lg:text-2xl font-bold text-[#d97706] mt-2">
+            {amount(totalBalancePaise)}
+          </b>
+          <small className="text-xs text-[#687285] mt-1">
+            Outstanding balance due
+          </small>
+        </div>
+
+        <div className="content-card p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#687285] flex items-center justify-between">
+            Active Inpatients <BedDouble size={15} className="text-[#0284c7]" />
+          </span>
+          <b className="text-xl lg:text-2xl font-bold text-[#0284c7] mt-2">
+            {activeStaysList.length} Inpatients
+          </b>
+          <small className="text-xs text-[#687285] mt-1">
+            Occupying ward beds today
+          </small>
+        </div>
+      </div>
+
+      {/* Module Navigation Tabs */}
       <div className="mb-4 flex gap-1 border-b border-[#e8ebef] print:hidden">
         <Link
-          className={`px-3 py-2 text-sm font-semibold ${isHistoryRoute ? "text-[#687285]" : "border-b-2 border-[#007d72] text-[#007d72]"}`}
+          className={`px-3 py-2 text-sm font-semibold ${!isHistoryRoute ? "border-b-2 border-[#007d72] text-[#007d72]" : "text-[#687285] hover:text-[#182236]"}`}
           to="/billing"
         >
-          Billing
+          Patient POS & Billing
         </Link>
         <Link
-          className={`px-3 py-2 text-sm font-semibold ${isHistoryRoute ? "border-b-2 border-[#007d72] text-[#007d72]" : "text-[#687285]"}`}
+          className={`px-3 py-2 text-sm font-semibold ${isHistoryRoute ? "border-b-2 border-[#007d72] text-[#007d72]" : "text-[#687285] hover:text-[#182236]"}`}
           to="/billing/history"
         >
-          Bills / History
+          All Invoices & History ({invoices.length})
         </Link>
       </div>
 
-      <section className="content-card mb-4 p-4 sm:p-5 print:hidden">
-        <label className={`${labelClass} max-w-2xl`}>
-          Search patient
-          <span className="flex h-11 items-center gap-2 rounded border border-[#dfe5e7] bg-white px-3 focus-within:border-[#007d72]">
-            <Search size={15} className="text-[#687285]" />
-            <input
-              className="w-full bg-transparent text-sm font-normal outline-none"
-              value={patientQuery}
-              onChange={(event) => {
-                setPatientQuery(event.target.value);
-                if (selectedPatient) setPatientId("");
-              }}
-              placeholder="Patient name, ID, or mobile number"
-            />
-            {selectedPatient && (
+      {/* HISTORY ROUTE: Full Invoices Directory View */}
+      {isHistoryRoute && (
+        <section className="content-card mb-4 overflow-hidden print:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf0f5] p-4 sm:p-5">
+            <div>
+              <h2 className="m-0 text-base font-semibold text-[#182236]">
+                Hospital Invoices & Receipts Directory
+              </h2>
+              <p className="mb-0 mt-1 text-xs text-[#687285]">
+                Showing {directoryInvoices.length} of {invoices.length} invoices.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex h-9 items-center gap-2 rounded border border-[#dfe5e7] bg-white px-2.5">
+                <Search size={14} className="text-[#687285]" />
+                <input
+                  className="w-44 bg-transparent text-xs font-normal outline-none"
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                  placeholder="Filter by invoice # or patient"
+                />
+              </span>
+              <IconButton className="white-button" onClick={handleExportInvoicesCsv}>
+                <Download size={13} /> Export CSV
+              </IconButton>
+            </div>
+          </div>
+
+          {/* Status Filter Chips */}
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-[#edf0f5] bg-[#f8fafb] px-4 py-2.5">
+            {[
+              { id: "ALL", label: `All (${invoices.length})` },
+              { id: "PAID", label: `Paid (${invoices.filter((i) => i.status === "PAID").length})` },
+              { id: "PARTIALLY_PAID", label: `Partially Paid (${invoices.filter((i) => i.status === "PARTIALLY_PAID").length})` },
+              { id: "UNPAID", label: `Unpaid (${invoices.filter((i) => i.status === "UNPAID").length})` },
+              { id: "DRAFT", label: `Draft (${invoices.filter((i) => i.status === "DRAFT").length})` },
+            ].map((chip) => (
               <button
+                key={chip.id}
                 type="button"
-                className="text-xs text-[#007d72]"
-                onClick={() => {
-                  setPatientId("");
-                  setPatientQuery("");
-                }}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                  historyStatusFilter === chip.id
+                    ? "bg-[#007d72] text-white shadow-sm"
+                    : "bg-white text-[#687285] border border-[#dfe5e7] hover:bg-[#f0fdfa]"
+                }`}
+                onClick={() => setHistoryStatusFilter(chip.id)}
               >
-                Clear
-              </button>
-            )}
-          </span>
-        </label>
-        {matches.length > 0 && (
-          <div className="mt-2 grid max-w-2xl gap-1 rounded border border-[#e8ebef] bg-white p-1">
-            {matches.map((patient) => (
-              <button
-                type="button"
-                key={patient[0]}
-                className="flex items-center justify-between gap-3 rounded px-3 py-2 text-left hover:bg-[#f4fbf9]"
-                onClick={() => {
-                  setPatientId(patient[0]);
-                  setPatientQuery(`${patient[1]} · ${patient[0]}`);
-                }}
-              >
-                <span>
-                  <b className="block text-sm text-[#182236]">{patient[1]}</b>
-                  <small className="text-xs text-[#687285]">
-                    {patient[0]} · {patient[10] || "Mobile not on file"}
-                  </small>
-                </span>
-                <UserRound size={15} className="text-[#687285]" />
+                {chip.label}
               </button>
             ))}
           </div>
-        )}
-        {patientQuery.trim() && !selectedPatient && !matches.length && (
-          <p className="mb-0 mt-2 text-xs text-[#687285]">
-            No patient matches that name, ID, or mobile number.
-          </p>
-        )}
-      </section>
 
-      {!bill && (
-        <div className="content-card px-4 py-14 text-center text-sm text-[#687285]">
-          Search for a patient to view billing details.
-        </div>
+          {directoryInvoices.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left text-sm">
+                <thead className="bg-[#f0f4fc] text-[10px] font-bold uppercase text-[#687285]">
+                  <tr>
+                    <th className="px-4 py-3">INVOICE #</th>
+                    <th className="px-4 py-3">PATIENT</th>
+                    <th className="px-4 py-3">TYPE</th>
+                    <th className="px-4 py-3">DATE</th>
+                    <th className="px-4 py-3 text-right">GROSS TOTAL</th>
+                    <th className="px-4 py-3 text-right">PAID</th>
+                    <th className="px-4 py-3 text-right">NET BALANCE</th>
+                    <th className="px-4 py-3">STATUS</th>
+                    <th className="px-4 py-3 text-right">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {directoryInvoices.map((inv) => {
+                    const pt = patients.find(([id]) => id === inv.patientId);
+                    return (
+                      <tr key={inv.id} className="border-t border-[#edf0f5] hover:bg-[#fbfcfd]">
+                        <td className="px-4 py-3 font-semibold text-[#007d72]">
+                          {inv.invoiceNumber}
+                        </td>
+                        <td className="px-4 py-3">
+                          <b className="block text-[#182236]">{pt ? pt[1] : inv.patientId}</b>
+                          <small className="text-xs text-[#687285]">ID: {inv.patientId}</small>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold ${
+                              inv.billingType === "IPD"
+                                ? "bg-[#e0f2fe] text-[#0369a1]"
+                                : inv.billingType === "EMERGENCY"
+                                  ? "bg-[#fee2e2] text-[#b91c1c]"
+                                  : "bg-[#f3f4f6] text-[#4b5563]"
+                            }`}
+                          >
+                            {inv.billingType ?? "IPD"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-[#687285]">
+                          {new Date(inv.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right font-semibold text-[#182236]">
+                          {amount(inv.totalPaise)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-xs font-semibold text-[#059669]">
+                          {amount(inv.paidPaise)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-[#b42318]">
+                          {amount(inv.balancePaise)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                              inv.status === "PAID"
+                                ? "bg-[#dcfce7] text-[#15803d]"
+                                : inv.status === "PARTIALLY_PAID"
+                                  ? "bg-[#fef3c7] text-[#b45309]"
+                                  : inv.status === "UNPAID"
+                                    ? "bg-[#fee2e2] text-[#b91c1c]"
+                                    : "bg-[#f1f5f9] text-[#475569]"
+                            }`}
+                          >
+                            {inv.status.replaceAll("_", " ")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              className="rounded border border-[#dfe5e7] bg-white px-2 py-1 text-xs font-semibold text-[#007d72] hover:bg-[#f0fdfa]"
+                              onClick={() => handleOpenInvoiceInPos(inv)}
+                              title="Open in POS"
+                            >
+                              Open
+                            </button>
+                            {inv.balancePaise > 0 && inv.status !== "DRAFT" && (
+                              <button
+                                type="button"
+                                className="rounded bg-[#007d72] px-2 py-1 text-xs font-semibold text-white hover:bg-[#00665d]"
+                                onClick={() => setPaymentInvoice(inv)}
+                                title="Record payment"
+                              >
+                                Pay
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-10 text-center text-sm text-[#687285]">
+              No invoices match your search or filter.
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* POS & PATIENT BILLING VIEW */}
+      {!isHistoryRoute && (
+        <>
+          {/* Quick Admitted Inpatient Selection Chips */}
+          {activeStaysList.length > 0 && (
+            <div className="mb-4 content-card p-3.5 print:hidden">
+              <span className="text-[11px] font-bold text-[#007d72] uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                <BedDouble size={14} /> Quick Select Inpatients Currently Admitted:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {activeStaysList.map((stay) => {
+                  const patient = patients.find(([id]) => id === stay.patientId);
+                  const isSelected = patientId === stay.patientId;
+                  return (
+                    <button
+                      key={stay.id}
+                      type="button"
+                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                        isSelected
+                          ? "bg-[#007d72] text-white shadow-sm"
+                          : "bg-[#f0fdfa] text-[#007d72] border border-[#99f6e4] hover:bg-[#ccfbf1]"
+                      }`}
+                      onClick={() => handleSelectInpatient(stay)}
+                    >
+                      <span>{patient ? patient[1] : stay.patientId}</span>
+                      <span className={`text-[10px] rounded px-1.5 py-0.2 ${isSelected ? "bg-white/20 text-white" : "bg-[#ccfbf1] text-[#007d72]"}`}>
+                        {WARD_LABELS[stay.wardType]} · {stay.roomNumberSnapshot}/{stay.bedNumberSnapshot}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Search Patient Box */}
+          <section className="content-card mb-4 p-4 sm:p-5 print:hidden">
+            <label className={`${labelClass} max-w-2xl`}>
+              Search patient for billing
+              <span className="flex h-11 items-center gap-2 rounded border border-[#dfe5e7] bg-white px-3 focus-within:border-[#007d72]">
+                <Search size={15} className="text-[#687285]" />
+                <input
+                  className="w-full bg-transparent text-sm font-normal outline-none"
+                  value={patientQuery}
+                  onChange={(event) => {
+                    setPatientQuery(event.target.value);
+                    if (selectedPatient) setPatientId("");
+                  }}
+                  placeholder="Search by patient name, ID, or mobile number"
+                />
+                {selectedPatient && (
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-[#007d72] hover:underline"
+                    onClick={() => {
+                      setPatientId("");
+                      setPatientQuery("");
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </span>
+            </label>
+            {matches.length > 0 && (
+              <div className="mt-2 grid max-w-2xl gap-1 rounded border border-[#e8ebef] bg-white p-1 shadow-sm">
+                {matches.map((patient) => (
+                  <button
+                    type="button"
+                    key={patient[0]}
+                    className="flex items-center justify-between gap-3 rounded px-3 py-2 text-left hover:bg-[#f4fbf9]"
+                    onClick={() => {
+                      setPatientId(patient[0]);
+                      setPatientQuery(`${patient[1]} · ${patient[0]}`);
+                    }}
+                  >
+                    <span>
+                      <b className="block text-sm text-[#182236]">{patient[1]}</b>
+                      <small className="text-xs text-[#687285]">
+                        {patient[0]} · {patient[10] || "Mobile not on file"}
+                      </small>
+                    </span>
+                    <UserRound size={15} className="text-[#687285]" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {patientQuery.trim() && !selectedPatient && !matches.length && (
+              <p className="mb-0 mt-2 text-xs text-[#687285]">
+                No patient matches that name, ID, or mobile number.
+              </p>
+            )}
+          </section>
+
+          {!bill && (
+            <div className="content-card px-4 py-16 text-center text-sm text-[#687285] print:hidden">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f0fdfa] text-[#007d72]">
+                <ReceiptText size={24} />
+              </div>
+              <b className="block text-base text-[#182236] mb-1">
+                Patient Billing & POS Desk
+              </b>
+              <p className="max-w-md mx-auto text-xs text-[#687285]">
+                Select an active inpatient from the quick chips above or search for any patient to generate, review, and finalize statements.
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {bill && (

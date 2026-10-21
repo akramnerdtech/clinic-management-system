@@ -1,10 +1,13 @@
-import { CheckCircle2, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, Download } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IconButton } from '@/components/ui/IconButton';
 import { AccountProfileCard } from '@/components/settings/AccountProfileCard';
+import { ThemeToggleCard } from '@/components/settings/ThemeToggleCard';
 import { SecurityCard } from '@/components/settings/SecurityCard';
 import { NotificationPreferencesCard } from '@/components/settings/NotificationPreferencesCard';
 import { useAccountSettings } from '@/hooks/useAccountSettings';
+import { downloadCsv } from '@/utils/exportFile';
+import { useToast } from '@/utils/toast';
 
 export function AccountSettingsPage() {
   const {
@@ -16,14 +19,28 @@ export function AccountSettingsPage() {
     dirty, anyUnsaved, saving, saveChanges, discardChanges,
   } = useAccountSettings();
 
+  const toast = useToast();
+
+  const handleExportAccountData = () => {
+    downloadCsv(
+      'curaclinic-account-profile',
+      ['Field', 'Value'],
+      profileFields.map((f) => [f.label, f.value || 'Not provided']),
+    );
+    toast.success('Account profile data exported.');
+  };
+
   return (
     <>
       <PageHeader
         eyebrow="MY ACCOUNT / PERSONAL PREFERENCES"
         title="Account Settings"
-        description="Manage your profile, security, and notification preferences."
+        description="Manage your profile, theme mode, security, and notification preferences."
         actions={<>
           <span className="autosaved"><i /> {saving ? 'Saving…' : anyUnsaved ? 'Unsaved changes' : 'All changes saved'}</span>
+          <IconButton className="white-button" onClick={handleExportAccountData}>
+            <Download size={14} /> Export Profile
+          </IconButton>
           <IconButton className="white-button" disabled={saving || !anyUnsaved} onClick={discardChanges}>Discard Changes</IconButton>
           <IconButton className="teal-button" disabled={saving || !dirty} onClick={saveChanges}>{saving ? 'Saving…' : <><CheckCircle2 size={14} /> Save Changes</>}</IconButton>
         </>}
@@ -33,6 +50,7 @@ export function AccountSettingsPage() {
       </div>
       <div className="account-settings-layout">
         <div>
+          <ThemeToggleCard />
           <AccountProfileCard
             avatar={avatar}
             avatarDirty={avatarDirty}

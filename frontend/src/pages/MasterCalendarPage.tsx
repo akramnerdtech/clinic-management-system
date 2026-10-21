@@ -10,6 +10,7 @@ import {
   FilterX,
   CheckCircle2,
   Clock,
+  Stethoscope,
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -274,17 +275,23 @@ export function MasterCalendarPage() {
       {selectedDoctor && (
         <div className="calendar-doctor-banner">
           <div className="doc-banner-left">
-            {selectedDoctorObj?.avatar ? (
-              <img
-                src={selectedDoctorObj.avatar}
-                alt={selectedDoctor}
-                className="doc-banner-avatar"
-              />
-            ) : (
-              <div className="doc-banner-avatar-fallback">
-                {selectedDoctor.slice(0, 2).toUpperCase()}
-              </div>
-            )}
+            <div
+              className="doc-banner-icon"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                background: '#f0fdfa',
+                color: '#007d72',
+                border: '1.5px solid #99f6e4',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Stethoscope size={20} />
+            </div>
             <div>
               <div className="doc-banner-title">
                 <h3>{selectedDoctor}</h3>
@@ -301,8 +308,8 @@ export function MasterCalendarPage() {
                 )}
               </div>
               <p className="doc-banner-sub">
-                15-Minute Slot Engine Active • Booked slots marked{' '}
-                <strong style={{ color: '#059669' }}>Green</strong> with status message &ldquo;Slot Booked&rdquo;.
+                15-Minute Slot Engine Active • {selectedDoctorObj?.slotTime ? `Visiting Hours: ${selectedDoctorObj.slotTime} • ` : ''}Booked slots marked{' '}
+                <strong style={{ color: '#059669' }}>Green</strong> with status &ldquo;Slot Booked&rdquo;.
               </p>
             </div>
           </div>

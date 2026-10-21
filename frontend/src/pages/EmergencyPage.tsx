@@ -9,6 +9,7 @@ import {
   Search,
   Siren,
   UserRound,
+  Download,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { IconButton } from "@/components/ui/IconButton";
@@ -16,6 +17,7 @@ import { emergencyService } from "@/services/emergencyService";
 import { doctorsService } from "@/services/doctorsService";
 import { patientsService } from "@/services/patientsService";
 import { useToast } from "@/utils/toast";
+import { downloadCsv } from "@/utils/exportFile";
 import type { Patient } from "@/types";
 import type { EmergencyCase, EmergencyPriority } from "@/types/inpatient";
 
@@ -214,6 +216,23 @@ export function EmergencyPage() {
     }
   };
 
+  const handleExportCases = () => {
+    downloadCsv(
+      'emergency-cases',
+      ['Case ID', 'Patient ID', 'Priority', 'Status', 'Arrived At', 'Doctor ID', 'Discharged At'],
+      cases.map((c) => [
+        c.id,
+        c.patientId,
+        c.priority,
+        c.status,
+        c.arrivedAt,
+        c.doctorId || 'Unassigned',
+        c.dischargedAt || 'Active',
+      ]),
+    );
+    toast.success('Emergency cases exported.');
+  };
+
   return (
     <>
       <PageHeader
@@ -221,9 +240,14 @@ export function EmergencyPage() {
         title="Emergency & Urgent Cases"
         description="Register urgent arrivals, assign a doctor immediately, treat, admit, or discharge without a routine appointment."
         actions={
-          <span className="autosaved">
-            <Siren size={13} /> {openCases.length} open cases
-          </span>
+          <>
+            <span className="autosaved">
+              <Siren size={13} /> {openCases.length} open cases
+            </span>
+            <IconButton className="white-button" onClick={handleExportCases}>
+              <Download size={14} /> Export Cases
+            </IconButton>
+          </>
         }
       />
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,.9fr)]">

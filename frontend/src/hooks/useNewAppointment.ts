@@ -257,9 +257,14 @@ export function useNewAppointment(editToken?: string) {
     return entry;
   };
 
+  const doctorFee = useMemo(
+    () => newAppointmentService.getDoctorFee(specialist, specialty),
+    [specialist, specialty],
+  );
+
   return {
     patients, selectedPatientId, setSelectedPatient, medicalSpecialties, specialists, formatOptions, priorityOptions,
-    monthLabel, days, slotSessions, meta,
+    monthLabel, days, slotSessions, meta, doctorFee,
     selectedDay, setSelectedDay,
     selectedSlot, setSelectedSlot,
     formatId, setFormatId,

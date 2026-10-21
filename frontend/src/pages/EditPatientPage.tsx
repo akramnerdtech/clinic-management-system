@@ -72,6 +72,7 @@ export function EditPatientPage() {
       patient[7].trim(),
       patient[8]?.trim() ?? '',
       patient[9] ?? '',
+      patient[10]?.trim() ?? '',
     ];
     patientsService.updatePatient(updated);
     toast.success(`${updated[1]} was updated successfully.`);
@@ -114,6 +115,10 @@ export function EditPatientPage() {
               <input type="email" placeholder="e.g. jane@example.com" value={patient[6]} onChange={(event) => updateField(6, event.target.value)} />
             </label>
             <label>
+              <span>Phone / WhatsApp<em>Optional</em></span>
+              <input type="tel" placeholder="e.g. +1 555-0199" value={patient[10] ?? ''} onChange={(event) => updateField(10, event.target.value)} />
+            </label>
+            <label className="wide">
               <span>Age *</span>
               <input
                 placeholder="e.g. 34"

@@ -44,6 +44,7 @@ export const addDoctorService = {
         ...savedDay,
         start: savedDay?.start || defaultDay.start,
         end: savedDay?.end || defaultDay.end,
+        sessions: savedDay?.sessions || defaultDay.sessions,
       };
     });
   },

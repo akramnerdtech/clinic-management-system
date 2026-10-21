@@ -85,26 +85,22 @@ export const newAppointmentService = {
    */
 
   getSpecialists() {
-    const configured =
-      loadFromStorage(
-        KEYS.specialists,
-        specialistOptions,
-      );
+    const configured = loadFromStorage(
+      KEYS.specialists,
+      specialistOptions,
+    ).filter((name: string) => !name.toLowerCase().includes('ahmed') && !name.toLowerCase().includes('ahmad'));
 
-    const registered =
-      doctorsService
-        .getDoctors()
-        .map(
-          ([name]) =>
-            name,
-        );
+    const registered = doctorsService.getDoctors().map(([name]) => name);
 
-    return [
-      ...new Set([
-        ...configured,
-        ...registered,
-      ]),
-    ];
+    if (registered.length > 0) {
+      return [...new Set([...registered, ...configured])];
+    }
+
+    return [...new Set(configured)];
+  },
+
+  getDoctorFee(specialist: string, specialty?: string): string {
+    return doctorsService.getDoctorFee(specialist, specialty);
   },
 
   /*
@@ -224,21 +220,25 @@ export const newAppointmentService = {
             date.getDay()
           ];
 
+        const sessionsList =
+          daySchedule?.sessions && daySchedule.sessions.length > 0
+            ? daySchedule.sessions
+            : daySchedule
+              ? [{ start: daySchedule.start, end: daySchedule.end }]
+              : [];
+
+        const allTimes = sessionsList.flatMap((s) => createTimes(s.start, s.end));
+
         const openSlots =
-          daySchedule
-            ? createTimes(
-                daySchedule.start,
-                daySchedule.end,
-              ).filter(
-                (time) =>
-                  !isBooked(
-                    entries,
-                    schedule.name,
-                    dateKey,
-                    time,
-                  ),
-              ).length
-            : 0;
+          allTimes.filter(
+            (time) =>
+              !isBooked(
+                entries,
+                schedule.name,
+                dateKey,
+                time,
+              ),
+          ).length;
 
         const status =
           !daySchedule

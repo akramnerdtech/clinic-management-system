@@ -6,7 +6,7 @@ export const accountTabs = [
   '♪ Notifications',
 ];
 
-export const accountAvatar = 'https://i.pravatar.cc/120?img=47';
+export const accountAvatar = '';
 
 export const profileFields: AccountProfileField[] = [
   { label: 'FULL NAME', value: 'Sarah Jenkins' },
