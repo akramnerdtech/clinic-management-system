@@ -51,9 +51,4 @@ export const roomStatuses: RoomStatus[] = [
   { label: '205 (Vacant)', tone: 'vacant' },
 ];
 
-export const physicianShifts: PhysicianShift[] = [
-  { name: 'Dr. XYZ', doctorName: 'Dr. XYZ', dept: 'General Medicine', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 105', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '1 / 4 Visits' },
-  { name: 'Dr. Marcus Vance', doctorName: 'Dr. Marcus Vale', dept: 'Cardiology Lead', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 101 / 102', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '6 / 8 Visits' },
-  { name: 'Dr. Elena Rostova', doctorName: 'Dr. Elena Rostova', dept: 'Pediatric Dept', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 204', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '5 / 7 Visits' },
-  { name: 'Dr. Aisha Patel', doctorName: 'Dr. Priya Patel', dept: 'Internal Medicine', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 103', statusLabel: 'In Consult', statusTone: 'in-consult', visits: '4 / 9 Visits' },
-];
+export const physicianShifts: PhysicianShift[] = [];

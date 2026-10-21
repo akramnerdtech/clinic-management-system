@@ -14,15 +14,17 @@ import { billingService } from '@/services/billingService';
 import { inpatientService } from '@/services/inpatientService';
 import type { AppointmentRow, MetricConfig, TrafficPoint, ActivityItem } from '@/types';
 
-function parseAppointmentDate(value?: string): Date | null {
-  if (!value) return null;
-  const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const date = iso
-    ? new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
-    : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  date.setHours(0, 0, 0, 0);
-  return date;
+function toDateKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function normalizeDate(value?: string): string {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '' : toDateKey(parsed);
 }
 
 export function getWeekBoundaries(): {
@@ -61,15 +63,24 @@ export function getWeekBoundaries(): {
 export const dashboardService = {
   getMetrics(): MetricConfig[] {
     const entries = appointmentsService.getEntries();
-    const { start, end } = getWeekBoundaries();
+    const { days } = getWeekBoundaries();
+    const weekIsoSet = new Set(days.map((d) => d.iso));
+    const today = toDateKey(new Date());
 
     const weeklyEntries = entries.filter((entry) => {
-      if (!entry[11] || entry[10] === 'Cancelled') return false;
-      const date = parseAppointmentDate(entry[11]);
-      return date !== null && date >= start && date < end;
+      const status = (entry[10] || '').trim().toLowerCase();
+      if (status === 'cancelled' || status.includes('cancel')) return false;
+      const apptDate = normalizeDate(entry[11]) || normalizeDate(entry[15]);
+      return apptDate ? weekIsoSet.has(apptDate) : false;
     });
 
-    const todayEntries = appointmentsService.getTodayEntries();
+    const todayEntries = entries.filter((entry) => {
+      const status = (entry[10] || '').trim().toLowerCase();
+      if (status === 'cancelled' || status.includes('cancel')) return false;
+      const apptDate = normalizeDate(entry[11]) || normalizeDate(entry[15]);
+      return apptDate === today;
+    });
+
     const patients = patientsService.getPatients();
     const doctors = doctorsService.getDoctors();
     const onDutyCount = doctors.filter((doctor) => doctor[4] === 'ON DUTY').length;
@@ -78,13 +89,16 @@ export const dashboardService = {
     const payments = billingService.getPayments();
     const weeklyPayments = payments.filter((p) => {
       const pDate = new Date(p.paidAt);
-      return !Number.isNaN(pDate.getTime()) && pDate >= start && pDate < end;
+      if (Number.isNaN(pDate.getTime())) return false;
+      const pIso = toDateKey(pDate);
+      return weekIsoSet.has(pIso);
     });
     const weeklyRevenuePaise = weeklyPayments.reduce((acc, p) => acc + (p.amountPaise || 0), 0);
 
-    const waitingToday = todayEntries.filter(
-      (e) => e[10] === 'Waiting' || e[10] === 'Slot Booked',
-    );
+    const waitingToday = todayEntries.filter((e) => {
+      const s = (e[10] || '').trim();
+      return s === 'Waiting' || s === 'Slot Booked';
+    });
 
     const inrFormatter = new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -96,14 +110,14 @@ export const dashboardService = {
       {
         label: 'APPOINTMENTS THIS WEEK',
         value: String(weeklyEntries.length),
-        note: `${todayEntries.length} scheduled today · Mon–Sun`,
-        color: 'blue',
+        note: todayEntries.length === 1 ? '1 scheduled today · Mon–Sun' : `${todayEntries.length} scheduled today · Mon–Sun`,
+        color: 'green',
         icon: CalendarDays,
       },
       {
         label: 'TOTAL PATIENTS',
         value: String(patients.length),
-        note: `${weeklyEntries.length} active visits this week`,
+        note: `${weeklyEntries.length} active visit${weeklyEntries.length === 1 ? '' : 's'} this week`,
         color: 'blue',
         icon: Users,
       },
@@ -116,7 +130,7 @@ export const dashboardService = {
       {
         label: 'WEEKLY REVENUE',
         value: inrFormatter.format(weeklyRevenuePaise / 100),
-        note: `${weeklyPayments.length} settled receipts this week`,
+        note: `${weeklyPayments.length} settled receipt${weeklyPayments.length === 1 ? '' : 's'} this week`,
         color: 'green',
         icon: Banknote,
       },
@@ -132,16 +146,31 @@ export const dashboardService = {
 
   getTabs(): string[] {
     const entries = appointmentsService.getEntries();
-    const { start, end } = getWeekBoundaries();
+    const { days } = getWeekBoundaries();
+    const weekIsoSet = new Set(days.map((d) => d.iso));
+    const today = toDateKey(new Date());
+
     const weeklyEntries = entries.filter((entry) => {
-      if (!entry[11] || entry[10] === 'Cancelled') return false;
-      const date = parseAppointmentDate(entry[11]);
-      return date !== null && date >= start && date < end;
+      const status = (entry[10] || '').trim().toLowerCase();
+      if (status === 'cancelled' || status.includes('cancel')) return false;
+      const apptDate = normalizeDate(entry[11]) || normalizeDate(entry[15]);
+      return apptDate ? weekIsoSet.has(apptDate) : false;
     });
-    const todayEntries = appointmentsService.getTodayEntries();
-    const waiting = todayEntries.filter((e) => e[10] === 'Waiting' || e[10] === 'Slot Booked');
-    const inConsult = todayEntries.filter((e) => e[10] === 'In Consultation');
-    const completed = weeklyEntries.filter((e) => e[10] === 'Completed');
+
+    const todayEntries = entries.filter((entry) => {
+      const status = (entry[10] || '').trim().toLowerCase();
+      if (status === 'cancelled' || status.includes('cancel')) return false;
+      const apptDate = normalizeDate(entry[11]) || normalizeDate(entry[15]);
+      return apptDate === today;
+    });
+
+    const waiting = todayEntries.filter((e) => {
+      const s = (e[10] || '').trim();
+      return s === 'Waiting' || s === 'Slot Booked';
+    });
+
+    const inConsult = todayEntries.filter((e) => (e[10] || '').trim() === 'In Consultation');
+    const completed = weeklyEntries.filter((e) => (e[10] || '').toLowerCase().includes('completed'));
 
     return [
       `This Week (${weeklyEntries.length})`,
@@ -154,32 +183,42 @@ export const dashboardService = {
 
   getAppointmentRows(tab?: string): AppointmentRow[] {
     const entries = appointmentsService.getEntries();
-    const { start, end } = getWeekBoundaries();
+    const { days } = getWeekBoundaries();
+    const weekIsoSet = new Set(days.map((d) => d.iso));
+    const today = toDateKey(new Date());
 
-    let filtered = entries.filter((entry) => entry[10] !== 'Cancelled');
+    let filtered = entries.filter((entry) => {
+      const status = (entry[10] || '').trim().toLowerCase();
+      return status !== 'cancelled' && !status.includes('cancel');
+    });
 
     if (tab) {
       if (tab.startsWith('Today')) {
-        const todayKey = new Date().toISOString().slice(0, 10);
-        filtered = filtered.filter((e) => e[11] === todayKey);
+        filtered = filtered.filter((e) => {
+          const apptDate = normalizeDate(e[11]) || normalizeDate(e[15]);
+          return apptDate === today;
+        });
       } else if (tab.startsWith('Waiting')) {
-        filtered = filtered.filter((e) => e[10] === 'Waiting' || e[10] === 'Slot Booked');
+        filtered = filtered.filter((e) => {
+          const s = (e[10] || '').trim();
+          return s === 'Waiting' || s === 'Slot Booked' || s.toLowerCase().includes('wait');
+        });
       } else if (tab.startsWith('In Consultation')) {
-        filtered = filtered.filter((e) => e[10] === 'In Consultation');
+        filtered = filtered.filter((e) => (e[10] || '').trim() === 'In Consultation');
       } else if (tab.startsWith('Completed')) {
-        filtered = filtered.filter((e) => e[10] === 'Completed');
+        filtered = filtered.filter((e) => (e[10] || '').toLowerCase().includes('completed'));
       } else {
         // Default: This Week
         filtered = filtered.filter((entry) => {
-          const date = parseAppointmentDate(entry[11]);
-          return date !== null && date >= start && date < end;
+          const apptDate = normalizeDate(entry[11]) || normalizeDate(entry[15]);
+          return apptDate ? weekIsoSet.has(apptDate) : false;
         });
       }
     } else {
       // Default: This Week
       filtered = filtered.filter((entry) => {
-        const date = parseAppointmentDate(entry[11]);
-        return date !== null && date >= start && date < end;
+        const apptDate = normalizeDate(entry[11]) || normalizeDate(entry[15]);
+        return apptDate ? weekIsoSet.has(apptDate) : false;
       });
     }
 
@@ -198,8 +237,10 @@ export const dashboardService = {
 
     return days.map((day) => {
       const count = entries.filter((e) => {
-        if (e[10] === 'Cancelled') return false;
-        return e[11] === day.iso;
+        const status = (e[10] || '').trim().toLowerCase();
+        if (status === 'cancelled' || status.includes('cancel')) return false;
+        const apptDate = normalizeDate(e[11]) || normalizeDate(e[15]);
+        return apptDate === day.iso;
       }).length;
 
       return {

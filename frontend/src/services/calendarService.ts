@@ -18,7 +18,7 @@ import { appointmentsService } from '@/services/appointmentsService';
 import { doctorScheduleConfigs } from '@/data/newAppointment';
 import { getDoctorRoomAndOpd } from '@/services/wardAllocationService';
 import { loadFromStorage, saveToStorage } from '@/utils/storage';
-import { addDays, weekdayIndex } from '@/utils/calendarDates';
+import { addDays, weekdayIndex, WEEKDAY_SHORT } from '@/utils/calendarDates';
 
 import type {
   CalendarDayHeader,
@@ -152,6 +152,53 @@ export const calendarService = {
       startHour: 10,
       endHour: 20,
     };
+  },
+
+  getDoctorGridBounds(doctorName?: string | null): { startHour: number; endHour: number } {
+    if (!doctorName) {
+      return { startHour: 10, endHour: 20 };
+    }
+    const normTarget = normalizeDoctor(doctorName);
+    const doctor = doctorsService.getDoctors().find(
+      (d) => normalizeDoctor(d[0]) === normTarget,
+    );
+    if (!doctor) {
+      return { startHour: 10, endHour: 20 };
+    }
+
+    const weekly = doctor[7];
+    let minMinutes = 10 * 60;
+    let maxMinutes = 20 * 60;
+
+    if (weekly && typeof weekly === 'object') {
+      let foundSession = false;
+      Object.values(weekly).forEach((daySched) => {
+        if (!daySched || daySched.active === false) return;
+        if (daySched.sessions && daySched.sessions.length > 0) {
+          daySched.sessions.forEach((s) => {
+            const sm = timeToMinutes(s.start);
+            const em = timeToMinutes(s.end);
+            if (sm > 0 && em > sm) {
+              minMinutes = foundSession ? Math.min(minMinutes, sm) : sm;
+              maxMinutes = foundSession ? Math.max(maxMinutes, em) : em;
+              foundSession = true;
+            }
+          });
+        } else if (daySched.start && daySched.end) {
+          const sm = timeToMinutes(daySched.start);
+          const em = timeToMinutes(daySched.end);
+          if (sm > 0 && em > sm) {
+            minMinutes = foundSession ? Math.min(minMinutes, sm) : sm;
+            maxMinutes = foundSession ? Math.max(maxMinutes, em) : em;
+            foundSession = true;
+          }
+        }
+      });
+    }
+
+    const startHour = Math.max(6, Math.min(10, Math.floor(minMinutes / 60)));
+    const endHour = Math.min(23, Math.max(20, Math.ceil(maxMinutes / 60)));
+    return { startHour, endHour };
   },
 
   getDayHeaders(): CalendarDayHeader[] {
@@ -292,28 +339,29 @@ export const calendarService = {
 
   getDoctorOptions(): CalendarDoctorOption[] {
     const doctors = doctorsService.getDoctors();
-    return doctors
-      .filter((doctor) => !doctor[0].toLowerCase().includes('ahmed') && !doctor[0].toLowerCase().includes('ahmad'))
-      .map((doctor) => {
-        const weekly = doctor[7];
-        let slotTime = '10:00 AM – 12:00 PM • 06:00 PM – 08:00 PM';
-        if (weekly) {
-          const firstDay = Object.values(weekly)[0];
-          if (firstDay?.sessions && firstDay.sessions.length > 0) {
-            slotTime = firstDay.sessions.map((s) => `${formatTime(timeToMinutes(s.start))} – ${formatTime(timeToMinutes(s.end))}`).join(' • ');
-          } else if (firstDay?.start && firstDay?.end) {
-            slotTime = `${formatTime(timeToMinutes(firstDay.start))} – ${formatTime(timeToMinutes(firstDay.end))}`;
-          }
+    return doctors.map((doctor) => {
+      const weekly = doctor[7];
+      let slotTime = '10:00 AM – 12:00 PM • 06:00 PM – 08:00 PM';
+      if (weekly && typeof weekly === 'object' && Object.keys(weekly).length > 0) {
+        const activeDays = Object.values(weekly).filter((d) => d && d.active !== false);
+        const firstDay = activeDays[0] || Object.values(weekly)[0];
+        if (firstDay?.sessions && firstDay.sessions.length > 0) {
+          slotTime = firstDay.sessions
+            .map((s) => `${formatTime(timeToMinutes(s.start))} – ${formatTime(timeToMinutes(s.end))}`)
+            .join(' • ');
+        } else if (firstDay?.start && firstDay?.end) {
+          slotTime = `${formatTime(timeToMinutes(firstDay.start))} – ${formatTime(timeToMinutes(firstDay.end))}`;
         }
-        return {
-          name: doctor[0],
-          specialty: doctor[1],
-          room: doctor[2],
-          onDuty: doctor[4] === 'ON DUTY' || doctor[4] === 'ON FLOOR' || doctor[4] === 'ACTIVE FLOOR',
-          avatar: '', // DO NOT show doctor image in Master Calendar
-          slotTime,
-        };
-      });
+      }
+      return {
+        name: doctor[0],
+        specialty: doctor[1],
+        room: doctor[2],
+        onDuty: doctor[4] === 'ON DUTY' || doctor[4] === 'ON FLOOR' || doctor[4] === 'ACTIVE FLOOR',
+        avatar: '', // DO NOT show doctor image in Master Calendar
+        slotTime,
+      };
+    });
   },
 
   getMiddayBanner(): CalendarBanner {
@@ -333,19 +381,23 @@ export const calendarService = {
   },
 
   getPhysicianShifts(): PhysicianShift[] {
-    const roster = doctorsService.getDoctors().filter(
-      (doctor) => !doctor[0].toLowerCase().includes('ahmed') && !doctor[0].toLowerCase().includes('ahmad'),
-    );
+    const roster = doctorsService.getDoctors();
 
     if (roster.length > 0) {
       return roster.map((doctor) => {
         const weekly = doctor[7];
         let shiftStart = '10:00';
         let shiftEnd = '20:00';
-        if (weekly) {
-          const firstDay = Object.values(weekly)[0];
-          if (firstDay?.start) shiftStart = firstDay.start;
-          if (firstDay?.end) shiftEnd = firstDay.end;
+        if (weekly && typeof weekly === 'object' && Object.keys(weekly).length > 0) {
+          const activeDays = Object.values(weekly).filter((d) => d && d.active !== false);
+          const firstDay = activeDays[0] || Object.values(weekly)[0];
+          if (firstDay?.sessions && firstDay.sessions.length > 0) {
+            shiftStart = firstDay.sessions[0].start;
+            shiftEnd = firstDay.sessions[firstDay.sessions.length - 1].end;
+          } else {
+            if (firstDay?.start) shiftStart = firstDay.start;
+            if (firstDay?.end) shiftEnd = firstDay.end;
+          }
         }
         const isOnDuty = doctor[4] === 'ON DUTY';
         return {
@@ -353,8 +405,8 @@ export const calendarService = {
           doctorName: doctor[0],
           dept: doctor[1],
           avatar: '', // NO DR IMAGE IN MASTER CALENDAR
-          shiftStart,
-          shiftEnd,
+          shiftStart: formatTime(timeToMinutes(shiftStart)),
+          shiftEnd: formatTime(timeToMinutes(shiftEnd)),
           station: doctor[2] || 'Suite 105',
           statusLabel: isOnDuty ? 'On Floor' : 'Off Duty',
           statusTone: (isOnDuty ? 'on-floor' : 'in-consult') as 'on-floor' | 'in-consult',
@@ -367,18 +419,88 @@ export const calendarService = {
   },
 
   /**
+   * Checks whether the given doctor is scheduled/available on a specific date (ISO or date key).
+   * Strict source of truth: only active working days added for this doctor are true.
+   */
+  isDoctorAvailableOnDay(doctorName: string, dateKeyOrIso: string): boolean {
+    if (!doctorName || !dateKeyOrIso) return false;
+    const cleanDate = normalizeDate(dateKeyOrIso);
+    if (!cleanDate) return false;
+
+    // ISO day code ('MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN')
+    const dayCode = WEEKDAY_SHORT[weekdayIndex(cleanDate)];
+    const normTarget = normalizeDoctor(doctorName);
+    const doctor = doctorsService.getDoctors().find(
+      (d) => normalizeDoctor(d[0]) === normTarget,
+    );
+    if (!doctor) return false;
+
+    // Doctor explicitly marked OFF DUTY
+    if (doctor[4] === 'OFF DUTY') return false;
+
+    // 1. Weekly schedule is the primary source of truth from AddDoctorPage
+    const weekly = doctor[7];
+    if (weekly && typeof weekly === 'object' && Object.keys(weekly).length > 0) {
+      const daySched = weekly[dayCode];
+      return Boolean(daySched && daySched.active !== false);
+    }
+
+    // 2. Legacy fallback: check workingDays string (doctor[3])
+    if (doctor[3]) {
+      const upper = doctor[3].toUpperCase();
+      if (upper.includes(dayCode)) return true;
+      const code2 = dayCode.slice(0, 2);
+      if (upper.includes(code2)) return true;
+      if (dayCode === 'MON' && (upper.includes('M') || upper.includes('MON'))) return true;
+      if (dayCode === 'WED' && (upper.includes('W') || upper.includes('WED'))) return true;
+      if (dayCode === 'FRI' && (upper.includes('F') || upper.includes('FRI'))) return true;
+    }
+
+    return false;
+  },
+
+  /**
+   * Returns list of 3-letter day codes on which the doctor is available: e.g. ['MON', 'WED']
+   */
+  getDoctorAvailableDayCodes(doctorName: string): string[] {
+    const dayCodes = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const normTarget = normalizeDoctor(doctorName);
+    const doctor = doctorsService.getDoctors().find(
+      (d) => normalizeDoctor(d[0]) === normTarget,
+    );
+    if (!doctor || doctor[4] === 'OFF DUTY') return [];
+
+    const weekly = doctor[7];
+    if (weekly && typeof weekly === 'object' && Object.keys(weekly).length > 0) {
+      return dayCodes.filter((code) => weekly[code] && weekly[code]?.active !== false);
+    }
+
+    if (doctor[3]) {
+      const upper = doctor[3].toUpperCase();
+      return dayCodes.filter((code) => {
+        if (upper.includes(code)) return true;
+        const code2 = code.slice(0, 2);
+        if (upper.includes(code2)) return true;
+        if (code === 'MON' && upper.includes('M')) return true;
+        if (code === 'WED' && upper.includes('W')) return true;
+        if (code === 'FRI' && upper.includes('F')) return true;
+        return false;
+      });
+    }
+
+    return [];
+  },
+
+  /**
    * Calculates the availability and 15-minute slot intervals for a given doctor on a specific date.
-   * Only generates slots for listed doctors from the doctor listing.
+   * Only generates slots for listed doctors and strictly on their configured duty days.
    */
   getDoctorDaySchedule(doctorName: string, dateKey: string): DoctorScheduleDayInfo {
     const parsedDate = new Date(`${dateKey}T00:00:00`);
-    const dayIndex = parsedDate.getDay(); // 0: Sun, 1: Mon, ...
     const dayCodes = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const dayCode = dayCodes[dayIndex];
+    const dayCode = dayCodes[parsedDate.getDay()];
 
     const normTarget = normalizeDoctor(doctorName);
-
-    // Only search registered doctors from doctor listing
     const registered = doctorsService.getDoctors().find(
       (d) => normalizeDoctor(d[0]) === normTarget,
     );
@@ -396,53 +518,20 @@ export const calendarService = {
       };
     }
 
-    let start = '10:00';
-    let end = '20:00';
     const suite = registered[2] || 'Suite 105';
-    let hasSchedule = false;
-    let sessions: Array<{ start: string; end: string }> = [];
-
-    const weekly = registered[7];
-    if (weekly && weekly[dayCode]?.active !== false) {
-      const daySched = weekly[dayCode];
-      if (daySched?.sessions && daySched.sessions.length > 0) {
-        hasSchedule = true;
-        sessions = daySched.sessions;
-        start = sessions[0].start;
-        end = sessions[sessions.length - 1].end;
-      } else if (daySched?.start && daySched?.end) {
-        hasSchedule = true;
-        sessions = [{ start: daySched.start, end: daySched.end }];
-        start = daySched.start;
-        end = daySched.end;
-      }
-    }
-
-    if (!hasSchedule && registered[3]) {
-      const weekdayLetter = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dayIndex];
-      const days = registered[3].toUpperCase();
-      if (days.includes(weekdayLetter) && registered[4] !== 'OFF DUTY') {
-        hasSchedule = true;
-        sessions = [
-          { start: '10:00', end: '12:00' },
-          { start: '18:00', end: '20:00' },
-        ];
-        start = '10:00';
-        end = '20:00';
-      }
-    }
-
     const roomOpd = getDoctorRoomAndOpd({
       doctorName,
       specialty: registered[1],
       doctorSuite: suite,
     });
 
-    if (!hasSchedule || sessions.length === 0) {
+    // Check availability strictly on this day: DO NOT show anything else on off-duty days!
+    const isAvailable = this.isDoctorAvailableOnDay(doctorName, dateKey);
+    if (!isAvailable) {
       return {
         hasSchedule: false,
-        start,
-        end,
+        start: '10:00',
+        end: '20:00',
         startMinutes: 0,
         endMinutes: 0,
         suite: roomOpd.room,
@@ -450,6 +539,30 @@ export const calendarService = {
         slots: [],
       };
     }
+
+    // Doctor is available on this day! Extract only their configured sessions:
+    let sessions: Array<{ start: string; end: string }> = [];
+    const weekly = registered[7];
+    if (weekly && weekly[dayCode]) {
+      const daySched = weekly[dayCode];
+      if (daySched?.sessions && daySched.sessions.length > 0) {
+        sessions = daySched.sessions.filter(
+          (s) => s.start && s.end && timeToMinutes(s.end) > timeToMinutes(s.start),
+        );
+      } else if (daySched?.start && daySched?.end) {
+        sessions = [{ start: daySched.start, end: daySched.end }];
+      }
+    }
+
+    if (sessions.length === 0) {
+      sessions = [
+        { start: '10:00', end: '12:00' },
+        { start: '18:00', end: '20:00' },
+      ];
+    }
+
+    const start = sessions[0].start;
+    const end = sessions[sessions.length - 1].end;
 
     const slots: DoctorSlotInfo[] = [];
     for (const session of sessions) {
@@ -479,4 +592,4 @@ export const calendarService = {
   },
 
   getEventDoctorName,
-};
+};

@@ -1,9 +1,5 @@
-import { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { IconButton } from '@/components/ui/IconButton';
-import { WhatsAppPromptModal } from '@/components/appointments/WhatsAppPromptModal';
-import type { AppointmentNotificationParams } from '@/services/whatsappService';
 import type { CalendarEvent } from '@/types';
 import { eventStatus } from '@/utils/calendarFilters';
 import { formatLongDate } from '@/utils/calendarDates';
@@ -20,8 +16,6 @@ export function EventDetailsModal({
   onClose,
   onOpenAppointments,
 }: EventDetailsModalProps) {
-  const [whatsappTarget, setWhatsappTarget] = useState<AppointmentNotificationParams | null>(null);
-
   const isBooked =
     event.status?.toLowerCase().includes('book') ||
     event.tone === 'confirmed';
@@ -37,43 +31,24 @@ export function EventDetailsModal({
   ];
 
   return (
-    <>
-      <Modal
-        title={event.patient}
-        subtitle="Appointment & Consultation Room Allocation"
-        onClose={onClose}
-        footer={
-          <>
-            <IconButton className="white-button" onClick={onClose}>
-              Close
-            </IconButton>
-            <IconButton
-              className="soft-button"
-              style={{ color: '#059669', borderColor: '#a7f3d0' }}
-              onClick={() =>
-                setWhatsappTarget({
-                  doctorName: event.doctorName ?? event.doctor ?? '',
-                  patientName: event.patient,
-                  date: event.date ?? '',
-                  timeSlot: event.time,
-                  roomSuite: event.room,
-                  opdUnit: event.opd,
-                  reason: 'Master Calendar Consultation',
-                  token: event.id,
-                })
-              }
-            >
-              <MessageCircle size={14} /> WhatsApp Doctor
-            </IconButton>
-            <IconButton
-              className="teal-button auto-width"
-              onClick={onOpenAppointments}
-            >
-              View in Appointments Table
-            </IconButton>
-          </>
-        }
-      >
+    <Modal
+      title={event.patient}
+      subtitle="Appointment & Consultation Room Allocation"
+      onClose={onClose}
+      footer={
+        <>
+          <IconButton className="white-button" onClick={onClose}>
+            Close
+          </IconButton>
+          <IconButton
+            className="teal-button auto-width"
+            onClick={onOpenAppointments}
+          >
+            View in Appointments Table
+          </IconButton>
+        </>
+      }
+    >
       <dl className="cal-detail-list">
         {rows.map(([label, value]) => (
           <div key={label}>
@@ -91,13 +66,5 @@ export function EventDetailsModal({
         ))}
       </dl>
     </Modal>
-
-    {whatsappTarget && (
-      <WhatsAppPromptModal
-        params={whatsappTarget}
-        onClose={() => setWhatsappTarget(null)}
-      />
-    )}
-  </>
   );
 }

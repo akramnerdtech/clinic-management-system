@@ -32,12 +32,12 @@ export function DutyDaySelector({
           gap: 8,
           marginBottom: 16,
           padding: '10px 14px',
-          background: '#f8fafc',
+          // background: '#f8fafc',
           borderRadius: 8,
-          border: '1px solid #e2e8f0',
+          // border: '1px solid #e2e8f0',
           alignItems: 'center'
         }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
+          {/* <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
             Quick Shift Preset:
           </span>
           <button
@@ -103,7 +103,7 @@ export function DutyDaySelector({
             }}
           >
             Full Day (10–8)
-          </button>
+          </button> */}
         </div>
       )}
 

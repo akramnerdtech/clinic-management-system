@@ -11,8 +11,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { IconButton } from '@/components/ui/IconButton';
-import { WhatsAppPromptModal } from '@/components/appointments/WhatsAppPromptModal';
-import { whatsappService, type AppointmentNotificationParams } from '@/services/whatsappService';
+import { AppointmentConfirmedModal, type AppointmentConfirmedDetails } from '@/components/appointments/AppointmentConfirmedModal';
 import { patientsService } from '@/services/patientsService';
 import { appointmentsService } from '@/services/appointmentsService';
 import { newAppointmentService } from '@/services/newAppointmentService';
@@ -42,7 +41,7 @@ export function BookSlotModal({
   onClose,
   onBookSuccess,
 }: BookSlotModalProps) {
-  const [whatsappPrompt, setWhatsappPrompt] = useState<AppointmentNotificationParams | null>(null);
+  const [confirmedDetails, setConfirmedDetails] = useState<AppointmentConfirmedDetails | null>(null);
   const [patients, setPatients] = useState(() => patientsService.getPatients());
   const [selectedPatientId, setSelectedPatientId] = useState(patients[0]?.[0] || '');
   const [customPatientName, setCustomPatientName] = useState('');
@@ -135,45 +134,26 @@ export function BookSlotModal({
       `Slot ${time} booked for ${patientDisplayName} with ${doctor}. Assigned to ${assignedRoom} (${assignedOpd}). Marked Green on Master Calendar.`,
     );
 
-    const params: AppointmentNotificationParams = {
-      doctorName: doctor,
-      patientName: patientDisplayName,
-      patientAgeSex,
-      date,
-      timeSlot: time,
-      roomSuite: assignedRoom,
-      opdUnit: assignedOpd,
-      reason: reason.trim() || 'Consultation',
-      token,
-    };
-
-    if (whatsappService.getAutoLaunch()) {
-      const prep = whatsappService.prepareNotification(params);
-      if (prep.hasPhone) {
-        whatsappService.openWhatsApp(prep.url);
-        whatsappService.logNotification({
-          doctorName: params.doctorName,
-          doctorMobile: prep.phone,
-          patientName: params.patientName,
-          date: params.date,
-          timeSlot: params.timeSlot,
-          message: prep.message,
-          status: 'sent',
-        });
-      }
-    }
-
     setSubmitting(false);
     onBookSuccess?.();
-    setWhatsappPrompt(params);
+    setConfirmedDetails({
+      token,
+      patientName: patientDisplayName,
+      patientAgeSex,
+      doctorName: doctor,
+      date,
+      timeSlot: time,
+      roomSuite: `${assignedRoom} (${assignedOpd})`,
+      reason: reason.trim() || 'Consultation',
+    });
   };
 
-  if (whatsappPrompt) {
+  if (confirmedDetails) {
     return (
-      <WhatsAppPromptModal
-        params={whatsappPrompt}
+      <AppointmentConfirmedModal
+        details={confirmedDetails}
         onClose={() => {
-          setWhatsappPrompt(null);
+          setConfirmedDetails(null);
           onClose();
         }}
       />

@@ -6,6 +6,7 @@ import { RoomStats } from "@/components/rooms/RoomStats";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { AssignPatientModal } from "@/components/rooms/AssignPatientModal";
 import { RoomDetailsModal } from "@/components/rooms/RoomDetailsModal";
+import { AddRoomModal } from "@/components/rooms/AddRoomModal";
 import { WARD_LABELS } from "@/data/rooms";
 import { freeCount, useRooms } from "@/hooks/useRooms";
 import type { SortKey, StatusFilter, WardFilter } from "@/hooks/useRooms";
@@ -42,10 +43,12 @@ export function RoomsPage() {
     setPage,
     assignPatient,
     dischargePatient,
+    addRoom,
   } = useRooms();
   const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
   const [detailsRoomId, setDetailsRoomId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const [addRoomOpen, setAddRoomOpen] = useState(false);
   const toast = useToast();
 
   const detailsRoom = rooms.find((r) => r.id === detailsRoomId);
@@ -72,6 +75,12 @@ export function RoomsPage() {
               onClick={() => setReportOpen(true)}
             >
               <Download size={14} /> Export Report
+            </IconButton>
+            <IconButton
+              className="h-[35px] gap-1.5 border border-[#007d72] bg-[#f0faf8] px-3.5 text-[#007d72] hover:bg-[#e0f5f1]"
+              onClick={() => setAddRoomOpen(true)}
+            >
+              <Plus size={14} /> Add Room
             </IconButton>
             <IconButton
               className="h-[35px] gap-1.5 bg-[#007d72] px-3.5 text-white"
@@ -215,6 +224,16 @@ export function RoomsPage() {
 
       {reportOpen && (
         <ReportModal module="rooms" onClose={() => setReportOpen(false)} />
+      )}
+
+      {addRoomOpen && (
+        <AddRoomModal
+          onClose={() => setAddRoomOpen(false)}
+          onSubmit={(data) => {
+            const res = addRoom(data);
+            return res;
+          }}
+        />
       )}
     </>
   );

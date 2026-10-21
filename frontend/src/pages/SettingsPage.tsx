@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import {
   Building2, CheckCircle2, Clock, Download, FileJson, FileText, Hash, Mail, MapPin, Phone, ShieldCheck,
@@ -9,12 +9,14 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Field } from '@/components/settings/Field';
 import { ScheduleCard } from '@/components/settings/ScheduleCard';
 import { ReceptionCard } from '@/components/settings/ReceptionCard';
+import { RoomsManagementCard } from '@/components/settings/RoomsManagementCard';
 import { useSettingsData } from '@/hooks/useSettingsData';
 import { useToast } from '@/utils/toast';
 import { downloadCsv, exportAllLocalStorage } from '@/utils/exportFile';
 import { appointmentsService } from '@/services/appointmentsService';
 import { whatsappService } from '@/services/whatsappService';
 import { doctorsService } from '@/services/doctorsService';
+import { roomsService } from '@/services/roomsService';
 import '@/styles/settings.css';
 
 const TABS: { label: string; icon: ReactNode }[] = [
@@ -41,6 +43,19 @@ export function SettingsPage() {
   } = useSettingsData();
   const toast = useToast();
   const [tab, setTab] = useState(0);
+  const [roomsList, setRoomsList] = useState(() => roomsService.getRooms());
+
+  useEffect(() => {
+    const handleRoomsUpdate = () => {
+      setRoomsList(roomsService.getRooms());
+    };
+    window.addEventListener('curaclinic:rooms-updated', handleRoomsUpdate);
+    window.addEventListener('storage', handleRoomsUpdate);
+    return () => {
+      window.removeEventListener('curaclinic:rooms-updated', handleRoomsUpdate);
+      window.removeEventListener('storage', handleRoomsUpdate);
+    };
+  }, []);
 
   const [waAutoLaunch, setWaAutoLaunch] = useState(() => whatsappService.getAutoLaunch());
   const [waCountryCode, setWaCountryCode] = useState(() => whatsappService.getDefaultCountryCode());
@@ -200,10 +215,15 @@ export function SettingsPage() {
             </header>
             <div className="sp-stats">
               <div className="sp-stat"><Globe size={16} /><small>Time zone</small><b>{campusInfo.timeZone}</b></div>
-              <div className="sp-stat"><BedDouble size={16} /><small>Beds &amp; suites</small><b>{campusInfo.suites}</b></div>
+              <div className="sp-stat"><BedDouble size={16} /><small>Beds &amp; suites</small><b>{roomsList.length} Rooms ({roomsList.reduce((acc, r) => acc + r.capacity, 0)} Beds)</b></div>
               <div className="sp-stat"><Users size={16} /><small>Clinical staff</small><b>{campusInfo.activeStaff}</b></div>
             </div>
           </section>
+
+          <RoomsManagementCard
+            rooms={roomsList}
+            onRoomsChanged={() => setRoomsList(roomsService.getRooms())}
+          />
         </>
       )}
 

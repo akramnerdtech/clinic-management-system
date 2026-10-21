@@ -13,10 +13,15 @@ export function useDashboardData() {
   const [trafficPoints, setTrafficPoints] = useState(() => dashboardService.getTrafficPoints());
 
   const refresh = useCallback((tab?: string) => {
+    const freshTabs = dashboardService.getTabs();
     const activeTab = tab ?? selectedTab;
+    const prefix = activeTab ? activeTab.split(' ')[0] : 'This';
+    const matchingFreshTab = freshTabs.find((t) => t.startsWith(prefix)) ?? freshTabs[0];
+
     setMetrics(dashboardService.getMetrics());
-    setTabs(dashboardService.getTabs());
-    setAppointmentRows(dashboardService.getAppointmentRows(activeTab));
+    setTabs(freshTabs);
+    setSelectedTab(matchingFreshTab);
+    setAppointmentRows(dashboardService.getAppointmentRows(matchingFreshTab));
     setActivityItems(dashboardService.getActivityItems());
     setActivityIcons(dashboardService.getActivityIcons());
     setTrafficPoints(dashboardService.getTrafficPoints());

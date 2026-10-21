@@ -5,14 +5,13 @@ import { PatientIdentityCard } from '@/components/appointments/PatientIdentityCa
 import { ClinicalSetupCard } from '@/components/appointments/ClinicalSetupCard';
 import { DateSlotCard } from '@/components/appointments/DateSlotCard';
 import { AppointmentOverviewCard } from '@/components/appointments/AppointmentOverviewCard';
-import { WhatsAppPromptModal } from '@/components/appointments/WhatsAppPromptModal';
-import { whatsappService, type AppointmentNotificationParams } from '@/services/whatsappService';
+import { AppointmentConfirmedModal, type AppointmentConfirmedDetails } from '@/components/appointments/AppointmentConfirmedModal';
 import { useNewAppointment } from '@/hooks/useNewAppointment';
 import { IconButton } from '@/components/ui/IconButton';
 
 export function NewAppointmentPage() {
   const { tokenId } = useParams<{ tokenId: string }>();
-  const [whatsappPrompt, setWhatsappPrompt] = useState<AppointmentNotificationParams | null>(null);
+  const [confirmedDetails, setConfirmedDetails] = useState<AppointmentConfirmedDetails | null>(null);
   const {
     patients, selectedPatientId, setSelectedPatient, medicalSpecialties, specialists, formatOptions, priorityOptions,
     monthLabel, days, slotSessions, meta, doctorFee,
@@ -27,35 +26,16 @@ export function NewAppointmentPage() {
   const handleBook = () => {
     const entry = bookAppointment();
     if (entry) {
-      const params: AppointmentNotificationParams = {
-        doctorName: entry[7],
+      setConfirmedDetails({
+        token: entry[2],
         patientName: entry[3],
         patientAgeSex: entry[4],
+        doctorName: entry[7],
         date: entry[11] || selectedDay,
         timeSlot: entry[0],
         roomSuite: entry[8],
         reason: entry[5],
-        token: entry[2],
-      };
-
-      // Auto-launch if enabled
-      if (whatsappService.getAutoLaunch()) {
-        const prep = whatsappService.prepareNotification(params);
-        if (prep.hasPhone) {
-          whatsappService.openWhatsApp(prep.url);
-          whatsappService.logNotification({
-            doctorName: params.doctorName,
-            doctorMobile: prep.phone,
-            patientName: params.patientName,
-            date: params.date,
-            timeSlot: params.timeSlot,
-            message: prep.message,
-            status: 'sent',
-          });
-        }
-      }
-
-      setWhatsappPrompt(params);
+      });
     }
   };
 
@@ -134,11 +114,18 @@ export function NewAppointmentPage() {
         </div>
       </div>
 
-      {whatsappPrompt && (
-        <WhatsAppPromptModal
-          params={whatsappPrompt}
+      {confirmedDetails && (
+        <AppointmentConfirmedModal
+          details={confirmedDetails}
           onClose={() => {
-            setWhatsappPrompt(null);
+            setConfirmedDetails(null);
+            navigate('/appointments');
+          }}
+          onBookAnother={() => {
+            setConfirmedDetails(null);
+          }}
+          onViewAppointments={() => {
+            setConfirmedDetails(null);
             navigate('/appointments');
           }}
         />

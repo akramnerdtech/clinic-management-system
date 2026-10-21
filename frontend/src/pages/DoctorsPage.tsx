@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useDoctors } from '@/hooks/useDoctors';
 import { useToast } from '@/utils/toast';
 import { downloadCsv } from '@/utils/exportFile';
-import { DoctorProfile } from '@/components/doctors/DoctorProfile';
+// import { DoctorProfile } from '@/components/doctors/DoctorProfile';
 import { formatDoctorShifts } from '@/utils/doctorSchedule';
 import type { Doctor } from '@/types';
 
@@ -161,7 +161,7 @@ export function DoctorsPage() {
                   <th>VISITING HOURS & DAYS</th>
                   <th>FEE</th>
                   <th>STATUS</th>
-                  <th>PATIENTS</th>
+                  {/* <th>PATIENTS</th> */}
                   <th>ACTIONS</th>
                 </tr>
               </thead>
@@ -212,10 +212,10 @@ export function DoctorsPage() {
                     <td>
                       <div style={{ display: 'flex', gap: 4, marginBottom: 4, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#fef3c7', color: '#92400e', fontWeight: 600 }}>
-                          ☀️ 10:00 AM – 12:00 PM
+                          10:00 AM – 12:00 PM
                         </span>
                         <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#e0e7ff', color: '#3730a3', fontWeight: 600 }}>
-                          🌙 06:00 PM – 08:00 PM
+                          06:00 PM – 08:00 PM
                         </span>
                       </div>
                       <div className="days">
@@ -249,7 +249,7 @@ export function DoctorsPage() {
                         </span>
                       </label>
                     </td>
-                    <td>{d[5]}</td>
+                    {/* <td>{d[5]}</td> */}
                     <td className="doctor-row-actions">
                       <button
                         type="button"
@@ -422,7 +422,7 @@ export function DoctorsPage() {
             </div>
           </div>
         </section>
-        <DoctorProfile />
+        {/* <DoctorProfile /> */}
       </div>
 
       {/* Delete Confirmation Modal */}

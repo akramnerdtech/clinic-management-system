@@ -18,7 +18,7 @@ export function RoomCard({ room, onAssign, onView }: RoomCardProps) {
   const free = freeCount(room);
   const full = free === 0;
   const fill = room.capacity ? (occupied / room.capacity) * 100 : 0;
-  const style = WARD_STYLES[room.ward];
+  const style = WARD_STYLES[room.ward] ?? WARD_STYLES.general;
 
   return (
     <section className="rounded-lg border border-[#ebedf2] bg-white p-3.5 pb-3 shadow-sm">
@@ -27,7 +27,7 @@ export function RoomCard({ room, onAssign, onView }: RoomCardProps) {
           <h2 className="m-0 flex flex-wrap items-center gap-[7px] text-sm font-semibold text-[#182338]">
             Room {room.number}
             <span className={`rounded border px-[7px] py-1 text-[9px] font-semibold leading-none ${style.badge}`}>
-              {WARD_LABELS[room.ward]}
+              {WARD_LABELS[room.ward] ?? room.ward}
             </span>
           </h2>
           <small className="mt-[3px] block text-[10px] text-[#7b8494]">{room.floor} • {room.area}</small>

@@ -374,6 +374,23 @@ small {
   box-shadow: 0 1px 2px #27314a06;
   position: relative;
   overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.metric-card.is-clickable {
+  cursor: pointer;
+}
+
+.metric-card.is-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px #007d721a;
+  border-color: #007d72;
+}
+
+.metric-card.is-active {
+  border-color: #007d72 !important;
+  box-shadow: 0 0 0 2px #007d7233, 0 4px 14px #007d721a !important;
+  background: #f0faf8 !important;
 }
 
 .metric-top {
@@ -7452,6 +7469,52 @@ body.dark,
   background: #f8fafc;
   border-color: #cbd5e1;
   color: #0f172a;
+}
+
+.complete-appointment-icon {
+  color: #059669 !important;
+  background: #f0fdf4 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.complete-appointment-icon:hover:not(:disabled) {
+  background: #dcfce7 !important;
+  border-color: #6ee7b7 !important;
+  color: #047857 !important;
+  transform: translateY(-1px);
+}
+
+.complete-appointment-icon.is-completed,
+.complete-appointment-icon:disabled {
+  opacity: 0.5;
+  cursor: default !important;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  transform: none !important;
+}
+
+.cancel-appointment-icon {
+  color: #ef4444 !important;
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+.cancel-appointment-icon:hover:not(:disabled) {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+  transform: translateY(-1px);
+}
+
+.cancel-appointment-icon.is-cancelled,
+.cancel-appointment-icon:disabled {
+  opacity: 0.5;
+  cursor: default !important;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  transform: none !important;
 }
 
 .whatsapp-action-icon {

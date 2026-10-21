@@ -9,50 +9,95 @@ const KEYS = {
   tabs: 'curaclinic.appointments.tabs',
   entries: 'curaclinic.appointments.entries.v2',
   statusStyles: 'curaclinic.appointments.statusStyles',
+  deletedCount: 'curaclinic.appointments.deletedCount',
 };
 
 export const appointmentsService = {
-  /** Builds the four summary cards from today's real appointment entries. */
+  /** Builds the four summary cards dynamically from real appointment entries. */
   getMetrics(): MetricConfig[] {
-    const cards = loadFromStorage(KEYS.metrics, appointmentsMetrics);
     const today = toDateKey(new Date());
-    const todays = this.getEntries().filter((entry) => normalizeDate(entry[11]) === today);
-    const active = todays.filter((entry) => entry[10] !== 'Cancelled');
-    const waiting = todays.filter((entry) => entry[10] === 'Waiting');
-    const completed = todays.filter((entry) => entry[10] === 'Completed');
-    const cancelled = todays.filter((entry) => entry[10] === 'Cancelled');
+    const allEntries = this.getEntries();
+    const deletedCount = loadFromStorage<number>(KEYS.deletedCount, 0);
+
+    // Appointments booked today (any booking created today)
+    const bookedToday = allEntries.filter((entry) => {
+      const bookedDate =
+        normalizeDate(entry[15]) ||
+        (entry[12] && /^\d{4}-\d{2}-\d{2}$/.test(entry[12]) ? entry[12] : '') ||
+        normalizeDate(entry[11]);
+      return bookedDate === today;
+    });
+
+    // Appointments scheduled for today (scheduled date is today and not cancelled)
+    const scheduledToday = allEntries.filter(
+      (entry) => normalizeDate(entry[11]) === today && (entry[10] || '').trim() !== 'Cancelled',
+    );
+
+    // Appointments marked Completed
+    const completed = allEntries.filter((entry) => {
+      const status = (entry[10] || '').trim().toLowerCase();
+      return status === 'completed';
+    });
+
+    // Cancelled / deleted appointments
+    const cancelledEntries = allEntries.filter((entry) => {
+      const status = (entry[10] || '').trim().toLowerCase();
+      return status === 'cancelled' || status.includes('cancel');
+    });
+    const totalCancelled = cancelledEntries.length + deletedCount;
 
     const capacity = newAppointmentService.getDayCapacity(today);
-    const booked = capacity > 0 ? Math.min(100, Math.round((active.length / capacity) * 100)) : null;
-    const longestWait = waiting.reduce((max, entry) => {
-      const match = entry[1].match(/(\d+)\s*min/i);
-      return match ? Math.max(max, Number(match[1])) : max;
-    }, 0);
-    const remaining = Math.max(0, active.length - completed.length);
+    const booked = capacity > 0 ? Math.min(100, Math.round((scheduledToday.length / capacity) * 100)) : null;
     const pad = (n: number) => String(n).padStart(2, '0');
 
     const computed: Record<string, { value: string; note: string }> = {
-      'SCHEDULED TODAY': {
-        value: pad(active.length),
-        note: booked === null ? 'No doctor slots configured today' : `${booked}% capacity booked`,
+      'TODAY APPOINTMENT BOOK': {
+        value: pad(bookedToday.length),
+        note: bookedToday.length === 1 ? '1 appointment booked today' : `${bookedToday.length} appointments booked today`,
       },
-      'IN WAITING ROOM': {
-        value: pad(waiting.length),
-        note: waiting.length && longestWait ? `Longest wait: ${longestWait} min · target < 20 min` : 'Target threshold: < 20 min',
+      'APPOINTMENTS BOOKED TODAY': {
+        value: pad(bookedToday.length),
+        note: bookedToday.length === 1 ? '1 appointment booked today' : `${bookedToday.length} appointments booked today`,
+      },
+      'SCHEDULED TODAY': {
+        value: pad(scheduledToday.length),
+        note: booked === null ? `${scheduledToday.length} scheduled today` : `${booked}% capacity booked`,
+      },
+      "TODAY'S APPOINTMENTS": {
+        value: pad(scheduledToday.length),
+        note: booked === null ? `${scheduledToday.length} scheduled today` : `${booked}% capacity booked`,
       },
       'COMPLETED TODAY': {
         value: pad(completed.length),
-        note: `${remaining} remaining on schedule`,
+        note: completed.length === 1 ? '1 consultation completed' : `${completed.length} consultations completed`,
+      },
+      COMPLETED: {
+        value: pad(completed.length),
+        note: completed.length === 1 ? '1 consultation completed' : `${completed.length} consultations completed`,
       },
       'CANCELLED / RESCHED': {
-        value: pad(cancelled.length),
-        note: cancelled.length ? 'Slots immediately freed' : 'No cancellations today',
+        value: pad(totalCancelled),
+        note: totalCancelled === 0 ? 'No cancellations' : `${totalCancelled} cancelled / freed`,
+      },
+      CANCELLED: {
+        value: pad(totalCancelled),
+        note: totalCancelled === 0 ? 'No cancellations' : `${totalCancelled} cancelled / freed`,
       },
     };
-    return cards.map((card) => (computed[card.label] ? { ...card, ...computed[card.label] } : card));
+
+    const cards = appointmentsMetrics.map((card) =>
+      computed[card.label] ? { ...card, ...computed[card.label] } : card,
+    );
+    saveToStorage(KEYS.metrics, cards);
+    return cards;
   },
   getTabs(): string[] {
-    return loadFromStorage(KEYS.tabs, appointmentTabs);
+    const loaded = loadFromStorage(KEYS.tabs, appointmentTabs);
+    if (loaded.includes('Pending') || loaded.includes('Confirmed') || loaded.length !== appointmentTabs.length) {
+      saveToStorage(KEYS.tabs, appointmentTabs);
+      return appointmentTabs;
+    }
+    return loaded;
   },
   getEntries(): AppointmentEntry[] {
     return loadFromStorage(KEYS.entries, appointmentEntries);
@@ -70,10 +115,17 @@ export const appointmentsService = {
    * the patient is also texted a booking confirmation.
    */
   addEntry(entry: AppointmentEntry, contact?: { patientMobile?: string }): AppointmentEntry[] {
+    const today = toDateKey(new Date());
+    const fullEntry: AppointmentEntry = [...entry] as AppointmentEntry;
+    while (fullEntry.length < 15) {
+      fullEntry.push('');
+    }
+    fullEntry[15] = fullEntry[15] || today;
     const current = loadFromStorage(KEYS.entries, appointmentEntries);
-    const updated = [entry, ...current];
+    const updated = [fullEntry, ...current];
     saveToStorage(KEYS.entries, updated);
-    notificationSyncService.syncAppointment(entry, contact); // SMS the doctor (and the patient) about the new booking
+    notificationSyncService.syncAppointment(fullEntry, contact); // SMS the doctor (and the patient) about the new booking
+    window.dispatchEvent(new CustomEvent('clinic-appointments-updated'));
     return updated;
   },
   getNextToken(): string {
@@ -93,6 +145,7 @@ export const appointmentsService = {
     const updated = current.map((entry) => (entry[2] === tokenId ? next : entry));
     saveToStorage(KEYS.entries, updated);
     notificationSyncService.syncAppointment(next); // reschedule / doctor change: update SMS reminders
+    window.dispatchEvent(new CustomEvent('clinic-appointments-updated'));
     return updated;
   },
   /** Removes the appointment with the given token ID and persists the change. */
@@ -101,7 +154,13 @@ export const appointmentsService = {
     const removed = current.find((entry) => entry[2] === tokenId);
     const updated = current.filter((entry) => entry[2] !== tokenId);
     saveToStorage(KEYS.entries, updated);
+
+    // Track deletion so cancelled count increases
+    const deletedCount = loadFromStorage<number>(KEYS.deletedCount, 0);
+    saveToStorage(KEYS.deletedCount, deletedCount + 1);
+
     if (removed) notificationSyncService.removeAppointment(removed); // cancel pending SMS reminders
+    window.dispatchEvent(new CustomEvent('clinic-appointments-updated'));
     return updated;
   },
   updateStatus(tokenId: string, status: string): AppointmentEntry[] {
@@ -112,6 +171,7 @@ export const appointmentsService = {
     saveToStorage(KEYS.entries, updated);
     const changed = updated.find((entry) => entry[2] === tokenId);
     if (changed) notificationSyncService.syncAppointment(changed); // e.g. Cancelled: cancel pending SMS reminders
+    window.dispatchEvent(new CustomEvent('clinic-appointments-updated'));
     return updated;
   },
 };

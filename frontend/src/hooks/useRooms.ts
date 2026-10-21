@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { roomsService } from '@/services/roomsService';
+import type { AddRoomInput, UpdateRoomInput } from '@/services/roomsService';
 import { useToast } from '@/utils/toast';
 import type { Room, WardType } from '@/types/rooms';
 
@@ -28,6 +29,22 @@ export function useRooms() {
   const [sort, setSort] = useState<SortKey>('number-asc');
   const [page, setPage] = useState(1);
   const toast = useToast();
+
+  const refreshRooms = useCallback(() => {
+    setRooms(roomsService.getRooms());
+  }, []);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      refreshRooms();
+    };
+    window.addEventListener('curaclinic:rooms-updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('curaclinic:rooms-updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [refreshRooms]);
 
   const metrics = useMemo(() => {
     const totalBeds = rooms.reduce((sum, r) => sum + r.capacity, 0);
@@ -91,6 +108,39 @@ export function useRooms() {
     toast.success(`${patient} discharged from Room ${target.number}.`);
   };
 
+  const addRoom = (input: AddRoomInput) => {
+    const res = roomsService.addRoom(input);
+    if (res.success) {
+      setRooms(roomsService.getRooms());
+      toast.success(res.message);
+    } else {
+      toast.error(res.message);
+    }
+    return res;
+  };
+
+  const updateRoom = (roomId: string, updates: UpdateRoomInput) => {
+    const res = roomsService.updateRoom(roomId, updates);
+    if (res.success) {
+      setRooms(roomsService.getRooms());
+      toast.success(res.message);
+    } else {
+      toast.error(res.message);
+    }
+    return res;
+  };
+
+  const deleteRoom = (roomId: string) => {
+    const res = roomsService.deleteRoom(roomId);
+    if (res.success) {
+      setRooms(roomsService.getRooms());
+      toast.success(res.message);
+    } else {
+      toast.error(res.message);
+    }
+    return res;
+  };
+
   return {
     rooms,
     rates,
@@ -107,5 +157,9 @@ export function useRooms() {
     setPage,
     assignPatient,
     dischargePatient,
+    addRoom,
+    updateRoom,
+    deleteRoom,
+    refreshRooms,
   };
 }

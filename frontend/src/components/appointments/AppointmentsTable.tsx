@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DoorOpen, MessageCircle, Pencil, Trash2 } from 'lucide-react';
+import { DoorOpen, Pencil, Trash2, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
 
 import { useToast } from '@/utils/toast';
 import { Modal } from '@/components/ui/Modal';
-import { WhatsAppPromptModal } from '@/components/appointments/WhatsAppPromptModal';
-import type { AppointmentNotificationParams } from '@/services/whatsappService';
 import type { AppointmentEntry } from '@/types';
 
 function formatAppointmentDate(value?: string): string {
@@ -39,12 +37,18 @@ export function AppointmentsTable({
   rows,
   statusStyles,
   onAttend,
+  onComplete,
+  onCancel,
   onDelete,
+  onStatusChange,
 }: {
   rows: AppointmentEntry[];
   statusStyles: Record<string, string>;
   onAttend: (tokenId: string) => void;
+  onComplete?: (tokenId: string) => void;
+  onCancel?: (tokenId: string) => void;
   onDelete: (tokenId: string) => void;
+  onStatusChange?: (tokenId: string, status: string) => void;
 }) {
   const toast = useToast();
   const navigate = useNavigate();
@@ -53,9 +57,6 @@ export function AppointmentsTable({
 
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentEntry | null>(null);
-
-  const [whatsappTarget, setWhatsappTarget] =
-    useState<AppointmentNotificationParams | null>(null);
 
   const notice = () => {
     toast.info(
@@ -227,30 +228,46 @@ export function AppointmentsTable({
 
                   <button
                     type="button"
-                    className="appointment-action-icon whatsapp-action-icon"
-                    title={`Send WhatsApp push to ${r[7]}`}
-                    aria-label={`Send WhatsApp push to ${r[7]}`}
-                    onClick={() =>
-                      setWhatsappTarget({
-                        doctorName: r[7],
-                        patientName: r[3],
-                        patientAgeSex: r[4],
-                        date: r[11] || '',
-                        timeSlot: r[0],
-                        roomSuite: r[8],
-                        opdUnit: r[12],
-                        reason: r[5],
-                        token: r[2],
-                      })
+                    className={`appointment-action-icon complete-appointment-icon ${r[10] === 'Completed' ? 'is-completed' : ''}`}
+                    title={
+                      r[10] === 'Completed'
+                        ? `Appointment ${r[2]} is already completed`
+                        : `Mark ${r[2]} as Completed`
                     }
+                    aria-label={`Mark appointment ${r[2]} as completed`}
+                    disabled={r[10] === 'Completed'}
+                    onClick={() => onComplete?.(r[2])}
                     style={{
                       marginLeft: '10px',
-                      color: '#10b981',
-                      borderColor: '#a7f3d0',
-                      backgroundColor: '#f0fdf4',
+                      color: r[10] === 'Completed' ? '#94a3b8' : '#059669',
+                      borderColor: r[10] === 'Completed' ? '#e2e8f0' : '#a7f3d0',
+                      backgroundColor: r[10] === 'Completed' ? '#f8fafc' : '#f0fdf4',
+                      cursor: r[10] === 'Completed' ? 'default' : 'pointer',
                     }}
                   >
-                    <MessageCircle size={15} />
+                    <CheckCircle2 size={15} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`appointment-action-icon cancel-appointment-icon ${r[10] === 'Cancelled' ? 'is-cancelled' : ''}`}
+                    title={
+                      r[10] === 'Cancelled'
+                        ? `Appointment ${r[2]} is already cancelled`
+                        : `Cancel appointment ${r[2]}`
+                    }
+                    aria-label={`Cancel appointment ${r[2]}`}
+                    disabled={r[10] === 'Cancelled'}
+                    onClick={() => onCancel?.(r[2])}
+                    style={{
+                      marginLeft: '10px',
+                      color: r[10] === 'Cancelled' ? '#94a3b8' : '#ef4444',
+                      borderColor: r[10] === 'Cancelled' ? '#e2e8f0' : '#fecaca',
+                      backgroundColor: r[10] === 'Cancelled' ? '#f8fafc' : '#fef2f2',
+                      cursor: r[10] === 'Cancelled' ? 'default' : 'pointer',
+                    }}
+                  >
+                    <XCircle size={15} />
                   </button>
 
                   <button
@@ -371,37 +388,89 @@ export function AppointmentsTable({
           className="appointment-details-modal"
           footer={
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-              <button
-                type="button"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '8px 14px',
-                  borderRadius: 6,
-                  backgroundColor: '#10b981',
-                  color: '#fff',
-                  border: 'none',
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-                onClick={() => {
-                  setWhatsappTarget({
-                    doctorName: selectedAppointment[7],
-                    patientName: selectedAppointment[3],
-                    patientAgeSex: selectedAppointment[4],
-                    date: selectedAppointment[11] || '',
-                    timeSlot: selectedAppointment[0],
-                    roomSuite: selectedAppointment[8],
-                    opdUnit: selectedAppointment[12],
-                    reason: selectedAppointment[5],
-                    token: selectedAppointment[2],
-                  });
-                }}
-              >
-                <MessageCircle size={15} /> Send WhatsApp to Doctor
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {selectedAppointment[10] !== 'Completed' && (
+                  <button
+                    type="button"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 14px',
+                      borderRadius: 6,
+                      backgroundColor: '#059669',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      onComplete?.(selectedAppointment[2]);
+                      setSelectedAppointment((prev) =>
+                        prev ? ([...prev.slice(0, 10), 'Completed', ...prev.slice(11)] as AppointmentEntry) : null,
+                      );
+                    }}
+                  >
+                    <CheckCircle2 size={15} /> Mark as Completed
+                  </button>
+                )}
+
+                {selectedAppointment[10] !== 'Cancelled' && (
+                  <button
+                    type="button"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 14px',
+                      borderRadius: 6,
+                      backgroundColor: '#fff',
+                      color: '#dc2626',
+                      border: '1px solid #fecaca',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      onStatusChange?.(selectedAppointment[2], 'Cancelled');
+                      setSelectedAppointment((prev) =>
+                        prev ? ([...prev.slice(0, 10), 'Cancelled', ...prev.slice(11)] as AppointmentEntry) : null,
+                      );
+                    }}
+                  >
+                    <XCircle size={15} /> Cancel Appointment
+                  </button>
+                )}
+
+                {(selectedAppointment[10] === 'Completed' || selectedAppointment[10] === 'Cancelled') && (
+                  <button
+                    type="button"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 14px',
+                      borderRadius: 6,
+                      backgroundColor: '#f1f5f9',
+                      color: '#334155',
+                      border: '1px solid #cbd5e1',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      onStatusChange?.(selectedAppointment[2], 'Pending');
+                      setSelectedAppointment((prev) =>
+                        prev ? ([...prev.slice(0, 10), 'Pending', ...prev.slice(11)] as AppointmentEntry) : null,
+                      );
+                    }}
+                  >
+                    <RotateCcw size={15} /> Reopen (Set Pending)
+                  </button>
+                )}
+              </div>
+
               <button
                 type="button"
                 className="appointment-detail-button"
@@ -501,13 +570,6 @@ export function AppointmentsTable({
             </div>
           </div>
         </Modal>
-      )}
-
-      {whatsappTarget && (
-        <WhatsAppPromptModal
-          params={whatsappTarget}
-          onClose={() => setWhatsappTarget(null)}
-        />
       )}
     </div>
   );

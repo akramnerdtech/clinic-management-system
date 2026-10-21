@@ -2,11 +2,11 @@ import { CalendarDays, Users, Stethoscope, Clock3, Activity, AlertTriangle } fro
 import type { AppointmentRow, AvailabilityEntry, VitalRow, ActivityItem, TrafficPoint, MetricConfig } from '@/types';
 
 export const dashboardMetrics: MetricConfig[] = [
-  { label: "TODAY'S APPOINTMENTS", value: '24', note: '↗ +4 vs yesterday', color: 'blue', icon: CalendarDays },
-  { label: 'APPOINTMENTS THIS WEEK', value: '0', note: 'Monday to Sunday', color: 'green', icon: CalendarDays },
-  { label: 'TOTAL PATIENTS', value: '1,248', note: '38 visits today', color: 'blue', icon: Users },
-  { label: 'DOCTORS ON DUTY', value: '8 / 8', note: '100% capacity', icon: Stethoscope },
-  { label: 'WAITING QUEUE', value: '6', note: 'Avg wait: 14 mins', color: 'blue', icon: Clock3 },
+  { label: 'APPOINTMENTS THIS WEEK', value: '0', note: '0 scheduled today · Mon–Sun', color: 'green', icon: CalendarDays },
+  { label: 'TOTAL PATIENTS', value: '0', note: '0 active visits this week', color: 'blue', icon: Users },
+  { label: 'DOCTORS ON DUTY', value: '8 / 8', note: 'Active on shift today', icon: Stethoscope },
+  { label: 'WEEKLY REVENUE', value: '₹0', note: '0 settled receipts this week', color: 'green', icon: CalendarDays },
+  { label: 'WAITING QUEUE', value: '0', note: 'Queue currently clear', color: 'blue', icon: Clock3 },
 ];
 
 export const dashboardTabs = ['All (24)', 'Waiting (6)', 'In Consultation (4)', 'Confirmed (12)', 'Completed (2)'];

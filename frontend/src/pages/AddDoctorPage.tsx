@@ -117,10 +117,10 @@ export function AddDoctorPage() {
               <span className="section-badge">WEEKLY ROSTER</span>
             </div>
             <div className="duty-block">
-              <div className="duty-block-head">
+              {/* <div className="duty-block-head">
                 <span>Weekly working hours</span>
                 <small>{activeDaysCount} working days</small>
-              </div>
+              </div> */}
               <DutyDaySelector
                 days={dutyDays}
                 onToggle={toggleDutyDay}

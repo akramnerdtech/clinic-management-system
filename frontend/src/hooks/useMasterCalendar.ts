@@ -27,28 +27,10 @@ import {
   filterCalendarEvents,
 } from '@/utils/calendarFilters';
 
-import type { CalendarColumn } from '@/types';
-
 export function useMasterCalendar() {
-  const [gridBounds] =
-    useState(() =>
-      calendarService.getGridBounds(),
-    );
-
-  const [syncLabel] =
-    useState(() =>
-      calendarService.getSyncLabel(),
-    );
-
-  const [today] =
-    useState(() =>
-      calendarService.getToday(),
-    );
-
-  const [now] =
-    useState(() =>
-      calendarService.getNow(),
-    );
+  const [syncLabel] = useState(() => calendarService.getSyncLabel());
+  const [today] = useState(() => calendarService.getToday());
+  const [now] = useState(() => calendarService.getNow());
 
   const [allEvents, setAllEvents] = useState(() => calendarService.getEvents());
   const [middayBanner] = useState(() => calendarService.getMiddayBanner());
@@ -58,10 +40,29 @@ export function useMasterCalendar() {
   const [physicianShifts, setPhysicianShifts] = useState(() => calendarService.getPhysicianShifts());
   const [doctorOptions, setDoctorOptions] = useState(() => calendarService.getDoctorOptions());
 
+  // Default to the first registered doctor if available
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(() => {
+    const options = calendarService.getDoctorOptions();
+    return options.length > 0 ? options[0].name : null;
+  });
+
+  // Dynamic grid bounds tailored to doctor shift hours
+  const gridBounds = useMemo(
+    () => calendarService.getDoctorGridBounds(selectedDoctor),
+    [selectedDoctor],
+  );
+
+  // Active working days for the selected doctor (e.g. ['MON', 'WED'])
+  const doctorActiveDays = useMemo(
+    () => (selectedDoctor ? calendarService.getDoctorAvailableDayCodes(selectedDoctor) : []),
+    [selectedDoctor],
+  );
+
   useEffect(() => {
     const handleUpdate = () => {
       setAllEvents(calendarService.getEvents());
-      setDoctorOptions(calendarService.getDoctorOptions());
+      const updatedDocs = calendarService.getDoctorOptions();
+      setDoctorOptions(updatedDocs);
       setPhysicianShifts(calendarService.getPhysicianShifts());
       setSuiteUtilizationRows(calendarService.getSuiteUtilizationRows());
       setRoomStatuses(calendarService.getRoomStatuses());
@@ -93,35 +94,22 @@ export function useMasterCalendar() {
     [],
   );
 
-  const [view, setView] =
-    useState<CalendarView>(
-      'Week',
-    );
+  const [view, setView] = useState<CalendarView>('Week');
+  const [anchor, setAnchor] = useState(today);
 
-  const [anchor, setAnchor] =
-    useState(today);
-
-  const [selectedDoctor, setSelectedDoctor] =
-    useState<string | null>(
-      null,
-    );
-
-  // If only 1 doctor is registered in the clinic, auto-select them so their schedule slots are immediately visible
+  // Keep selected doctor valid when doctor options change
   useEffect(() => {
-    if (!selectedDoctor && doctorOptions.length === 1) {
+    if (selectedDoctor && !doctorOptions.some((d) => d.name === selectedDoctor)) {
+      setSelectedDoctor(doctorOptions[0]?.name || null);
+    } else if (!selectedDoctor && doctorOptions.length === 1) {
       setSelectedDoctor(doctorOptions[0].name);
     }
   }, [selectedDoctor, doctorOptions]);
 
-  const [selectedRoom, setSelectedRoom] =
-    useState<string | null>(
-      null,
-    );
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-  const [selectedStatus, setSelectedStatus] =
-    useState<string | null>(
-      null,
-    );
+
 
   const goToday =
     useCallback(() => {
@@ -192,7 +180,7 @@ export function useMasterCalendar() {
 
           label:
             WEEKDAY_SHORT[
-              weekdayIndex(iso)
+            weekdayIndex(iso)
             ],
 
           date:
@@ -215,8 +203,8 @@ export function useMasterCalendar() {
       () =>
         view === 'Month'
           ? getMonthWeeks(
-              anchor,
-            )
+            anchor,
+          )
           : [],
       [view, anchor],
     );
@@ -247,9 +235,9 @@ export function useMasterCalendar() {
               event.date,
             ) &&
             event.date! >=
-              range.start &&
+            range.start &&
             event.date! <=
-              range.end,
+            range.end,
         ),
       [
         allEvents,
