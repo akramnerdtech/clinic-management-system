@@ -125,7 +125,7 @@ export function BookSlotModal({
       assignedOpd,
     ];
 
-    appointmentsService.addEntry(entry);
+    appointmentsService.addEntry(entry, { patientMobile: selectedPatient?.[10] ?? '' });
     newAppointmentService.saveAppointmentToCalendar(entry);
 
     window.dispatchEvent(new CustomEvent('clinic-appointments-updated'));

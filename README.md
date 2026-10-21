@@ -5,7 +5,8 @@ calendar, settings) with email + OTP authentication in front of it.
 
 ```
 frontend/   Main Project (React/Vite dashboard, localStorage-based) + Login/Signup UI
-backend/    Authentication only — Supabase (accounts) + Nodemailer (OTP email)
+backend/    Authentication — Supabase (accounts) + Nodemailer (OTP email), plus a small relay for SMS notifications
+supabase/   Migrations + Edge Functions that text doctors via Twilio (see docs/sms-notifications-setup.md)
 ```
 
 The dashboard itself is unchanged from the original Main Project — all of its
@@ -25,6 +26,13 @@ it: the backend only ever handles signup and OTP login, nothing else.
    `curaclinic.auth.session`, completely separate from the dashboard's
    existing data (which stays under its own `curaclinic.<domain>.<key>` keys
    and is never sent to the backend).
+
+## SMS notifications
+
+Patients receive a confirmation SMS right after booking (date, time, doctor, token). Doctors receive an SMS when an appointment is booked and a reminder at 08:00 IST on the appointment
+day (updated/cancelled automatically on reschedule or cancellation). Twilio runs entirely inside
+Supabase Edge Functions + Cron; credentials live in Supabase Secrets only.
+Setup guide: [docs/sms-notifications-setup.md](docs/sms-notifications-setup.md).
 
 ## Running it locally
 

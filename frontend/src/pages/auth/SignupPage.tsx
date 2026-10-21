@@ -12,6 +12,9 @@ type Step = 'details' | 'otp' | 'password';
 // Must match backend/src/utils/passwordPolicy.js (the backend is the source of truth).
 const PASSWORD_MIN_LENGTH = 8;
 
+// Same pattern as EMAIL_RE in backend/src/controllers/authController.js.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function SignupPage() {
   const [step, setStep] = useState<Step>('details');
   const [fullName, setFullName] = useState('');
@@ -38,6 +41,10 @@ export function SignupPage() {
     }
     if (!email.trim()) {
       setError('Please enter your email address.');
+      return;
+    }
+    if (!EMAIL_RE.test(email.trim())) {
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -248,6 +255,8 @@ export function SignupPage() {
           <span>Full name</span>
           <input
             type="text"
+            name="fullName"
+            autoComplete="name"
             placeholder="Jane Doe"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -258,6 +267,8 @@ export function SignupPage() {
           <span>Email</span>
           <input
             type="email"
+            name="email"
+            autoComplete="email"
             placeholder="you@clinic.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}

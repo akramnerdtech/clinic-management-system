@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { addDoctorService } from '@/services/addDoctorService';
 import { doctorsService } from '@/services/doctorsService';
+import { notificationSyncService } from '@/services/notificationSyncService';
 import { useToast } from '@/utils/toast';
 import type { Doctor, DoctorDaySchedule, DoctorFormField } from '@/types';
 
@@ -209,6 +210,7 @@ export function useAddDoctor() {
     ];
 
     doctorsService.addDoctor(doctor);
+    notificationSyncService.syncDoctorContact(name, formValues.mobile); // registered mobile used for SMS alerts
     addDoctorService.resetForm();
     setFormValues(buildInitialValues(allFields, {}));
     setDutyDays(addDoctorService.getDutyDays());

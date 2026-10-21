@@ -1,6 +1,7 @@
 import { appointmentsMetrics, appointmentTabs, appointmentEntries, appointmentStatusStyles } from '@/data/appointments';
 import { loadFromStorage, saveToStorage } from '@/utils/storage';
 import { newAppointmentService } from '@/services/newAppointmentService';
+import { notificationSyncService } from '@/services/notificationSyncService';
 import type { AppointmentEntry, MetricConfig } from '@/types';
 
 const KEYS = {
@@ -63,11 +64,16 @@ export const appointmentsService = {
   getStatusStyles(): Record<string, string> {
     return loadFromStorage(KEYS.statusStyles, appointmentStatusStyles);
   },
-  /** Prepends a newly booked appointment to the schedule and persists it. */
-  addEntry(entry: AppointmentEntry): AppointmentEntry[] {
+  /**
+   * Prepends a newly booked appointment to the schedule and persists it.
+   * `contact.patientMobile` is the patient's registered mobile ('' if none on file); when given,
+   * the patient is also texted a booking confirmation.
+   */
+  addEntry(entry: AppointmentEntry, contact?: { patientMobile?: string }): AppointmentEntry[] {
     const current = loadFromStorage(KEYS.entries, appointmentEntries);
     const updated = [entry, ...current];
     saveToStorage(KEYS.entries, updated);
+    notificationSyncService.syncAppointment(entry, contact); // SMS the doctor (and the patient) about the new booking
     return updated;
   },
   getNextToken(): string {
@@ -86,13 +92,16 @@ export const appointmentsService = {
     const current = loadFromStorage(KEYS.entries, appointmentEntries);
     const updated = current.map((entry) => (entry[2] === tokenId ? next : entry));
     saveToStorage(KEYS.entries, updated);
+    notificationSyncService.syncAppointment(next); // reschedule / doctor change: update SMS reminders
     return updated;
   },
   /** Removes the appointment with the given token ID and persists the change. */
   deleteEntry(tokenId: string): AppointmentEntry[] {
     const current = loadFromStorage(KEYS.entries, appointmentEntries);
+    const removed = current.find((entry) => entry[2] === tokenId);
     const updated = current.filter((entry) => entry[2] !== tokenId);
     saveToStorage(KEYS.entries, updated);
+    if (removed) notificationSyncService.removeAppointment(removed); // cancel pending SMS reminders
     return updated;
   },
   updateStatus(tokenId: string, status: string): AppointmentEntry[] {
@@ -101,6 +110,8 @@ export const appointmentsService = {
       ? [...entry.slice(0, 10), status, ...entry.slice(11)] as AppointmentEntry
       : entry);
     saveToStorage(KEYS.entries, updated);
+    const changed = updated.find((entry) => entry[2] === tokenId);
+    if (changed) notificationSyncService.syncAppointment(changed); // e.g. Cancelled: cancel pending SMS reminders
     return updated;
   },
 };
