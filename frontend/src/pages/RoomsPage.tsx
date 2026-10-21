@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Download, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { IconButton } from "@/components/ui/IconButton";
 import { RoomStats } from "@/components/rooms/RoomStats";
+import { ActiveRoomStays } from "@/components/rooms/ActiveRoomStays";
 import { RoomCard } from "@/components/rooms/RoomCard";
 import { AssignPatientModal } from "@/components/rooms/AssignPatientModal";
 import { RoomDetailsModal } from "@/components/rooms/RoomDetailsModal";
@@ -70,6 +72,7 @@ export function RoomsPage() {
         description="Manage rooms and monitor patient occupancy."
         actions={
           <>
+            <Link to="/rooms/admissions" className="inline-flex h-[35px] items-center gap-1.5 rounded-[5px] border border-[#007d72] bg-[#f0faf8] px-3 text-[10px] font-medium text-[#007d72] hover:bg-[#e0f5f1]">Emergency / Inpatient Management</Link>
             <IconButton
               className="h-[35px] gap-1.5 border border-[#e3e5ed] bg-white text-[#253148]"
               onClick={() => setReportOpen(true)}
@@ -93,6 +96,7 @@ export function RoomsPage() {
       />
 
       <RoomStats {...metrics} rates={rates} />
+      <ActiveRoomStays />
 
       <div className="mb-3.5 flex flex-wrap items-center gap-3 rounded-[5px] border border-[#ebedf2] bg-white p-3">
         <div className="flex h-[29px] min-w-0 flex-[1_1_260px] cursor-text items-center gap-2 rounded border border-[#e6e9f4] bg-[#f1f3ff] px-[9px] text-[#6c7482]">
