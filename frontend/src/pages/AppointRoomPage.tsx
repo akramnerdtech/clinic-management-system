@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowRightLeft, BedDouble, CheckCircle2, Clock3, LogOut, Search, UserRoundPlus, Download } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
@@ -14,7 +14,7 @@ import { WARD_LABELS } from '@/data/rooms';
 import { useToast } from '@/utils/toast';
 import { downloadCsv } from '@/utils/exportFile';
 import type { RoomStay, WardType } from '@/types/rooms';
-import type { AdmissionType, EmergencyCase } from '@/types/inpatient';
+import type { AdmissionType } from '@/types/inpatient';
 
 const allotableWards: WardType[] = ['general', 'icu', 'private', 'emergency'];
 const selectClass = 'h-10 w-full rounded border border-[#dfe5e7] bg-white px-3 text-sm text-[#182236] outline-none focus:border-[#007d72]';
@@ -287,6 +287,7 @@ export function AppointRoomPage() {
         description="Allot beds, transfer patients between wards, and preserve every room-stay segment."
         actions={
           <>
+            <Link to="/rooms" className="inline-flex h-[35px] items-center rounded-[5px] border border-[#dfe5e7] bg-white px-3 text-[10px] font-medium text-[#253148] hover:bg-[#f8fafb]">Back to Rooms</Link>
             <span className="autosaved"><BedDouble size={13} /> {activeStays.length} active stays</span>
             <IconButton className="white-button" onClick={handleExportStays}>
               <Download size={14} /> Export Stays
