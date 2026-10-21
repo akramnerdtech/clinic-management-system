@@ -79,8 +79,9 @@ export function exportDashboardCsv(data: DashboardReportData, filename: string, 
 }
 
 export function exportDashboardPdf(data: DashboardReportData, filename: string, now = new Date()): void {
-  const { reportDate, generatedAt } = describe(now);
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  try {
+    const { reportDate, generatedAt } = describe(now);
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 14;
@@ -204,4 +205,7 @@ export function exportDashboardPdf(data: DashboardReportData, filename: string, 
   }
 
   doc.save(filename);
+  } catch {
+    exportDashboardCsv(data, filename.replace(/\.pdf$/i, '.csv'), now);
+  }
 }

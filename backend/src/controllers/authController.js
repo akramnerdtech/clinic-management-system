@@ -6,10 +6,12 @@ import { otpEmailHtml } from '../utils/emailTemplate.js';
 import { signSessionToken, signSignupToken, verifySignupToken } from '../utils/token.js';
 import { validateNewPassword } from '../utils/passwordPolicy.js';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_RE = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 function isValidEmail(email) {
-  return typeof email === 'string' && EMAIL_RE.test(email.trim());
+  if (typeof email !== 'string') return false;
+  const trimmed = email.trim();
+  return trimmed.length >= 5 && trimmed.length <= 254 && EMAIL_RE.test(trimmed);
 }
 
 function toUserPayload(user) {

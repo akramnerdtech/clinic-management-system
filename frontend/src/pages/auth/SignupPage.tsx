@@ -108,6 +108,22 @@ export function SignupPage() {
       setError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters.`);
       return;
     }
+    if (!/[A-Z]/.test(password)) {
+      setError('Password must contain at least one uppercase letter (A-Z).');
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      setError('Password must contain at least one lowercase letter (a-z).');
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError('Password must contain at least one number (0-9).');
+      return;
+    }
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {
+      setError('Password must contain at least one special character (!@#$%^&*...).');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -178,7 +194,7 @@ export function SignupPage() {
         </button>
         <h2>Set your password</h2>
         <p className="auth-subtitle">
-          Your email is verified. Choose a password of at least {PASSWORD_MIN_LENGTH} characters to finish creating your account.
+          Your email is verified. Choose a strong password (at least {PASSWORD_MIN_LENGTH} characters, with uppercase, lowercase, a number, and a symbol) to secure your account.
         </p>
 
         {error && (

@@ -20,10 +20,10 @@ export const appointmentRows: AppointmentRow[] = [
 ];
 
 export const availabilityEntries: AvailabilityEntry[] = [
-  ['Dr. Ahmed Rahman', 'Neurologist • Suite 102', 'In Consult', 'https://i.pravatar.cc/60?img=12'],
-  ['Dr. Priya Sharma', 'Dermatologist • Suite 205', 'Available', 'https://i.pravatar.cc/60?img=45'],
-  ['Dr. Robert Chen', 'Cardiologist • Suite 310', 'Available', 'https://i.pravatar.cc/60?img=11'],
-  ['Dr. Linda Gomez', 'General Med • Suite 104', 'Available', 'https://i.pravatar.cc/60?img=32'],
+  ['Dr. Ahmed Rahman', 'Neurologist • Suite 102', 'In Consult', ''],
+  ['Dr. Priya Sharma', 'Dermatologist • Suite 205', 'Available', ''],
+  ['Dr. Robert Chen', 'Cardiologist • Suite 310', 'Available', ''],
+  ['Dr. Linda Gomez', 'General Med • Suite 104', 'Available', ''],
 ];
 
 export const vitalsRows: VitalRow[] = [

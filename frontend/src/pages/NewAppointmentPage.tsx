@@ -1,17 +1,21 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PatientIdentityCard } from '@/components/appointments/PatientIdentityCard';
 import { ClinicalSetupCard } from '@/components/appointments/ClinicalSetupCard';
 import { DateSlotCard } from '@/components/appointments/DateSlotCard';
 import { AppointmentOverviewCard } from '@/components/appointments/AppointmentOverviewCard';
+import { WhatsAppPromptModal } from '@/components/appointments/WhatsAppPromptModal';
+import { whatsappService, type AppointmentNotificationParams } from '@/services/whatsappService';
 import { useNewAppointment } from '@/hooks/useNewAppointment';
 import { IconButton } from '@/components/ui/IconButton';
 
 export function NewAppointmentPage() {
   const { tokenId } = useParams<{ tokenId: string }>();
+  const [whatsappPrompt, setWhatsappPrompt] = useState<AppointmentNotificationParams | null>(null);
   const {
     patients, selectedPatientId, setSelectedPatient, medicalSpecialties, specialists, formatOptions, priorityOptions,
-    monthLabel, days, slotSessions, meta,
+    monthLabel, days, slotSessions, meta, doctorFee,
     selectedDay, setSelectedDay, selectedSlot, setSelectedSlot,
     formatId, setFormatId, priorityId, setPriorityId,
     specialty, setSpecialty, specialist, setSpecialist,
@@ -22,7 +26,37 @@ export function NewAppointmentPage() {
 
   const handleBook = () => {
     const entry = bookAppointment();
-    if (entry) navigate('/appointments');
+    if (entry) {
+      const params: AppointmentNotificationParams = {
+        doctorName: entry[7],
+        patientName: entry[3],
+        patientAgeSex: entry[4],
+        date: entry[11] || selectedDay,
+        timeSlot: entry[0],
+        roomSuite: entry[8],
+        reason: entry[5],
+        token: entry[2],
+      };
+
+      // Auto-launch if enabled
+      if (whatsappService.getAutoLaunch()) {
+        const prep = whatsappService.prepareNotification(params);
+        if (prep.hasPhone) {
+          whatsappService.openWhatsApp(prep.url);
+          whatsappService.logNotification({
+            doctorName: params.doctorName,
+            doctorMobile: prep.phone,
+            patientName: params.patientName,
+            date: params.date,
+            timeSlot: params.timeSlot,
+            message: prep.message,
+            status: 'sent',
+          });
+        }
+      }
+
+      setWhatsappPrompt(params);
+    }
   };
 
   if (editNotFound) {
@@ -89,7 +123,7 @@ export function NewAppointmentPage() {
           <AppointmentOverviewCard
             holdMinutesLabel={meta.holdMinutesLabel}
             overview={overview}
-            fee={meta.fee}
+            fee={doctorFee || meta.fee}
             feeNote={meta.feeNote}
             syncNote={meta.syncNote}
             status={status}
@@ -99,6 +133,16 @@ export function NewAppointmentPage() {
           />
         </div>
       </div>
+
+      {whatsappPrompt && (
+        <WhatsAppPromptModal
+          params={whatsappPrompt}
+          onClose={() => {
+            setWhatsappPrompt(null);
+            navigate('/appointments');
+          }}
+        />
+      )}
     </>
   );
 }

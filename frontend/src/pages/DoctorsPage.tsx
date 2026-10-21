@@ -8,6 +8,8 @@ import { Modal } from '@/components/ui/Modal';
 import { useDoctors } from '@/hooks/useDoctors';
 import { useToast } from '@/utils/toast';
 import { downloadCsv } from '@/utils/exportFile';
+import { DoctorProfile } from '@/components/doctors/DoctorProfile';
+import { formatDoctorShifts } from '@/utils/doctorSchedule';
 import type { Doctor } from '@/types';
 
 export function DoctorsPage() {
@@ -22,16 +24,26 @@ export function DoctorsPage() {
   const toast = useToast();
 
   const filtered = doctors.filter((d) =>
-    `${d[0]} ${d[1]} ${d[2]}`.toLowerCase().includes(query.trim().toLowerCase()),
+    `${d[0]} ${d[1]} ${d[2]} ${d[9] || ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   );
 
   const handleExport = () => {
     downloadCsv(
       'doctors-roster',
-      ['Name', 'Specialty', 'Room & Wing', 'Working Days', 'Status', 'Patients'],
-      doctors,
+      ['Name', 'Specialty', 'Room & Wing', 'Visiting Shifts', 'Working Days', 'Consultation Fee', 'Contact / WhatsApp', 'Status', 'Patients'],
+      doctors.map((d) => [
+        d[0],
+        d[1],
+        d[2],
+        formatDoctorShifts(d[7]),
+        d[3],
+        d[8] || '₹800.00',
+        d[9] || 'Not specified',
+        d[4],
+        d[5],
+      ]),
     );
-    toast.success('Physician roster exported.');
+    toast.success('Physician roster exported with visiting hours, fees, and contact details.');
   };
 
   const updateEditingDoctorField = (index: number, value: string) => {
@@ -146,7 +158,8 @@ export function DoctorsPage() {
                   <th>DOCTOR</th>
                   <th>SPECIALTY</th>
                   <th>ROOM & WING</th>
-                  <th>WORKING DAYS</th>
+                  <th>VISITING HOURS & DAYS</th>
+                  <th>FEE</th>
                   <th>STATUS</th>
                   <th>PATIENTS</th>
                   <th>ACTIONS</th>
@@ -157,10 +170,35 @@ export function DoctorsPage() {
                   <tr key={d[0]}>
                     <td>
                       <div className="doctor-cell">
-                        <img src={d[6]} alt="" />
+                        {d[6] ? (
+                          <img src={d[6]} alt="" />
+                        ) : (
+                          <div
+                            className="doctor-avatar-fallback"
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: '50%',
+                              backgroundColor: '#f0fdfa',
+                              color: '#0d9488',
+                              border: '1.5px solid #99f6e4',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: 12,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {d[0].replace(/^Dr\.\s*/i, '').slice(0, 2).toUpperCase() || 'DR'}
+                          </div>
+                        )}
                         <div>
                           <b>{d[0]}</b>
-                          <small>ID: #DOC-{d[0].length * 142}</small>
+                          <small>
+                            ID: #DOC-{d[0].length * 142}
+                            {d[9] ? ` • 💬 ${d[9]}` : ''}
+                          </small>
                         </div>
                       </div>
                     </td>
@@ -172,6 +210,14 @@ export function DoctorsPage() {
                       <small>Clinical Wing</small>
                     </td>
                     <td>
+                      <div style={{ display: 'flex', gap: 4, marginBottom: 4, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#fef3c7', color: '#92400e', fontWeight: 600 }}>
+                          ☀️ 10:00 AM – 12:00 PM
+                        </span>
+                        <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#e0e7ff', color: '#3730a3', fontWeight: 600 }}>
+                          🌙 06:00 PM – 08:00 PM
+                        </span>
+                      </div>
                       <div className="days">
                         {d[3].split(' ').map((x, i) => (
                           <b className={i < 4 ? 'on' : ''} key={i}>
@@ -179,6 +225,10 @@ export function DoctorsPage() {
                           </b>
                         ))}
                       </div>
+                    </td>
+                    <td>
+                      <b style={{ color: '#007d72', fontSize: 13 }}>{d[8] || '₹800.00'}</b>
+                      <small>per 15 min</small>
                     </td>
                     <td>
                       <label className="doctor-duty-control">
@@ -192,9 +242,8 @@ export function DoctorsPage() {
                         />
                         <span className="doctor-duty-switch" />
                         <span
-                          className={`doctor-duty-label ${
-                            d[4] === 'ON DUTY' ? 'on-duty' : 'off-duty'
-                          }`}
+                          className={`doctor-duty-label ${d[4] === 'ON DUTY' ? 'on-duty' : 'off-duty'
+                            }`}
                         >
                           {d[4]}
                         </span>
@@ -252,9 +301,44 @@ export function DoctorsPage() {
             <div className="doctor-cards">
               {filtered.map((d) => (
                 <div className="doctor-card" key={d[0]}>
-                  <img src={d[6]} alt="" />
+                  {d[6] ? (
+                    <img src={d[6]} alt="" />
+                  ) : (
+                    <div
+                      className="doctor-avatar-fallback"
+                      style={{
+                        width: 54,
+                        height: 54,
+                        borderRadius: '50%',
+                        backgroundColor: '#f0fdfa',
+                        color: '#0d9488',
+                        border: '2px solid #99f6e4',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: 16,
+                        margin: '0 auto 8px',
+                      }}
+                    >
+                      {d[0].replace(/^Dr\.\s*/i, '').slice(0, 2).toUpperCase() || 'DR'}
+                    </div>
+                  )}
                   <b>{d[0]}</b>
                   <span>{d[1]}</span>
+                  {d[9] && (
+                    <span style={{ fontSize: 11, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      💬 {d[9]}
+                    </span>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, margin: '6px 0', fontSize: 11 }}>
+                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>
+                      ☀️ Morning: 10:00 – 12:00
+                    </span>
+                    <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>
+                      🌙 Evening: 18:00 – 20:00
+                    </span>
+                  </div>
                   <small>
                     {d[2]} · {d[4]}
                   </small>
@@ -269,9 +353,8 @@ export function DoctorsPage() {
                     />
                     <span className="doctor-duty-switch" />
                     <span
-                      className={`doctor-duty-label ${
-                        d[4] === 'ON DUTY' ? 'on-duty' : 'off-duty'
-                      }`}
+                      className={`doctor-duty-label ${d[4] === 'ON DUTY' ? 'on-duty' : 'off-duty'
+                        }`}
                     >
                       {d[4]}
                     </span>
@@ -339,6 +422,7 @@ export function DoctorsPage() {
             </div>
           </div>
         </section>
+        <DoctorProfile />
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -516,6 +600,49 @@ export function DoctorsPage() {
                 onChange={(event) =>
                   updateEditingDoctorField(3, event.target.value)
                 }
+              />
+            </label>
+            <div style={{ padding: '10px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', margin: '4px 0' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: 8 }}>
+                Visiting Hours Configuration (Two Shifts / Day)
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: '#fefce8', padding: '8px 10px', borderRadius: 6, border: '1px solid #fef08a' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#854d0e', display: 'block' }}>
+                    ☀️ Morning Shift
+                  </span>
+                  <span style={{ fontSize: 12, color: '#475569', marginTop: 4, display: 'block' }}>
+                    10:00 AM – 12:00 PM
+                  </span>
+                </div>
+                <div style={{ background: '#eef2ff', padding: '8px 10px', borderRadius: 6, border: '1px solid #c7d2fe' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#3730a3', display: 'block' }}>
+                    🌙 Evening Shift
+                  </span>
+                  <span style={{ fontSize: 12, color: '#475569', marginTop: 4, display: 'block' }}>
+                    06:00 PM – 08:00 PM
+                  </span>
+                </div>
+              </div>
+            </div>
+            <label>
+              <span>WhatsApp / Contact Mobile Number</span>
+              <input
+                value={editingDoctor[9] || ''}
+                onChange={(event) =>
+                  updateEditingDoctorField(9, event.target.value)
+                }
+                placeholder="e.g. +91 98765 43210"
+              />
+            </label>
+            <label>
+              <span>Consultation fee (₹ INR)</span>
+              <input
+                value={editingDoctor[8] || '₹800.00'}
+                onChange={(event) =>
+                  updateEditingDoctorField(8, event.target.value)
+                }
+                placeholder="e.g. ₹800.00"
               />
             </label>
             <label>

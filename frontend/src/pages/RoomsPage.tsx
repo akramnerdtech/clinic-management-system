@@ -10,7 +10,8 @@ import { WARD_LABELS } from "@/data/rooms";
 import { freeCount, useRooms } from "@/hooks/useRooms";
 import type { SortKey, StatusFilter, WardFilter } from "@/hooks/useRooms";
 import { useToast } from "@/utils/toast";
-import { ReportModal } from "@/components/reports/ReportModal";
+import { ReportModal } from "@/components/reports/Reportmodal";
+import "@/styles/rooms.css";
 
 const filterLabel =
   "flex items-center gap-1.5 text-[10px] text-[#6d7685] max-sm:flex-[1_1_140px]";

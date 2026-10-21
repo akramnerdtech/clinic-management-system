@@ -291,13 +291,29 @@ export const calendarService = {
   },
 
   getDoctorOptions(): CalendarDoctorOption[] {
-    return doctorsService.getDoctors().map((doctor) => ({
-      name: doctor[0],
-      specialty: doctor[1],
-      room: doctor[2],
-      onDuty: doctor[4] === 'ON DUTY' || doctor[4] === 'ON FLOOR' || doctor[4] === 'ACTIVE FLOOR',
-      avatar: doctor[6],
-    }));
+    const doctors = doctorsService.getDoctors();
+    return doctors
+      .filter((doctor) => !doctor[0].toLowerCase().includes('ahmed') && !doctor[0].toLowerCase().includes('ahmad'))
+      .map((doctor) => {
+        const weekly = doctor[7];
+        let slotTime = '10:00 AM – 12:00 PM • 06:00 PM – 08:00 PM';
+        if (weekly) {
+          const firstDay = Object.values(weekly)[0];
+          if (firstDay?.sessions && firstDay.sessions.length > 0) {
+            slotTime = firstDay.sessions.map((s) => `${formatTime(timeToMinutes(s.start))} – ${formatTime(timeToMinutes(s.end))}`).join(' • ');
+          } else if (firstDay?.start && firstDay?.end) {
+            slotTime = `${formatTime(timeToMinutes(firstDay.start))} – ${formatTime(timeToMinutes(firstDay.end))}`;
+          }
+        }
+        return {
+          name: doctor[0],
+          specialty: doctor[1],
+          room: doctor[2],
+          onDuty: doctor[4] === 'ON DUTY' || doctor[4] === 'ON FLOOR' || doctor[4] === 'ACTIVE FLOOR',
+          avatar: '', // DO NOT show doctor image in Master Calendar
+          slotTime,
+        };
+      });
   },
 
   getMiddayBanner(): CalendarBanner {
@@ -317,21 +333,42 @@ export const calendarService = {
   },
 
   getPhysicianShifts(): PhysicianShift[] {
-    const seed = new Map(physicianShifts.map((physician) => [physician.name, physician.doctorName]));
-    return loadFromStorage(KEYS.physicianShifts, physicianShifts).map((physician) => ({
-      ...physician,
-      doctorName: physician.doctorName ?? seed.get(physician.name),
-    }));
+    const roster = doctorsService.getDoctors().filter(
+      (doctor) => !doctor[0].toLowerCase().includes('ahmed') && !doctor[0].toLowerCase().includes('ahmad'),
+    );
+
+    if (roster.length > 0) {
+      return roster.map((doctor) => {
+        const weekly = doctor[7];
+        let shiftStart = '10:00';
+        let shiftEnd = '20:00';
+        if (weekly) {
+          const firstDay = Object.values(weekly)[0];
+          if (firstDay?.start) shiftStart = firstDay.start;
+          if (firstDay?.end) shiftEnd = firstDay.end;
+        }
+        const isOnDuty = doctor[4] === 'ON DUTY';
+        return {
+          name: doctor[0],
+          doctorName: doctor[0],
+          dept: doctor[1],
+          avatar: '', // NO DR IMAGE IN MASTER CALENDAR
+          shiftStart,
+          shiftEnd,
+          station: doctor[2] || 'Suite 105',
+          statusLabel: isOnDuty ? 'On Floor' : 'Off Duty',
+          statusTone: (isOnDuty ? 'on-floor' : 'in-consult') as 'on-floor' | 'in-consult',
+          visits: `${doctor[5] || '0/16'} Visits`,
+        };
+      });
+    }
+
+    return [];
   },
 
   /**
    * Calculates the availability and 15-minute slot intervals for a given doctor on a specific date.
-   * E.g. If doctor availability is 5:00 PM to 6:00 PM (17:00 to 18:00),
-   * generates 4 discrete 15-min slots:
-   * - 05:00 PM - 05:15 PM
-   * - 05:15 PM - 05:30 PM
-   * - 05:30 PM - 05:45 PM
-   * - 05:45 PM - 06:00 PM
+   * Only generates slots for listed doctors from the doctor listing.
    */
   getDoctorDaySchedule(doctorName: string, dateKey: string): DoctorScheduleDayInfo {
     const parsedDate = new Date(`${dateKey}T00:00:00`);
@@ -341,58 +378,67 @@ export const calendarService = {
 
     const normTarget = normalizeDoctor(doctorName);
 
-    // 1. Prioritize registered doctors
+    // Only search registered doctors from doctor listing
     const registered = doctorsService.getDoctors().find(
       (d) => normalizeDoctor(d[0]) === normTarget,
     );
 
-    // 2. Fallback to demo doctor config if exists
-    const matchedConfig = Object.values(doctorScheduleConfigs).find(
-      (cfg) => normalizeDoctor(cfg.name) === normTarget,
-    );
+    if (!registered) {
+      return {
+        hasSchedule: false,
+        start: '10:00',
+        end: '20:00',
+        startMinutes: 0,
+        endMinutes: 0,
+        suite: 'Suite 105',
+        opd: 'General OPD',
+        slots: [],
+      };
+    }
 
     let start = '10:00';
     let end = '20:00';
-    let suite = registered?.[2] || matchedConfig?.suite || 'Suite 105';
+    const suite = registered[2] || 'Suite 105';
     let hasSchedule = false;
+    let sessions: Array<{ start: string; end: string }> = [];
 
-    if (registered) {
-      const weekly = registered[7];
-      if (weekly && weekly[dayCode]?.start && weekly[dayCode]?.end) {
+    const weekly = registered[7];
+    if (weekly && weekly[dayCode]?.active !== false) {
+      const daySched = weekly[dayCode];
+      if (daySched?.sessions && daySched.sessions.length > 0) {
         hasSchedule = true;
-        start = weekly[dayCode].start;
-        end = weekly[dayCode].end;
-        suite = registered[2] || 'Suite 105';
-      } else if (registered[3]) {
-        // e.g. "M T W T F"
-        const weekdayLetter = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dayIndex];
-        const days = registered[3].toUpperCase();
-        if (days.includes(weekdayLetter) && registered[4] !== 'OFF DUTY') {
-          hasSchedule = true;
-          start = '10:00';
-          end = '20:00';
-          suite = registered[2] || 'Suite 105';
-        }
-      } else if (registered[4] === 'ON DUTY' && dayIndex >= 1 && dayIndex <= 5) {
+        sessions = daySched.sessions;
+        start = sessions[0].start;
+        end = sessions[sessions.length - 1].end;
+      } else if (daySched?.start && daySched?.end) {
         hasSchedule = true;
+        sessions = [{ start: daySched.start, end: daySched.end }];
+        start = daySched.start;
+        end = daySched.end;
+      }
+    }
+
+    if (!hasSchedule && registered[3]) {
+      const weekdayLetter = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dayIndex];
+      const days = registered[3].toUpperCase();
+      if (days.includes(weekdayLetter) && registered[4] !== 'OFF DUTY') {
+        hasSchedule = true;
+        sessions = [
+          { start: '10:00', end: '12:00' },
+          { start: '18:00', end: '20:00' },
+        ];
         start = '10:00';
         end = '20:00';
-        suite = registered[2] || 'Suite 105';
       }
-    } else if (matchedConfig && matchedConfig.weekdays.includes(dayIndex)) {
-      hasSchedule = true;
-      start = `${String(matchedConfig.startHour).padStart(2, '0')}:00`;
-      end = `${String(matchedConfig.endHour).padStart(2, '0')}:00`;
-      suite = matchedConfig.suite;
     }
 
     const roomOpd = getDoctorRoomAndOpd({
       doctorName,
-      specialty: registered?.[1],
+      specialty: registered[1],
       doctorSuite: suite,
     });
 
-    if (!hasSchedule) {
+    if (!hasSchedule || sessions.length === 0) {
       return {
         hasSchedule: false,
         start,
@@ -405,19 +451,18 @@ export const calendarService = {
       };
     }
 
-    const startMinutes = timeToMinutes(start);
-    const endMinutes = timeToMinutes(end);
     const slots: DoctorSlotInfo[] = [];
-
-    if (endMinutes > startMinutes) {
-      for (let m = startMinutes; m < endMinutes; m += 15) {
-        const slotStart = formatTime(m);
-        const slotEnd = formatTime(m + 15);
-        slots.push({
-          time: `${slotStart} - ${slotEnd}`,
-          startMinutes: m,
-          durationMinutes: 15,
-        });
+    for (const session of sessions) {
+      const sStart = timeToMinutes(session.start);
+      const sEnd = timeToMinutes(session.end);
+      if (sEnd > sStart) {
+        for (let m = sStart; m < sEnd; m += 15) {
+          slots.push({
+            time: `${formatTime(m)} - ${formatTime(m + 15)}`,
+            startMinutes: m,
+            durationMinutes: 15,
+          });
+        }
       }
     }
 
@@ -425,8 +470,8 @@ export const calendarService = {
       hasSchedule: true,
       start,
       end,
-      startMinutes,
-      endMinutes,
+      startMinutes: timeToMinutes(start),
+      endMinutes: timeToMinutes(end),
       suite: roomOpd.room,
       opd: roomOpd.opd,
       slots,

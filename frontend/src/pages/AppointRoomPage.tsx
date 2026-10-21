@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ArrowRightLeft, BedDouble, CheckCircle2, Clock3, LogOut, Search, UserRoundPlus } from 'lucide-react';
+import { ArrowRightLeft, BedDouble, CheckCircle2, Clock3, LogOut, Search, UserRoundPlus, Download } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -12,6 +12,7 @@ import { emergencyService } from '@/services/emergencyService';
 import { billingService, calculateRoomCharges } from '@/services/billingService';
 import { WARD_LABELS } from '@/data/rooms';
 import { useToast } from '@/utils/toast';
+import { downloadCsv } from '@/utils/exportFile';
 import type { RoomStay, WardType } from '@/types/rooms';
 import type { AdmissionType, EmergencyCase } from '@/types/inpatient';
 
@@ -258,6 +259,24 @@ export function AppointRoomPage() {
     }
   };
 
+  const handleExportStays = () => {
+    downloadCsv(
+      'inpatient-room-stays',
+      ['Stay ID', 'Patient ID', 'Ward', 'Room', 'Bed', 'Status', 'Admitted At', 'Rate (Paise)'],
+      allStays.map((s) => [
+        s.id,
+        s.patientId,
+        WARD_LABELS[s.wardType],
+        s.roomNumberSnapshot,
+        s.bedNumberSnapshot,
+        s.status,
+        s.startAt,
+        String(s.ratePerDayPaise),
+      ]),
+    );
+    toast.success('Room stays exported.');
+  };
+
   const patientHistory = selectedPatient ? allStays.filter((stay) => stay.patientId === selectedPatient[0]) : allStays;
 
   return (
@@ -266,7 +285,14 @@ export function AppointRoomPage() {
         eyebrow="PATIENT MANAGEMENT / INPATIENTS"
         title="Appoint Room"
         description="Allot beds, transfer patients between wards, and preserve every room-stay segment."
-        actions={<span className="autosaved"><BedDouble size={13} /> {activeStays.length} active stays</span>}
+        actions={
+          <>
+            <span className="autosaved"><BedDouble size={13} /> {activeStays.length} active stays</span>
+            <IconButton className="white-button" onClick={handleExportStays}>
+              <Download size={14} /> Export Stays
+            </IconButton>
+          </>
+        }
       />
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(330px,.9fr)]">
         <section className="content-card p-4 sm:p-5">

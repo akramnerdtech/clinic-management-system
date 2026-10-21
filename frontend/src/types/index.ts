@@ -19,6 +19,7 @@ export type Patient = [string, string, string, string, string, string, string, s
 // ---------- Doctors ----------
 export interface DutySession {
   id?: string;
+  label?: string; // e.g. "Morning Shift", "Evening Shift"
   start: string;
   end: string;
 }
@@ -101,6 +102,7 @@ export interface DutyDay {
   active: boolean;
   start: string;
   end: string;
+  sessions?: DutySession[];
 }
 
 export interface SpecialtyRosterItem {
@@ -169,6 +171,7 @@ export interface CalendarDoctorOption {
   room: string;
   avatar: string;
   onDuty: boolean;
+  slotTime?: string;
 }
 
 export interface CalendarBanner {

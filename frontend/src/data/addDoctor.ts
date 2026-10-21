@@ -5,8 +5,8 @@ export const basicInfoFields: DoctorFormField[] = [
   { id: 'title', label: 'Title', placeholder: 'Dr.', type: 'select', options: ['Dr.', 'Prof.', 'Mr.', 'Mrs.'] },
   { id: 'fullName', label: 'Full Legal Name *', placeholder: 'e.g. Eleanor Vance, MD', wide: true },
   { id: 'license', label: 'Medical License / Board ID *', placeholder: 'e.g. MED-CA-948201-B' },
-  { id: 'npi', label: 'NPI / Registry Number', placeholder: '10-digit National NPI',  },
-  { id: 'mobile', label: 'Primary Contact Mobile *', placeholder: '+1 (555) 349-8821',  },
+  { id: 'npi', label: 'NPI / Registry Number', placeholder: '10-digit National NPI', },
+  { id: 'mobile', label: 'Primary Contact Mobile *', placeholder: '+1 (555) 349-8821', },
   { id: 'email', label: 'Clinical Communication Email *', placeholder: 'dr.vance@curaclinic.org', },
 ];
 
@@ -26,13 +26,53 @@ export const credentialFields: DoctorFormField[] = [
 ];
 
 export const dutyDaysDefault: DutyDay[] = [
-  { key: 'MON', active: true, start: '10:00', end: '20:00' },
-  { key: 'TUE', active: true, start: '10:00', end: '20:00' },
-  { key: 'WED', active: true, start: '10:00', end: '20:00' },
-  { key: 'THU', active: true, start: '10:00', end: '20:00' },
-  { key: 'FRI', active: true, start: '10:00', end: '20:00' },
-  { key: 'SAT', active: false, start: '10:00', end: '14:00' },
-  { key: 'SUN', active: false, start: '10:00', end: '14:00' },
+  {
+    key: 'MON', active: true, start: '10:00', end: '20:00',
+    sessions: [
+      { id: 'mon-morn', label: 'Morning', start: '10:00', end: '12:00' },
+      { id: 'mon-eve', label: 'Evening', start: '18:00', end: '20:00' },
+    ],
+  },
+  {
+    key: 'TUE', active: true, start: '10:00', end: '20:00',
+    sessions: [
+      { id: 'tue-morn', label: 'Morning', start: '10:00', end: '12:00' },
+      { id: 'tue-eve', label: 'Evening', start: '18:00', end: '20:00' },
+    ],
+  },
+  {
+    key: 'WED', active: true, start: '10:00', end: '20:00',
+    sessions: [
+      { id: 'wed-morn', label: 'Morning', start: '10:00', end: '12:00' },
+      { id: 'wed-eve', label: 'Evening', start: '18:00', end: '20:00' },
+    ],
+  },
+  {
+    key: 'THU', active: true, start: '10:00', end: '20:00',
+    sessions: [
+      { id: 'thu-morn', label: 'Morning', start: '10:00', end: '12:00' },
+      { id: 'thu-eve', label: 'Evening', start: '18:00', end: '20:00' },
+    ],
+  },
+  {
+    key: 'FRI', active: true, start: '10:00', end: '20:00',
+    sessions: [
+      { id: 'fri-morn', label: 'Morning', start: '10:00', end: '12:00' },
+      { id: 'fri-eve', label: 'Evening', start: '18:00', end: '20:00' },
+    ],
+  },
+  {
+    key: 'SAT', active: false, start: '10:00', end: '14:00',
+    sessions: [
+      { id: 'sat-morn', label: 'Morning', start: '10:00', end: '12:00' },
+    ],
+  },
+  {
+    key: 'SUN', active: false, start: '10:00', end: '14:00',
+    sessions: [
+      { id: 'sun-morn', label: 'Morning', start: '10:00', end: '12:00' },
+    ],
+  },
 ];
 
 export const shiftTimesDefault = { start: '', end: '' };
@@ -56,7 +96,7 @@ export const addDoctorPreview: AddDoctorPreview = {
   name: 'Dr. Eleanor Vance',
   specialty: 'Neurology Specialist',
   location: 'Suite 101 · North Pavillion',
-  avatar: 'https://i.pravatar.cc/100?img=48',
+  avatar: '',
   fee: '₹800.00',
   capacity: '16 / Day',
 };

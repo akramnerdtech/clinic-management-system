@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Building2, CheckCircle2, Clock, Download, FileJson, FileText, Hash, Mail, MapPin, Phone, ShieldCheck,
-  Siren, TriangleAlert, Users, BedDouble, Globe, Activity, Upload, ConciergeBell, Database,
+  Siren, TriangleAlert, Users, BedDouble, Globe, Activity, Upload, ConciergeBell, Database, MessageCircle, Send,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IconButton } from '@/components/ui/IconButton';
@@ -13,12 +13,15 @@ import { useSettingsData } from '@/hooks/useSettingsData';
 import { useToast } from '@/utils/toast';
 import { downloadCsv, exportAllLocalStorage } from '@/utils/exportFile';
 import { appointmentsService } from '@/services/appointmentsService';
+import { whatsappService } from '@/services/whatsappService';
+import { doctorsService } from '@/services/doctorsService';
 import '@/styles/settings.css';
 
 const TABS: { label: string; icon: ReactNode }[] = [
   { label: 'Clinic Profile', icon: <Building2 size={15} /> },
   { label: 'Hours & Slots', icon: <Clock size={15} /> },
   { label: 'Reception', icon: <ConciergeBell size={15} /> },
+  { label: 'WhatsApp Alerts', icon: <MessageCircle size={15} /> },
   { label: 'Data & Compliance', icon: <Database size={15} /> },
 ];
 
@@ -38,6 +41,69 @@ export function SettingsPage() {
   } = useSettingsData();
   const toast = useToast();
   const [tab, setTab] = useState(0);
+
+  const [waAutoLaunch, setWaAutoLaunch] = useState(() => whatsappService.getAutoLaunch());
+  const [waCountryCode, setWaCountryCode] = useState(() => whatsappService.getDefaultCountryCode());
+  const doctorsList = doctorsService.getDoctors();
+  const [testDoctor, setTestDoctor] = useState(() => doctorsList[0]?.[0] || 'Dr. Eleanor Vance');
+  const [testPhone, setTestPhone] = useState(() => whatsappService.getDoctorPhone(testDoctor) || '+91 98765 43210');
+  const [waHistory, setWaHistory] = useState(() => whatsappService.getHistory());
+
+  const handleToggleAutoLaunch = (val: boolean) => {
+    setWaAutoLaunch(val);
+    whatsappService.setAutoLaunch(val);
+    toast.success(`WhatsApp auto-launch ${val ? 'enabled' : 'disabled'}.`);
+  };
+
+  const handleCountryCodeChange = (code: string) => {
+    setWaCountryCode(code);
+    whatsappService.setDefaultCountryCode(code);
+  };
+
+  const handleDoctorSelect = (name: string) => {
+    setTestDoctor(name);
+    setTestPhone(whatsappService.getDoctorPhone(name) || '');
+  };
+
+  const handleSendTestPush = () => {
+    if (!testPhone.trim()) {
+      toast.error('Enter a mobile number to send the test alert.');
+      return;
+    }
+
+    const params = {
+      doctorName: testDoctor,
+      doctorMobile: testPhone.trim(),
+      patientName: 'Test Patient (John Doe)',
+      patientAgeSex: '34 / M',
+      date: new Date().toISOString().slice(0, 10),
+      timeSlot: '11:15 AM',
+      roomSuite: 'Suite 101',
+      opdUnit: 'OPD-1 • General Medicine',
+      reason: 'Routine Clinical Checkup (Test Alert)',
+      token: 'TK-TEST-99',
+    };
+
+    const prep = whatsappService.prepareNotification(params);
+    whatsappService.logNotification({
+      doctorName: params.doctorName,
+      doctorMobile: prep.phone,
+      patientName: params.patientName,
+      date: params.date,
+      timeSlot: params.timeSlot,
+      message: prep.message,
+      status: 'sent',
+    });
+    setWaHistory(whatsappService.getHistory());
+    whatsappService.openWhatsApp(prep.url);
+    toast.success(`WhatsApp test notification opened for ${testDoctor}.`);
+  };
+
+  const handleClearWaHistory = () => {
+    whatsappService.clearHistory();
+    setWaHistory([]);
+    toast.success('WhatsApp alert dispatch logs cleared.');
+  };
 
   const handleExportLogs = () => {
     const entries = appointmentsService.getEntries();
@@ -171,6 +237,151 @@ export function SettingsPage() {
       )}
 
       {tab === 3 && (
+        <>
+          <section className="sp-card">
+            <header className="sp-card-head">
+              <span className="sp-card-icon" style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}><MessageCircle size={18} /></span>
+              <div>
+                <h2>WhatsApp Doctor Notifications</h2>
+                <p>Configure automated appointment alert pushes sent to physicians via WhatsApp.</p>
+              </div>
+              <span className="sp-badge green"><i className="sp-dot" /> WhatsApp Cloud/Web Ready</span>
+            </header>
+
+            <h3 className="sp-section">Alert Preferences</h3>
+            <div className="sp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>Default Country Calling Code</label>
+                <input
+                  type="text"
+                  value={waCountryCode}
+                  onChange={(e) => handleCountryCodeChange(e.target.value)}
+                  placeholder="+91"
+                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                />
+                <small style={{ fontSize: 11, color: '#64748b' }}>Used when doctor numbers are entered without country prefix (e.g. 10 digits).</small>
+              </div>
+
+              <div className="sp-wa-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8 }}>
+                <div>
+                  <b style={{ fontSize: 13, display: 'block' }}>Auto-launch WhatsApp on Booking</b>
+                  <span style={{ fontSize: 12, color: 'var(--sp-muted, #64748b)' }}>Automatically open wa.me link when an appointment slot is confirmed</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={waAutoLaunch}
+                  onChange={(e) => handleToggleAutoLaunch(e.target.checked)}
+                  style={{ width: 18, height: 18, accentColor: '#10b981', cursor: 'pointer' }}
+                />
+              </div>
+            </div>
+
+            <h3 className="sp-section" style={{ marginTop: 24 }}>Test Notification Dispatch</h3>
+            <div className="sp-wa-box" style={{ padding: 16, borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
+                Send a sample notification push to verify doctor mobile configuration and WhatsApp messaging template.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Select Doctor</label>
+                  <select
+                    value={testDoctor}
+                    onChange={(e) => handleDoctorSelect(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  >
+                    {doctorsList.length > 0 ? (
+                      doctorsList.map((doc) => (
+                        <option key={doc[0]} value={doc[0]}>
+                          {doc[0]} ({doc[1]})
+                        </option>
+                      ))
+                    ) : (
+                      <option value="Dr. Eleanor Vance">Dr. Eleanor Vance (Consultant)</option>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Doctor WhatsApp Number</label>
+                  <input
+                    type="tel"
+                    value={testPhone}
+                    onChange={(e) => setTestPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={handleSendTestPush}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 16px',
+                    borderRadius: 6,
+                    backgroundColor: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Send size={14} /> Send Test WhatsApp Push
+                </button>
+              </div>
+            </div>
+
+            <h3 className="sp-section" style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Recent WhatsApp Dispatch Logs ({waHistory.length})</span>
+              {waHistory.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearWaHistory}
+                  style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Clear History
+                </button>
+              )}
+            </h3>
+
+            {waHistory.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
+                {waHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    className="sp-wa-item"
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: 12,
+                    }}
+                  >
+                    <div>
+                      <b>{item.doctorName}</b> ({item.doctorMobile})
+                      <span style={{ color: '#64748b', marginLeft: 8 }}>Patient: {item.patientName} • {item.timeSlot}</span>
+                    </div>
+                    <span style={{ padding: '2px 8px', borderRadius: 10, backgroundColor: '#dcfce7', color: '#166534', fontWeight: 600, fontSize: 11 }}>
+                      ✓ Dispatched
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: '#64748b', fontSize: 13, margin: '8px 0' }}>No notification alerts have been dispatched yet.</p>
+            )}
+          </section>
+        </>
+      )}
+
+      {tab === 4 && (
         <>
           <section className="sp-card">
             <header className="sp-card-head">

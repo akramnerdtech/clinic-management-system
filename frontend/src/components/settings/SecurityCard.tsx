@@ -20,6 +20,10 @@ function validate(f: typeof EMPTY): Partial<Record<PasswordKey, string>> {
   if (!f.next) errors.next = 'Enter a new password.';
   else if (f.next.length < 8) errors.next = 'Password must be at least 8 characters.';
   else if (new TextEncoder().encode(f.next).length > 72) errors.next = 'Password must be at most 72 characters.';
+  else if (!/[A-Z]/.test(f.next)) errors.next = 'Password must contain at least one uppercase letter (A-Z).';
+  else if (!/[a-z]/.test(f.next)) errors.next = 'Password must contain at least one lowercase letter (a-z).';
+  else if (!/[0-9]/.test(f.next)) errors.next = 'Password must contain at least one number (0-9).';
+  else if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(f.next)) errors.next = 'Password must contain at least one special character (!@#$%^&*...).';
   else if (f.current && f.next === f.current) errors.next = 'New password must be different from your current password.';
   if (!f.confirm) errors.confirm = 'Confirm your new password.';
   else if (f.next !== f.confirm) errors.confirm = 'Passwords do not match.';

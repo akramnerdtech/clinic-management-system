@@ -52,8 +52,8 @@ export const roomStatuses: RoomStatus[] = [
 ];
 
 export const physicianShifts: PhysicianShift[] = [
-  { name: 'Dr. XYZ', doctorName: 'Dr. XYZ', dept: 'General Medicine', avatar: 'https://i.pravatar.cc/60?img=33', shiftStart: '15:00', shiftEnd: '16:00', station: 'Suite 105', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '1 / 4 Visits' },
-  { name: 'Dr. Marcus Vance', doctorName: 'Dr. Marcus Vale', dept: 'Cardiology Lead', avatar: 'https://i.pravatar.cc/60?img=12', shiftStart: '08:00', shiftEnd: '16:30', station: 'Suite 101 / 102', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '6 / 8 Visits' },
-  { name: 'Dr. Elena Rostova', doctorName: 'Dr. Elena Rostova', dept: 'Pediatric Dept', avatar: 'https://i.pravatar.cc/60?img=48', shiftStart: '08:30', shiftEnd: '17:00', station: 'Suite 204', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '5 / 7 Visits' },
-  { name: 'Dr. Aisha Patel', doctorName: 'Dr. Priya Patel', dept: 'Internal Medicine', avatar: 'https://i.pravatar.cc/60?img=32', shiftStart: '09:00', shiftEnd: '18:00', station: 'Suite 103', statusLabel: 'In Consult', statusTone: 'in-consult', visits: '4 / 9 Visits' },
+  { name: 'Dr. XYZ', doctorName: 'Dr. XYZ', dept: 'General Medicine', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 105', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '1 / 4 Visits' },
+  { name: 'Dr. Marcus Vance', doctorName: 'Dr. Marcus Vale', dept: 'Cardiology Lead', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 101 / 102', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '6 / 8 Visits' },
+  { name: 'Dr. Elena Rostova', doctorName: 'Dr. Elena Rostova', dept: 'Pediatric Dept', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 204', statusLabel: 'On Floor', statusTone: 'on-floor', visits: '5 / 7 Visits' },
+  { name: 'Dr. Aisha Patel', doctorName: 'Dr. Priya Patel', dept: 'Internal Medicine', avatar: '', shiftStart: '10:00', shiftEnd: '20:00', station: 'Suite 103', statusLabel: 'In Consult', statusTone: 'in-consult', visits: '4 / 9 Visits' },
 ];

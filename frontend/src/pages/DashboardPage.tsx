@@ -10,18 +10,19 @@ import { Traffic } from "@/components/dashboard/Traffic";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/utils/toast";
-import { ReportModal } from "@/components/reports/ReportModal";
+import { ReportModal } from "@/components/reports/Reportmodal";
 
 export function DashboardPage() {
   const {
     metrics,
     tabs,
+    selectedTab,
+    selectTab,
     appointmentRows,
     activityItems,
     activityIcons,
     trafficPoints,
   } = useDashboardData();
-  const [tab, setTab] = useState(tabs[0]);
   const [query, setQuery] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   const navigate = useNavigate();
@@ -43,9 +44,9 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="CLINICAL OPERATIONS / TODAY"
+        eyebrow="CLINICAL OPERATIONS / WEEKLY TELEMETRY"
         title={`Good Morning, ${user?.fullName?.trim() || "there"}`}
-        description={`Here is what is happening at Central Clinic today · ${todayLabel}`}
+        description={`Here is what is happening at Central Clinic this week · ${todayLabel}`}
         actions={
           <>
             <span className="live-sync">
@@ -69,21 +70,25 @@ export function DashboardPage() {
         <section className="content-card appointments-card">
           <div className="card-title">
             <div>
-              <h2>Today's Appointments Queue</h2>
-              <p>Real-time patient intake and status telemetry</p>
+              <h2>Appointments Queue</h2>
+              <p>Weekly patient intake and status telemetry</p>
             </div>
             <div className="inline-tools">
               <div className="small-search">
                 <Search size={14} />
                 <input
-                  placeholder="Filter patient or room..."
+                  placeholder="Filter patient or doctor..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
               </div>
               <IconButton
                 className="soft-button"
-                onClick={() => toast.info("Showing today's schedule.")}
+                onClick={() => {
+                  const todayTab = tabs.find((t) => t.startsWith("Today"));
+                  if (todayTab) selectTab(todayTab);
+                  toast.info("Showing today's schedule.");
+                }}
               >
                 <Calendar size={13} /> Today
               </IconButton>
@@ -93,8 +98,8 @@ export function DashboardPage() {
             {tabs.map((t) => (
               <button
                 key={t}
-                className={tab === t ? "selected" : ""}
-                onClick={() => setTab(t)}
+                className={selectedTab === t ? "selected" : ""}
+                onClick={() => selectTab(t)}
               >
                 {t}
               </button>

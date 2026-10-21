@@ -126,3 +126,23 @@
   .sp-logo-row, .sp-schedule-row, .sp-list-row { flex-wrap: wrap; }
   .sp-card-head { flex-wrap: wrap; }
 }
+
+.sp-wa-box {
+  background: #f8fafc;
+  border: 1px solid var(--sp-line);
+}
+.sp-wa-item {
+  background: #fff;
+  border: 1px solid var(--sp-line);
+}
+[data-theme="dark"] .sp-wa-box,
+.dark .sp-wa-box {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+}
+[data-theme="dark"] .sp-wa-item,
+.dark .sp-wa-item {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}

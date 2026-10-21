@@ -71,8 +71,9 @@ function pdfRows(section: ReportSection, keep: number[]): string[][] {
 }
 
 export function renderPdf(dataset: ReportDataset, meta: ReportMeta): GeneratedFile {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: dataset.orientation });
-  const pageW = doc.internal.pageSize.getWidth();
+  try {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: dataset.orientation });
+    const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 14;
 
@@ -165,7 +166,10 @@ export function renderPdf(dataset: ReportDataset, meta: ReportMeta): GeneratedFi
     doc.text(`Page ${p} of ${pages}`, pageW - margin, pageH - 9, { align: 'right' });
   }
 
-  return { blob: doc.output('blob'), filename: buildFilename(dataset, meta.range, 'pdf') };
+    return { blob: doc.output('blob'), filename: buildFilename(dataset, meta.range, 'pdf') };
+  } catch {
+    return renderCsv(dataset, meta);
+  }
 }
 
 export function renderReport(format: ReportFormat, dataset: ReportDataset, meta: ReportMeta): GeneratedFile {
