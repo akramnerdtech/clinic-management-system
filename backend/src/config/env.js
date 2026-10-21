@@ -32,4 +32,10 @@ export const env = {
   smtpUser: process.env.SMTP_USER,
   smtpPass: process.env.SMTP_PASS,
   mailFrom: process.env.MAIL_FROM || 'CuraClinic <no-reply@curaclinic.app>',
+
+  // SMS notifications (all optional — Twilio credentials live ONLY in Supabase Secrets).
+  smsWorkerSecret: process.env.SMS_WORKER_SECRET || '', // lets the backend trigger the Edge Function immediately
+  smsNotifyChanges: process.env.SMS_NOTIFY_CHANGES === 'true', // also text doctors on reschedule / cancel
+  smsDefaultCountryCode: process.env.SMS_DEFAULT_COUNTRY_CODE || '91',
+  smsDailyLimitPerAccount: Number(process.env.SMS_DAILY_LIMIT_PER_ACCOUNT) || 300,
 };

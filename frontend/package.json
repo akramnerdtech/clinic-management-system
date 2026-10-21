@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "test:sms": "node --import ./test/sms-sync/register.mjs --test test/sms-sync/sms-sync.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

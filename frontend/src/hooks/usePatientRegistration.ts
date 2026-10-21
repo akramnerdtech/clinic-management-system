@@ -81,6 +81,7 @@ export function usePatientRegistration() {
       formValues.bloodGroup?.trim() ?? '',
       formValues.recommendedTest?.trim() ?? '',
       todayDateKey(),
+      formValues.phone?.trim() ?? '', // mobile (index 10): used for the booking confirmation SMS
     ];
 
     patientsService.addPatient(patient);

@@ -15,7 +15,7 @@ export const SESSION_EXPIRED_EVENT = "curaclinic:session-expired";
 
 // Account endpoints are authenticated with the session token (the server never trusts a userId from the client).
 apiClient.interceptors.request.use((config) => {
-  if (config.url?.startsWith("/account")) {
+  if (config.url?.startsWith("/account") || config.url?.startsWith("/notifications")) {
     const token = loadAuthSession()?.token;
     if (token) config.headers.set("Authorization", `Bearer ${token}`);
   }

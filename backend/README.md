@@ -11,9 +11,10 @@ OTPs are used for exactly one thing: verifying the email address of a _new_ acco
 during signup. Emails that already have an account are rejected at signup, so an
 existing user is never sent an OTP.
 
-It has no other routes, no clinic/app data, and no database beyond Supabase's
-auth store. The Main Project's existing localStorage-based data is completely
-untouched by this backend.
+Besides authentication it has one more authenticated job: relaying appointment/doctor-contact
+changes to Supabase so doctors can be notified by SMS (see _SMS notifications_ below). It still does
+not serve clinic data back to the browser, and the Main Project's localStorage-based data stays the
+source of truth.
 
 ## Setup
 
@@ -35,6 +36,8 @@ Required environment variables (see `.env.example`):
   credentials Nodemailer uses to send the signup OTP email.
 - `OTP_LENGTH`, `OTP_TTL_MINUTES`, `OTP_MAX_ATTEMPTS` — OTP settings (defaults 6 / 5 / 5).
 - `CORS_ORIGIN` — your frontend's URL(s), comma-separated.
+- _(optional, SMS)_ `SMS_WORKER_SECRET`, `SMS_DEFAULT_COUNTRY_CODE` (91), `SMS_NOTIFY_CHANGES` (false),
+  `SMS_DAILY_LIMIT_PER_ACCOUNT` (300). **Twilio credentials do not go here** — they live in Supabase Secrets.
 
 ## API
 
@@ -71,3 +74,17 @@ routes have been removed.
 OTPs are kept in an in-memory store (hashed, with expiry, a max-attempt limit and a
 resend cooldown) — sufficient for a single-instance deployment. Swap it for Redis if
 you ever run multiple instances.
+
+### SMS notifications (authenticated)
+
+Same auth rule as the account routes (user always from the verified token) plus a per-user rate limit
+(120 requests/min). These write to the `clinic_appointments`, `sms_notifications` and `doctor_contacts`
+tables; the Edge Functions in `/supabase` do the actual sending through Twilio.
+
+| Method | Path                                | Body                                          | Notes                                                                 |
+| ------ | ----------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| POST   | `/api/notifications/appointments/sync` | `{ clientId, action: 'upsert'\|'delete', appointment }` | Idempotent. Queues/cancels/reschedules the doctor's SMS.             |
+| POST   | `/api/notifications/doctors`        | `{ name, mobile }`                            | Validates + stores the doctor's mobile as E.164. `400` if invalid.    |
+| POST   | `/api/notifications/doctors/rename` | `{ from, to }`                                | Keeps SMS working after a doctor is renamed.                          |
+
+Run the tests with `npm test` (Node 22.18+). Full setup: `../docs/sms-notifications-setup.md`.

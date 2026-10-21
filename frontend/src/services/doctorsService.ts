@@ -1,5 +1,6 @@
 import { doctorsMetrics, doctorProfile } from '@/data/doctors';
 import { loadFromStorage, saveToStorage } from '@/utils/storage';
+import { notificationSyncService } from '@/services/notificationSyncService';
 import { Stethoscope, Clock3, CheckCircle2, Building2 } from 'lucide-react';
 import type { Doctor, MetricConfig } from '@/types';
 
@@ -91,6 +92,7 @@ export const doctorsService = {
     const current = loadFromStorage<Doctor[]>(KEYS.doctors, []);
     const updated = current.map((doctor) => doctor[0] === previousName ? updatedDoctor : doctor);
     saveToStorage(KEYS.doctors, updated);
+    notificationSyncService.renameDoctor(previousName, updatedDoctor[0]);
     window.dispatchEvent(new CustomEvent('clinic-doctors-updated'));
     window.dispatchEvent(new CustomEvent('clinic-calendar-updated'));
     return this.getDoctors();

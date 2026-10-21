@@ -1,0 +1,12 @@
+# Minimal Supabase CLI config for the SMS notification functions.
+# If you already ran `supabase init`, keep your existing config.toml and just add the
+# two [functions.*] blocks below.
+project_id = "curaclinic"
+
+# Both functions authenticate callers themselves (shared secret header / Twilio signature),
+# because neither caller is a logged-in Supabase user.
+[functions.process-sms-queue]
+verify_jwt = false
+
+[functions.twilio-status-callback]
+verify_jwt = false

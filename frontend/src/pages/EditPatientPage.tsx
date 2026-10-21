@@ -72,6 +72,7 @@ export function EditPatientPage() {
       patient[7].trim(),
       patient[8]?.trim() ?? '',
       patient[9] ?? '',
+      patient[10] ?? '', // keep the registered mobile (used for the booking confirmation SMS)
     ];
     patientsService.updatePatient(updated);
     toast.success(`${updated[1]} was updated successfully.`);
