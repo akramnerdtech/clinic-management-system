@@ -72,7 +72,11 @@ export const admissionService = {
     }
     if (params.sourceAppointmentId) {
       const appointment = appointmentsService.getEntryByToken(params.sourceAppointmentId);
-      if (!appointment || appointment[13] !== params.patientId) throw new Error('The source appointment does not belong to this patient.');
+      const belongsToPatient = !!appointment && (
+        appointment[13] === params.patientId ||
+        (!appointment[13] && appointment[3]?.trim().toLowerCase() === patient[1].trim().toLowerCase())
+      );
+      if (!appointment || !belongsToPatient) throw new Error('The source appointment does not belong to this patient.');
     }
     if (params.admissionType === 'EMERGENCY' && !params.emergencyCaseId) {
       throw new Error('Emergency admissions must reference an emergency case.');

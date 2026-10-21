@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRightLeft, BedDouble, CheckCircle2, Clock3, LogOut, Search, UserRoundPlus, Download } from 'lucide-react';
+import { ArrowRightLeft, BedDouble, CheckCircle2, Clock3, LogOut, Download } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -30,7 +30,12 @@ function currentLocalDateTime(): string {
 
 function localDateTimeToIso(value: string): string {
   const date = new Date(value);
-  if (!value || Number.isNaN(date.getTime())) throw new Error('Enter a valid date and time.');
+  if (!value || Number.isNaN(date.getTime())) {
+    throw new Error('Enter a valid date and time.');
+  }
+  if (date.getTime() > Date.now()) {
+    throw new Error('Room admission, transfer, and discharge times cannot be in the future.');
+  }
   return date.toISOString();
 }
 
@@ -130,7 +135,7 @@ function TransferDialog({ stay, onClose, onTransferred }: {
           </select>
         </label>
         <label className={labelClass}>Transfer date and time
-          <input className={inputClass} type="datetime-local" value={transferAt} onChange={(event) => setTransferAt(event.target.value)} />
+          <input className={inputClass} type="datetime-local" max={currentLocalDateTime()} value={transferAt} onChange={(event) => setTransferAt(event.target.value)} />
         </label>
         <div className="rounded border border-[#e7ebef] p-3 text-sm sm:col-span-2">
           <b>New rate: {money(ratePaise)}/day</b>
@@ -166,7 +171,7 @@ function DischargeDialog({ stay, onClose, onDischarged }: {
       <IconButton className="teal-button" onClick={submit}><LogOut size={14} /> Discharge</IconButton>
     </>}>
       <label className={labelClass}>Discharge date and time
-        <input className={inputClass} type="datetime-local" value={dischargedAt} onChange={(event) => setDischargedAt(event.target.value)} />
+        <input className={inputClass} type="datetime-local" max={currentLocalDateTime()} value={dischargedAt} onChange={(event) => setDischargedAt(event.target.value)} />
       </label>
       <dl className="mb-0 mt-3 grid grid-cols-2 gap-2 rounded border border-[#e8ebef] bg-[#f8fafb] p-3 text-xs"><dt className="text-[#687285]">Current bill</dt><dd className="m-0 text-right font-semibold">{money(bill.totalPaise)}</dd><dt className="text-[#687285]">Paid</dt><dd className="m-0 text-right">{money(bill.paidPaise)}</dd><dt className="text-[#687285]">Balance due</dt><dd className="m-0 text-right font-semibold">{money(bill.balancePaise)}</dd></dl>
       <p className="mb-0 mt-3 text-xs text-[#687285]">The stay and admission close only after the final bill snapshot saves successfully.</p>
@@ -180,7 +185,6 @@ export function AppointRoomPage() {
   const [patients, setPatients] = useState(() => patientsService.getPatients());
   const [activeStays, setActiveStays] = useState(() => inpatientService.getActiveStays());
   const [allStays, setAllStays] = useState(() => inpatientService.getRoomStays());
-  const [patientQuery, setPatientQuery] = useState('');
   const [patientId, setPatientId] = useState(handoff?.patientId ?? '');
   const [admissionType, setAdmissionType] = useState<AdmissionType>(handoff?.admissionType ?? 'DIRECT_IPD');
   const [admittingDoctorId, setAdmittingDoctorId] = useState(handoff?.admittingDoctorId ?? '');
@@ -216,18 +220,19 @@ export function AppointRoomPage() {
   const bedIndex = bedIndexValue === '' ? availableBeds[0] : Number(bedIndexValue);
   const selectedPatient = patients.find(([id]) => id === patientId);
   const availableDoctors = doctorsService.getDoctors().filter((doctor) => doctor[4] !== 'OFF DUTY');
-  const patientAppointments = patientId ? appointmentsService.getEntries().filter((entry) => entry[13] === patientId && !['CANCELLED', 'NO_SHOW'].includes(entry[10])) : [];
-  const patientEmergencyCases = patientId ? emergencyService.getCasesForPatient(patientId).filter((item) => !['DISCHARGED', 'CLOSED', 'ADMITTED'].includes(item.status)) : [];
+  const patientAppointments = patientId ? appointmentsService.getEntries().filter((entry) => (entry[13] === patientId || (!entry[13] && selectedPatient && entry[3]?.trim().toLowerCase() === selectedPatient[1].trim().toLowerCase())) && !['CANCELLED', 'NO_SHOW'].includes(entry[10])) : [];
+  const patientEmergencyCases = patientId
+    ? emergencyService.getCasesForPatient(patientId).filter((item) => ['WAITING_FOR_DOCTOR', 'ASSESSING', 'TREATING'].includes(item.status))
+    : [];
+  const selectedEmergencyCaseId = patientEmergencyCases.some((item) => item.id === emergencyCaseId)
+    ? emergencyCaseId
+    : patientEmergencyCases[0]?.id ?? '';
   const rates = inpatientService.getRates();
   const ratePaise = inpatientService.getWardRatePaise(wardType);
   const filteredPatients = useMemo(() => {
-    const query = patientQuery.trim().toLowerCase();
     const admitted = new Set(activeStays.map((stay) => stay.patientId));
-    return patients.filter((patient) =>
-      (!query || `${patient[0]} ${patient[1]}`.toLowerCase().includes(query))
-      && (!admitted.has(patient[0]) || patient[0] === patientId),
-    );
-  }, [patients, activeStays, patientQuery, patientId]);
+    return patients.filter((patient) => !admitted.has(patient[0]) || patient[0] === patientId);
+  }, [patients, activeStays, patientId]);
 
   const submitAllotment = () => {
     if (pending) return;
@@ -240,7 +245,7 @@ export function AppointRoomPage() {
         admissionType,
         admittingDoctorId,
         sourceAppointmentId: admissionType === 'OPD_TO_IPD' ? sourceAppointmentId : undefined,
-        emergencyCaseId: admissionType === 'EMERGENCY' ? emergencyCaseId : undefined,
+        emergencyCaseId: admissionType === 'EMERGENCY' ? selectedEmergencyCaseId : undefined,
       });
       toast.success(`${selectedPatient[1]} allotted to Room ${stay.roomNumberSnapshot}, Bed ${stay.bedNumberSnapshot}.`);
       setPatientId('');
@@ -248,7 +253,6 @@ export function AppointRoomPage() {
       setAdmittingDoctorId('');
       setSourceAppointmentId('');
       setEmergencyCaseId('');
-      setPatientQuery('');
       setRoomId('');
       setBedIndexValue('');
       refresh();
@@ -302,21 +306,14 @@ export function AppointRoomPage() {
               <h2 className="m-0 text-base font-semibold text-[#182236]">New room allotment</h2>
               <p className="mb-0 mt-1 text-xs text-[#687285]">Choose a registered patient and an active available bed.</p>
             </div>
-            <UserRoundPlus size={18} className="text-[#007d72]" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className={`${labelClass} sm:col-span-2`}>Patient search
-              <span className="flex h-10 items-center gap-2 rounded border border-[#dfe5e7] bg-white px-3 focus-within:border-[#007d72]">
-                <Search size={14} className="text-[#687285]" />
-                <input className="w-full bg-transparent text-sm font-normal outline-none" value={patientQuery} onChange={(event) => setPatientQuery(event.target.value)} placeholder="Search by patient name or ID" />
-              </span>
-            </label>
             <label className={`${labelClass} sm:col-span-2`}>Patient
               <select className={inputClass} value={patientId} onChange={(event) => { setPatientId(event.target.value); setSourceAppointmentId(''); setEmergencyCaseId(''); setAdmittingDoctorId(''); }}>
                 <option value="">Select a registered patient</option>
                 {filteredPatients.map((patient) => <option key={patient[0]} value={patient[0]}>{patient[1]} · {patient[0]} · {patient[2]}</option>)}
               </select>
-              {!filteredPatients.length && <small className="font-normal text-[#687285]">No eligible patient matches this search.</small>}
+              {!filteredPatients.length && <small className="font-normal text-[#687285]">No eligible registered patients available.</small>}
             </label>
             <label className={labelClass}>Admission pathway
               <select className={inputClass} value={admissionType} onChange={(event) => { setAdmissionType(event.target.value as AdmissionType); setSourceAppointmentId(''); setEmergencyCaseId(''); }}>
@@ -336,18 +333,19 @@ export function AppointRoomPage() {
                 <option value="">Select this patient's visit</option>
                 {patientAppointments.map((entry) => <option key={entry[2]} value={entry[2]}>{new Date(entry[11] ?? '').toLocaleString()} · {entry[7]} · {entry[5]}</option>)}
               </select>
+              {patientId && !patientAppointments.length && <small className="font-normal text-[#b42318]">No outpatient visits found for this patient. Book an appointment first, or choose "Direct inpatient".</small>}
             </label>}
             {admissionType === 'EMERGENCY' && <label className={labelClass}>Emergency case
-              <select className={inputClass} value={emergencyCaseId} onChange={(event) => { setEmergencyCaseId(event.target.value); const emergency = patientEmergencyCases.find((item) => item.id === event.target.value); if (emergency) setAdmittingDoctorId(emergency.assignedDoctorId); }}>
-                <option value="">Select this patient's active emergency case</option>
-                {patientEmergencyCases.map((item) => <option key={item.id} value={item.id}>{item.priority} · {new Date(item.arrivedAt).toLocaleString()} · {item.status}</option>)}
+              <select className={inputClass} value={selectedEmergencyCaseId} onChange={(event) => {
+                setEmergencyCaseId(event.target.value);
+                const emergencyCase = patientEmergencyCases.find((item) => item.id === event.target.value);
+                if (emergencyCase) setAdmittingDoctorId(emergencyCase.assignedDoctorId);
+              }}>
+                {!patientEmergencyCases.length && <option value="">No active emergency case</option>}
+                {patientEmergencyCases.map((item) => <option key={item.id} value={item.id}>{item.priority} · arrived {new Date(item.arrivedAt).toLocaleString()} · {item.status.replace(/_/g, ' ')}</option>)}
               </select>
+              {patientId && !patientEmergencyCases.length && <small className="font-normal text-[#b42318]">This patient has no active emergency case. Register one from Emergency / Triage first.</small>}
             </label>}
-            <label className={labelClass}>Ward type
-              <select className={inputClass} value={wardType} onChange={(event) => { setWardType(event.target.value as WardType); setRoomId(''); setBedIndexValue(''); }}>
-                {allotableWards.map((ward) => <option key={ward} value={ward}>{WARD_LABELS[ward]}</option>)}
-              </select>
-            </label>
             <label className={labelClass}>Available room
               <select className={inputClass} value={selectedRoomId} onChange={(event) => { setRoomId(event.target.value); setBedIndexValue(''); }}>
                 {rooms.map((room) => <option key={room.id} value={room.id}>Room {room.number} · {inpatientService.getAvailableBedIndexes(room.id, wardType).length} beds available</option>)}
@@ -360,7 +358,7 @@ export function AppointRoomPage() {
               </select>
             </label>
             <label className={labelClass}>Admission date and time
-              <input className={inputClass} type="datetime-local" value={startAt} onChange={(event) => setStartAt(event.target.value)} />
+              <input className={inputClass} type="datetime-local" max={currentLocalDateTime()} value={startAt} onChange={(event) => setStartAt(event.target.value)} />
             </label>
           </div>
           <div className="mt-4 rounded border border-[#dceee9] bg-[#f4fbf9] p-3.5">
